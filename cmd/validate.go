@@ -42,7 +42,11 @@ func validate() {
   }
 
   if err := schema.Validate(doc); err != nil {
-    panic(err)
+    for _, err := range err.(xsd.SchemaValidationError).Errors() {
+      fmt.Println(err)
+    }
+
+    return
   }
 
   fmt.Println("OK")
