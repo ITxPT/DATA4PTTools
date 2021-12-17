@@ -1,0 +1,8 @@
+logger:
+  level: debug
+schema: xsd/NeTEx_publication-NoConstraint.xsd
+scripts:
+  enableBuiltIn: true
+  paths:
+    - $HOME/.greenlight/scripts
+    - ./scripts
