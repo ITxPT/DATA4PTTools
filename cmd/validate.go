@@ -91,7 +91,7 @@ func validate() {
 					return
 				}
 
-				fileRes := greenlight.ValidateReader(schema, fr)
+				fileRes := greenlight.ValidateReader(schema, fr, f.Name)
 				fileRes.FileName = f.Name
 				fileRes.FileSize = int64(f.UncompressedSize64)
 				result.Validations = append(result.Validations, fileRes)
