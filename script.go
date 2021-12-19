@@ -4,7 +4,9 @@ import (
 	"fmt"
 	"os"
 	"path"
+	"time"
 
+	"github.com/concreteit/greenlight/libxml2/types"
 	"github.com/dop251/goja"
 )
 
@@ -13,6 +15,11 @@ type Script struct {
 	source   []byte
 	filePath string
 	program  *goja.Program
+	logger   *Logger
+}
+
+func (s *Script) SetLogger(logger *Logger) {
+	s.logger = logger
 }
 
 func (s *Script) Runtime() *goja.Runtime {
@@ -31,6 +38,7 @@ func NewScript(filePath string) (*Script, error) {
 	script := &Script{
 		source:   source,
 		filePath: filePath,
+		logger:   NewLogger(),
 	}
 
 	program, err := goja.Compile(filePath, string(source), true)
@@ -53,6 +61,48 @@ func NewScript(filePath string) (*Script, error) {
 	// TODO get dependencies
 
 	return script, nil
+}
+
+func executeScript(script *Script, doc types.Document) *ValidationRuleResult {
+	start := time.Now()
+	res := &ValidationRuleResult{
+		Name:   script.name, // TODO may add description
+		Valid:  true,
+		Errors: []string{},
+	}
+	defer func() {
+		res.ValidationTime = time.Since(start).Seconds()
+	}()
+
+	ctx, err := netexContext(doc)
+	if err != nil {
+		res.AddError(err)
+		return res
+	}
+
+	var validateHandler func(ctx jsObject, xpath jsObject) []string
+
+	vm := script.Runtime()
+	if err := vm.ExportTo(vm.Get("main"), &validateHandler); err != nil {
+		res.AddError(err)
+		return res
+	}
+
+	jsCtx := JSMainContext{
+		script: script,
+		tasks:  []jsTask{},
+
+		Document:    doc,
+		NodeContext: ctx,
+	}
+
+	if errors := validateHandler(jsCtx.JSObject(), jsStandardLib); errors != nil {
+		for _, err := range errors {
+			res.AddError(fmt.Errorf(err))
+		}
+	}
+
+	return res
 }
 
 func CompileDir(dirPath string) ([]*Script, error) {
