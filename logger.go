@@ -85,7 +85,22 @@ type Logger struct {
 	tags TagSlice
 }
 
+func (a *Logger) Copy() *Logger {
+	b := &Logger{}
+	*b = *a
+
+	return b
+}
+
 func (l *Logger) AddTag(field, value string, width int) *Logger {
+	for i, tag := range l.tags {
+		if tag.field == field {
+			l.tags[i] = LogTag{field, value, width}
+
+			return l
+		}
+	}
+
 	l.tags = append(l.tags, LogTag{field, value, width})
 
 	return l
@@ -95,7 +110,8 @@ func (l Logger) Debugf(v string, args ...interface{}) { l.Logf(LogLevelDebug, v,
 func (l Logger) Infof(v string, args ...interface{})  { l.Logf(LogLevelInfo, v, args...) }
 func (l Logger) Warnf(v string, args ...interface{})  { l.Logf(LogLevelWarn, v, args...) }
 func (l Logger) Errorf(v string, args ...interface{}) { l.Logf(LogLevelError, v, args...) }
-func (l Logger) JS() jsObject {
+
+func (l Logger) JSObject() jsObject {
 	return jsObject{
 		"debug": l.Debugf,
 		"info":  l.Infof,
