@@ -122,8 +122,8 @@ func executeScript(script *Script, schema *xsd.Schema, doc types.Document) *Vali
 	return res
 }
 
-func CompileDir(dirPath string) ([]*Script, error) {
-	scripts := []*Script{}
+func CompileDir(dirPath string) (map[string]*Script, error) {
+	scripts := map[string]*Script{}
 	entries, err := os.ReadDir(dirPath)
 	if err != nil {
 		return nil, err
@@ -133,27 +133,37 @@ func CompileDir(dirPath string) ([]*Script, error) {
 		fullPath := fmt.Sprintf("%s/%s", dirPath, entry.Name())
 
 		if entry.IsDir() {
-			ss, err := CompileDir(fullPath)
+			sm, err := CompileDir(fullPath)
 			if err != nil {
 				return nil, err
 			}
 
-			scripts = append(scripts, ss...)
+			for k, v := range sm {
+				if scripts[k] != nil {
+					return nil, fmt.Errorf("script with the name '%s' already exist", k)
+				}
+
+				scripts[k] = v
+			}
 		} else if path.Ext(entry.Name()) == ".js" {
 			s, err := NewScript(fullPath)
 			if err != nil {
 				return nil, err
 			}
 
-			scripts = append(scripts, s)
+			if scripts[s.name] != nil {
+				return nil, fmt.Errorf("script with the name '%s' already exist", s.name)
+			}
+
+			scripts[s.name] = s
 		}
 	}
 
 	return scripts, nil
 }
 
-func CompileDirs(dirPaths []string) ([]*Script, error) {
-	scripts := []*Script{}
+func CompileDirs(dirPaths []string) (map[string]*Script, error) {
+	scripts := map[string]*Script{}
 
 	for _, dirPath := range dirPaths {
 		ss, err := CompileDir(dirPath)
@@ -161,8 +171,25 @@ func CompileDirs(dirPaths []string) ([]*Script, error) {
 			return nil, err
 		}
 
-		scripts = append(scripts, ss...)
+		for k, v := range ss {
+			if scripts[k] != nil {
+				return nil, fmt.Errorf("script with the name '%s' alredy exist", k)
+			}
+
+			scripts[k] = v
+		}
 	}
 
 	return scripts, nil
+}
+
+func scriptMapKeys(v map[string]*Script) []string {
+	i := 0
+	keys := make([]string, len(v))
+	for k := range v {
+		keys[i] = k
+		i++
+	}
+
+	return keys
 }
