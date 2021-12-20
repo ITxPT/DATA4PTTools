@@ -10,7 +10,6 @@ import (
 	"time"
 
 	"github.com/concreteit/greenlight"
-	"github.com/concreteit/greenlight/libxml2/xsd"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -41,7 +40,7 @@ func init() {
 	rootCmd.AddCommand(validateCmd)
 }
 
-func validatePath(schema *xsd.Schema, input string) ([]*greenlight.FileValidationResult, error) {
+func validatePath(v *greenlight.Validator, input string) ([]*greenlight.FileValidationResult, error) {
 	fi, err := os.Stat(input)
 	if err != nil {
 		return nil, err
@@ -55,7 +54,7 @@ func validatePath(schema *xsd.Schema, input string) ([]*greenlight.FileValidatio
 
 		res := []*greenlight.FileValidationResult{}
 		for _, entry := range fileEntries {
-			vr, err := validatePath(schema, input+"/"+entry.Name())
+			vr, err := validatePath(v, input+"/"+entry.Name())
 			if err != nil {
 
 			}
@@ -67,7 +66,7 @@ func validatePath(schema *xsd.Schema, input string) ([]*greenlight.FileValidatio
 	} else {
 		switch path.Ext(input) {
 		case ".xml":
-			return greenlight.ValidateFiles(schema, []string{input}), nil
+			return v.ValidateFiles([]string{input}), nil
 		case ".zip":
 			r, err := zip.OpenReader(input)
 			if err != nil {
@@ -87,7 +86,7 @@ func validatePath(schema *xsd.Schema, input string) ([]*greenlight.FileValidatio
 					return nil, err
 				}
 
-				fileRes := greenlight.ValidateReader(schema, fr, input+"/"+f.Name)
+				fileRes := v.ValidateReader(fr, input+"/"+f.Name)
 				fileRes.FileSize = int64(f.UncompressedSize64)
 				res = append(res, fileRes)
 			}
@@ -108,7 +107,7 @@ func validate() {
 
 	result.Start()
 
-	schema, err := xsd.ParseFromFile(viper.GetString("schema"))
+	validator, err := greenlight.NewValidator(viper.GetString("schema"))
 	if err != nil {
 		result.GeneralError = err.Error()
 		logResult(result)
@@ -124,7 +123,7 @@ func validate() {
 	}
 
 	for _, path := range input {
-		res, _ := validatePath(schema, greenlight.EnvPath(path))
+		res, _ := validatePath(validator, greenlight.EnvPath(path))
 		result.Validations = append(result.Validations, res...)
 	}
 

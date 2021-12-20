@@ -17,12 +17,12 @@ const (
 )
 
 type taskValidateFile struct {
-	schema   *xsd.Schema
-	filePath string
+	validator *Validator
+	filePath  string
 }
 
 func (t taskValidateFile) Execute(id int) interface{} {
-	return ValidateFile(t.schema, t.filePath)
+	return t.validator.ValidateFile(t.filePath)
 }
 
 type Measure struct {
@@ -75,7 +75,36 @@ func generalValidationError(name string, err error) *FileValidationResult {
 	}
 }
 
-func Validate(schema *xsd.Schema, doc types.Document, name string) *FileValidationResult {
+type Validator struct {
+	schema  *xsd.Schema
+	scripts map[string]*Script
+}
+
+func NewValidator(schemaPath string) (*Validator, error) {
+	var err error
+	v := &Validator{
+		scripts: map[string]*Script{},
+	}
+
+	if v.schema, err = xsd.ParseFromFile(schemaPath); err != nil {
+		return nil, err
+	}
+
+	scriptDirs := []string{}
+	if viper.GetBool("scripts.enableBuiltIn") {
+		scriptDirs = append(scriptDirs, builtInPath)
+	}
+
+	// TODO scripts should be defined as a map in order to handle dependencies
+
+	if v.scripts, err = CompileDirs(scriptDirs); err != nil {
+		return nil, err
+	}
+
+	return v, nil
+}
+
+func (v *Validator) Validate(doc types.Document, name string) *FileValidationResult {
 	result := &FileValidationResult{
 		Measure:         &Measure{},
 		FileName:        name,
@@ -89,43 +118,31 @@ func Validate(schema *xsd.Schema, doc types.Document, name string) *FileValidati
 
 	result.Start()
 
-	scriptDirs := []string{}
-	if viper.GetBool("scripts.enableBuiltIn") {
-		scriptDirs = append(scriptDirs, builtInPath)
-	}
-
-	// TODO scripts should be defined as a map in order to handle dependencies
-	scripts, err := CompileDirs(scriptDirs)
-	if err != nil {
-		result.Valid = false
-		result.GeneralError = err.Error()
-		return result
-	}
-
-	for _, script := range scripts {
+	maxScriptWidth := stringMaxWidth(scriptMapKeys(v.scripts))
+	for _, script := range v.scripts {
 		script.SetLogger(
-			NewLogger().
+			script.logger.Copy().
 				AddTag("name", "main", 10).
-				AddTag("script", script.name, 0).
+				AddTag("script", script.name, maxScriptWidth).
 				AddTag("document", name, 0),
 		)
 
-		result.ValidationRules = append(result.ValidationRules, executeScript(script, schema, doc))
+		result.ValidationRules = append(result.ValidationRules, executeScript(script, v.schema, doc))
 	}
 
 	return result
 }
 
-func ValidateReader(schema *xsd.Schema, reader io.Reader, name string) *FileValidationResult {
+func (v *Validator) ValidateReader(reader io.Reader, name string) *FileValidationResult {
 	doc, err := libxml2.ParseReader(reader)
 	if err != nil {
 		return generalValidationError(name, err)
 	}
 
-	return Validate(schema, doc, name)
+	return v.Validate(doc, name)
 }
 
-func ValidateFile(schema *xsd.Schema, filePath string) *FileValidationResult {
+func (v *Validator) ValidateFile(filePath string) *FileValidationResult {
 	file, err := os.Open(filePath)
 	if err != nil {
 		return generalValidationError(filePath, err)
@@ -138,7 +155,7 @@ func ValidateFile(schema *xsd.Schema, filePath string) *FileValidationResult {
 		return generalValidationError(filePath, err)
 	}
 
-	result := Validate(schema, doc, filePath)
+	result := v.Validate(doc, filePath)
 
 	if fi, err := file.Stat(); err == nil {
 		result.FileSize = fi.Size()
@@ -147,7 +164,7 @@ func ValidateFile(schema *xsd.Schema, filePath string) *FileValidationResult {
 	return result
 }
 
-func ValidateFiles(schema *xsd.Schema, filePaths []string) []*FileValidationResult {
+func (v *Validator) ValidateFiles(filePaths []string) []*FileValidationResult {
 	results := []*FileValidationResult{}
 	numTasks := len(filePaths)
 	tasks := make(chan task, numTasks)
@@ -157,8 +174,8 @@ func ValidateFiles(schema *xsd.Schema, filePaths []string) []*FileValidationResu
 
 	for _, filePath := range filePaths {
 		tasks <- taskValidateFile{
-			schema:   schema,
-			filePath: filePath,
+			validator: v,
+			filePath:  filePath,
 		}
 	}
 	close(tasks)
