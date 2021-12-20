@@ -55,6 +55,7 @@ type ValidationResult struct {
 }
 
 func (v *ValidationResult) AddError(err error) {
+	v.Valid = false
 	v.ErrorCount++
 
 	if v.ErrorCount <= 32 {
@@ -70,31 +71,6 @@ func generalValidationError(name string, err error) *FileValidationResult {
 	}
 }
 
-func ValidateXSD(schema *xsd.Schema, doc types.Document) *ValidationResult {
-	res := &ValidationResult{
-		Measure: &Measure{},
-		Name:    "xsd",
-		Valid:   true,
-		Errors:  []string{},
-	}
-
-	defer func() {
-		res.Stop()
-	}()
-
-	res.Start()
-
-	if n, errors := schema.Validate(doc); n > 0 {
-		for _, err := range errors {
-			res.AddError(err)
-		}
-
-		res.ErrorCount = n
-	}
-
-	return res
-}
-
 func Validate(schema *xsd.Schema, doc types.Document, name string) *FileValidationResult {
 	result := &FileValidationResult{
 		Measure:         &Measure{},
@@ -108,7 +84,6 @@ func Validate(schema *xsd.Schema, doc types.Document, name string) *FileValidati
 	}()
 
 	result.Start()
-	result.ValidationRules = append(result.ValidationRules, ValidateXSD(schema, doc))
 
 	scriptDirs := []string{}
 	if viper.GetBool("scripts.enableBuiltIn") {
@@ -131,7 +106,7 @@ func Validate(schema *xsd.Schema, doc types.Document, name string) *FileValidati
 				AddTag("document", name, 0),
 		)
 
-		result.ValidationRules = append(result.ValidationRules, executeScript(script, doc))
+		result.ValidationRules = append(result.ValidationRules, executeScript(script, schema, doc))
 	}
 
 	return result
@@ -147,18 +122,9 @@ func ValidateReader(schema *xsd.Schema, reader io.Reader, name string) *FileVali
 }
 
 func ValidateFile(schema *xsd.Schema, filePath string) *FileValidationResult {
-	result := &FileValidationResult{
-		FileName:        filePath,
-		Valid:           true,
-		ValidationRules: []*ValidationResult{},
-	}
 	file, err := os.Open(filePath)
 	if err != nil {
 		return generalValidationError(filePath, err)
-	}
-
-	if fi, err := file.Stat(); err == nil {
-		result.FileSize = fi.Size()
 	}
 
 	defer file.Close()
@@ -168,7 +134,13 @@ func ValidateFile(schema *xsd.Schema, filePath string) *FileValidationResult {
 		return generalValidationError(filePath, err)
 	}
 
-	return Validate(schema, doc, filePath)
+	result := Validate(schema, doc, filePath)
+
+	if fi, err := file.Stat(); err == nil {
+		result.FileSize = fi.Size()
+	}
+
+	return result
 }
 
 func ValidateFiles(schema *xsd.Schema, filePaths []string) []*FileValidationResult {
