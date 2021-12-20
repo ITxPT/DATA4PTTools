@@ -12,6 +12,7 @@ import (
 	"github.com/concreteit/greenlight"
 	"github.com/concreteit/greenlight/libxml2/xsd"
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 )
 
 var (
@@ -22,87 +23,116 @@ var (
 			validate()
 		},
 	}
-	input      string
-	schemaPath string
 )
 
 type ValidationResult struct {
-	TotalExecutionTime float64                            `json:"total_execution_time"`
-	SchemaParseTime    float64                            `json:"schema_parse_time"`
-	Validations        []*greenlight.FileValidationResult `json:"validations"`
+	*greenlight.Measure
+
+	SchemaParseTime float64                            `json:"schema_parse_time"`
+	Validations     []*greenlight.FileValidationResult `json:"validations"`
+	GeneralError    string                             `json:"general_error,omitempty"`
 }
 
 func init() {
-	validateCmd.Flags().StringVarP(&input, "input", "i", "", "XML file, dir or archive to validate")
-	validateCmd.Flags().StringVarP(&schemaPath, "schema", "s", "./xsd/NeTEx_publication.xsd", "do validation against the schema")
+	validateCmd.Flags().StringP("input", "i", "", "XML file, dir or archive to validate")
+	validateCmd.Flags().StringP("schema", "s", "", "do validation against the schema")
+	viper.BindPFlag("input", validateCmd.Flags().Lookup("input"))
+	viper.BindPFlag("schema", validateCmd.Flags().Lookup("schema"))
 	rootCmd.AddCommand(validateCmd)
 }
 
-func validate() {
-	start := time.Now()
-	result := ValidationResult{}
-	schema, err := xsd.ParseFromFile(schemaPath)
-	if err != nil {
-		panic(err)
-	}
-
-	result.SchemaParseTime = time.Since(start).Seconds()
+func validatePath(schema *xsd.Schema, input string) ([]*greenlight.FileValidationResult, error) {
 	fi, err := os.Stat(input)
 	if err != nil {
-		fmt.Print(err)
-		return
+		return nil, err
 	}
 
 	if fi.IsDir() {
 		fileEntries, err := os.ReadDir(input)
 		if err != nil {
-			fmt.Print(err)
-			return
+			return nil, err
 		}
 
-		files := []string{}
+		res := []*greenlight.FileValidationResult{}
 		for _, entry := range fileEntries {
-			if !entry.IsDir() {
-				files = append(files, input+"/"+entry.Name())
+			vr, err := validatePath(schema, input+"/"+entry.Name())
+			if err != nil {
+
 			}
+
+			res = append(res, vr...)
 		}
 
-		result.Validations = greenlight.ValidateFiles(schema, files)
+		return res, nil
 	} else {
 		switch path.Ext(input) {
 		case ".xml":
-			result.Validations = greenlight.ValidateFiles(schema, []string{input})
+			return greenlight.ValidateFiles(schema, []string{input}), nil
 		case ".zip":
 			r, err := zip.OpenReader(input)
 			if err != nil {
-				fmt.Print(err)
-				return
+				return nil, err
 			}
 			defer r.Close()
 
+			res := []*greenlight.FileValidationResult{}
+
 			for _, f := range r.File {
-				if strings.Contains(f.Name, "__MACOSX") {
+				if strings.Contains(f.Name, "__MACOSX") || path.Ext(f.Name) != ".xml" {
 					continue
 				}
 
 				fr, err := f.Open()
 				if err != nil {
-					fmt.Print(err)
-					return
+					return nil, err
 				}
 
-				fileRes := greenlight.ValidateReader(schema, fr, f.Name)
+				fileRes := greenlight.ValidateReader(schema, fr, input+"/"+f.Name)
 				fileRes.FileSize = int64(f.UncompressedSize64)
-				result.Validations = append(result.Validations, fileRes)
+				res = append(res, fileRes)
 			}
-		default:
-			fmt.Print("invalid file format")
-			return
-		}
 
+			return res, nil
+		default:
+			return nil, fmt.Errorf("unsupported file format")
+		}
+	}
+}
+
+func validate() {
+	start := time.Now()
+	result := ValidationResult{
+		Measure:     &greenlight.Measure{},
+		Validations: []*greenlight.FileValidationResult{},
 	}
 
-	result.TotalExecutionTime = time.Since(start).Seconds()
+	result.Start()
+
+	schema, err := xsd.ParseFromFile(viper.GetString("schema"))
+	if err != nil {
+		result.GeneralError = err.Error()
+		logResult(result)
+		return
+	}
+
+	result.SchemaParseTime = time.Since(start).Seconds()
+	input := viper.GetStringSlice("input")
+	if len(input) == 0 {
+		result.GeneralError = "no input paths defined"
+		logResult(result)
+		return
+	}
+
+	for _, path := range input {
+		res, _ := validatePath(schema, greenlight.EnvPath(path))
+		result.Validations = append(result.Validations, res...)
+	}
+
+	result.Stop()
+	logResult(result)
+}
+
+func logResult(result ValidationResult) {
 	buf, _ := json.MarshalIndent(result, "", "  ")
 
 	fmt.Println(string(buf))
