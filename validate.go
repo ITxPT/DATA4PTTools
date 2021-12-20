@@ -12,6 +12,10 @@ import (
 	"github.com/spf13/viper"
 )
 
+const (
+	builtInPath = "./builtin"
+)
+
 type taskValidateFile struct {
 	schema   *xsd.Schema
 	filePath string
@@ -87,7 +91,7 @@ func Validate(schema *xsd.Schema, doc types.Document, name string) *FileValidati
 
 	scriptDirs := []string{}
 	if viper.GetBool("scripts.enableBuiltIn") {
-		scriptDirs = append(scriptDirs, viper.GetString("scripts.builtInPath"))
+		scriptDirs = append(scriptDirs, builtInPath)
 	}
 
 	// TODO scripts should be defined as a map in order to handle dependencies
