@@ -26,14 +26,6 @@ var (
 	}
 )
 
-func stringFixedWidth(v string, size int) string {
-	if n := size - len(v); n > 0 {
-		return v + strings.Repeat(" ", n)
-	}
-
-	return v
-}
-
 type LogTag struct {
 	field string
 	value string
@@ -142,4 +134,24 @@ func (l Logger) Logf(level LogLevel, v string, args ...interface{}) {
 
 func NewLogger() *Logger {
 	return &Logger{}
+}
+
+func stringMaxWidth(vs []string) int {
+	i := 0
+	for _, v := range vs {
+		vl := len(v)
+		if vl > i {
+			i = vl
+		}
+	}
+
+	return i
+}
+
+func stringFixedWidth(v string, size int) string {
+	if n := size - len(v); n > 0 {
+		return v + strings.Repeat(" ", n)
+	}
+
+	return v
 }
