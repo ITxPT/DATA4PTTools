@@ -11,9 +11,7 @@ var (
 	rootCmd = &cobra.Command{
 		Use:     "greenlight",
 		Short:   "NeTEx/Siri validation tool",
-		Version: "0.0.1",
-		Run: func(cmd *cobra.Command, args []string) {
-		},
+		Version: "1.0.0-alpha",
 	}
 )
 
