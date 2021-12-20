@@ -6,6 +6,7 @@ import (
 
 	"github.com/concreteit/greenlight/libxml2/types"
 	"github.com/concreteit/greenlight/libxml2/xpath"
+	"github.com/concreteit/greenlight/libxml2/xsd"
 	"github.com/dop251/goja"
 )
 
@@ -41,6 +42,7 @@ type JSMainContext struct {
 	script *Script
 	tasks  []jsTask
 
+	Schema      *xsd.Schema    // TODO should wrap this in order to securely be passed down to script runtime
 	Document    types.Document // TODO should wrap this in order to securely be passed down to script runtime
 	NodeContext *xpath.Context // TODO should wrap this in order to securely be passed down to script runtime
 }
@@ -48,6 +50,7 @@ type JSMainContext struct {
 func (c *JSMainContext) JSObject() jsObject {
 	return jsObject{
 		"log":         c.script.logger.JSObject(),
+		"schema":      c.Schema,
 		"document":    c.Document,
 		"nodeContext": c.NodeContext,
 		"queue":       c.Queue,

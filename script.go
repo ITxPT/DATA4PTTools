@@ -6,6 +6,7 @@ import (
 	"path"
 
 	"github.com/concreteit/greenlight/libxml2/types"
+	"github.com/concreteit/greenlight/libxml2/xsd"
 	"github.com/dop251/goja"
 )
 
@@ -75,7 +76,7 @@ func exportVariable(field string, vm *goja.Runtime, target interface{}) error {
 	return vm.ExportTo(v, target)
 }
 
-func executeScript(script *Script, doc types.Document) *ValidationResult {
+func executeScript(script *Script, schema *xsd.Schema, doc types.Document) *ValidationResult {
 	res := &ValidationResult{
 		Measure:     &Measure{},
 		Name:        script.name,
@@ -107,6 +108,7 @@ func executeScript(script *Script, doc types.Document) *ValidationResult {
 		script: script,
 		tasks:  []jsTask{},
 
+		Schema:      schema,
 		Document:    doc,
 		NodeContext: ctx,
 	}
