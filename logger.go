@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"strings"
 	"time"
+
+	"github.com/spf13/viper"
 )
 
 type LogLevel string
@@ -13,6 +15,15 @@ const (
 	LogLevelInfo  = "info"
 	LogLevelWarn  = "warn"
 	LogLevelError = "error"
+)
+
+var (
+  logLevelMap = map[LogLevel]int{
+    LogLevelDebug: 0,
+    LogLevelInfo: 1,
+    LogLevelWarn: 2,
+    LogLevelError: 3,
+  }
 )
 
 func stringFixedWidth(v string, size int) string {
@@ -121,7 +132,12 @@ func (l Logger) JSObject() jsObject {
 }
 
 func (l Logger) Logf(level LogLevel, v string, args ...interface{}) {
-	fmt.Println(NewLogEntry(level, l.tags, v, args...))
+  entry := NewLogEntry(level, l.tags, v, args...)
+  envLevel := LogLevel(viper.GetString("log.level"))
+
+  if logLevelMap[envLevel] <= logLevelMap[level] {
+    fmt.Println(entry)
+  }
 }
 
 func NewLogger() *Logger {
