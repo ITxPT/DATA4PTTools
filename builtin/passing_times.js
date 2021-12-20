@@ -1,4 +1,5 @@
 const name = "passing-times"
+const description = "Make sure that every StopPointInJourneyPattern contains a arrival and departure time"
 
 // entry point in script
 function main(context, stdlib) {

@@ -4,18 +4,22 @@ import (
 	"fmt"
 	"os"
 	"path"
-	"time"
 
 	"github.com/concreteit/greenlight/libxml2/types"
 	"github.com/dop251/goja"
 )
 
+var (
+	ErrVariableNotFound = fmt.Errorf("variable not found")
+)
+
 type Script struct {
-	name     string
-	source   []byte
-	filePath string
-	program  *goja.Program
-	logger   *Logger
+	name        string
+	description string
+	source      []byte
+	filePath    string
+	program     *goja.Program
+	logger      *Logger
 }
 
 func (s *Script) SetLogger(logger *Logger) {
@@ -51,28 +55,39 @@ func NewScript(filePath string) (*Script, error) {
 	vm := goja.New()
 	vm.RunProgram(program)
 
-	var name string
-	if err := vm.ExportTo(vm.Get("name"), &name); err != nil {
+	if err := exportVariable("name", vm, &script.name); err != nil {
 		return nil, err
 	}
 
-	script.name = name
+	exportVariable("description", vm, &script.description)
 
 	// TODO get dependencies
 
 	return script, nil
 }
 
-func executeScript(script *Script, doc types.Document) *ValidationRuleResult {
-	start := time.Now()
-	res := &ValidationRuleResult{
-		Name:   script.name, // TODO may add description
-		Valid:  true,
-		Errors: []string{},
+func exportVariable(field string, vm *goja.Runtime, target interface{}) error {
+	v := vm.Get(field)
+	if v == nil {
+		return fmt.Errorf("variable '%s' not found", field)
+	}
+
+	return vm.ExportTo(v, target)
+}
+
+func executeScript(script *Script, doc types.Document) *ValidationResult {
+	res := &ValidationResult{
+		Measure:     &Measure{},
+		Name:        script.name,
+		Description: script.description,
+		Valid:       true,
+		Errors:      []string{},
 	}
 	defer func() {
-		res.ValidationTime = time.Since(start).Seconds()
+		res.Stop()
 	}()
+
+	res.Start()
 
 	ctx, err := netexContext(doc)
 	if err != nil {

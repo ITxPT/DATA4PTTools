@@ -12,34 +12,49 @@ import (
 	"github.com/spf13/viper"
 )
 
-// program start
-// validate program input (cmd)
-// read default or provided configuration (main.go)
-// compile builtin scripts if enabled (true by default)
-// compile scripts if provided
-// determine script execution order (dependent on meta information provided in script)
-// perform xsd validation
-// execute script tasks
+type taskValidateFile struct {
+	schema   *xsd.Schema
+	filePath string
+}
+
+func (t taskValidateFile) Execute(id int) interface{} {
+	return ValidateFile(t.schema, t.filePath)
+}
+
+type Measure struct {
+	start time.Time
+	stop  time.Time
+
+	ExecutionTimeMS int64 `json:"execution_time_ms"`
+}
+
+func (m *Measure) Start() { m.start = time.Now() }
+func (m *Measure) Stop() {
+	m.stop = time.Now()
+	m.ExecutionTimeMS = m.stop.Sub(m.start).Milliseconds()
+}
 
 type FileValidationResult struct {
-	FileName        string                  `json:"file_name"`
-	ValidationTime  float64                 `json:"validation_time"`
-	Valid           bool                    `json:"valid"`
-	FileSize        int64                   `json:"file_size"`
-	ErrorCount      int                     `json:"error_count,omitempty"`
-	Errors          []string                `json:"errors,omitempty"`
-	ValidationRules []*ValidationRuleResult `json:"validation_rules,omitempty"`
+	*Measure
+
+	FileName        string              `json:"file_name"`
+	FileSize        int64               `json:"file_size"`
+	Valid           bool                `json:"valid"`
+	GeneralError    string              `json:"general_error,omitempty"`
+	ValidationRules []*ValidationResult `json:"validation_rules,omitempty"`
 }
 
-type ValidationRuleResult struct {
-	Name           string   `json:"name"`
-	Valid          bool     `json:"valid"`
-	ValidationTime float64  `json:"validation_time"`
-	ErrorCount     int      `json:"error_count,omitempty"`
-	Errors         []string `json:"errors,omitempty"`
+type ValidationResult struct {
+	*Measure
+
+	Name        string   `json:"name"`
+	Description string   `json:"description,omitempty"`
+	Valid       bool     `json:"valid"`
+	ErrorCount  int      `json:"error_count,omitempty"`
+	Errors      []string `json:"errors,omitempty"`
 }
 
-func (v *ValidationRuleResult) AddError(err error) {
+func (v *ValidationResult) AddError(err error) {
 	v.ErrorCount++
 
 	if v.ErrorCount <= 32 {
@@ -47,36 +62,53 @@ func (v *ValidationRuleResult) AddError(err error) {
 	}
 }
 
-func genericValidationError(name string, err error) *FileValidationResult {
+func generalValidationError(name string, err error) *FileValidationResult {
 	return &FileValidationResult{
-		FileName:   name,
-		Valid:      false,
-		ErrorCount: 1,
-		Errors:     []string{fmt.Sprintf("%s", err)},
+		FileName:     name,
+		Valid:        false,
+		GeneralError: fmt.Sprintf("%s", err),
 	}
+}
+
+func ValidateXSD(schema *xsd.Schema, doc types.Document) *ValidationResult {
+	res := &ValidationResult{
+		Measure: &Measure{},
+		Name:    "xsd",
+		Valid:   true,
+		Errors:  []string{},
+	}
+
+	defer func() {
+		res.Stop()
+	}()
+
+	res.Start()
+
+	if n, errors := schema.Validate(doc); n > 0 {
+		for _, err := range errors {
+			res.AddError(err)
+		}
+
+		res.ErrorCount = n
+	}
+
+	return res
 }
 
 func Validate(schema *xsd.Schema, doc types.Document, name string) *FileValidationResult {
 	result := &FileValidationResult{
+		Measure:         &Measure{},
 		FileName:        name,
 		Valid:           true,
-		Errors:          []string{},
-		ValidationRules: []*ValidationRuleResult{},
+		ValidationRules: []*ValidationResult{},
 	}
-	start := time.Now()
 
 	defer func() {
-		result.ValidationTime = time.Since(start).Seconds()
+		result.Stop()
 	}()
 
-	if n, errors := schema.Validate(doc); n > 0 {
-		result.Valid = false
-		result.ErrorCount = n
-
-		for _, err := range errors {
-			result.Errors = append(result.Errors, err.Error())
-		}
-	}
+	result.Start()
+	result.ValidationRules = append(result.ValidationRules, ValidateXSD(schema, doc))
 
 	scriptDirs := []string{}
 	if viper.GetBool("scripts.enableBuiltIn") {
@@ -86,7 +118,8 @@ func Validate(schema *xsd.Schema, doc types.Document, name string) *FileValidati
 	// TODO scripts should be defined as a map in order to handle dependencies
 	scripts, err := CompileDirs(scriptDirs)
 	if err != nil {
-		result.Errors = append(result.Errors, err.Error())
+		result.Valid = false
+		result.GeneralError = err.Error()
 		return result
 	}
 
@@ -107,7 +140,7 @@ func Validate(schema *xsd.Schema, doc types.Document, name string) *FileValidati
 func ValidateReader(schema *xsd.Schema, reader io.Reader, name string) *FileValidationResult {
 	doc, err := libxml2.ParseReader(reader)
 	if err != nil {
-		return genericValidationError(name, err)
+		return generalValidationError(name, err)
 	}
 
 	return Validate(schema, doc, name)
@@ -117,12 +150,11 @@ func ValidateFile(schema *xsd.Schema, filePath string) *FileValidationResult {
 	result := &FileValidationResult{
 		FileName:        filePath,
 		Valid:           true,
-		Errors:          []string{},
-		ValidationRules: []*ValidationRuleResult{},
+		ValidationRules: []*ValidationResult{},
 	}
 	file, err := os.Open(filePath)
 	if err != nil {
-		return genericValidationError(filePath, err)
+		return generalValidationError(filePath, err)
 	}
 
 	if fi, err := file.Stat(); err == nil {
@@ -133,19 +165,10 @@ func ValidateFile(schema *xsd.Schema, filePath string) *FileValidationResult {
 
 	doc, err := libxml2.ParseReader(file)
 	if err != nil {
-		return genericValidationError(filePath, err)
+		return generalValidationError(filePath, err)
 	}
 
 	return Validate(schema, doc, filePath)
-}
-
-type taskValidateFile struct {
-	schema   *xsd.Schema
-	filePath string
-}
-
-func (t taskValidateFile) Execute(id int) interface{} {
-	return ValidateFile(t.schema, t.filePath)
 }
 
 func ValidateFiles(schema *xsd.Schema, filePaths []string) []*FileValidationResult {
