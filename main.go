@@ -29,15 +29,17 @@ func stringsJoin(v string, o []string, joinHandler func(elem ...string) string) 
 
 func init() {
 	// default `logger`properties
-	viper.SetDefault("logger.level", "debug")
+	viper.SetDefault("log.level", "debug")
 
 	// default `schema` properties
-	viper.SetDefault("schema", "xsd/NeTEx_publication-NoConstraint.xsd")
+	viper.SetDefault("schema", "xsd/NeTEx_publication.xsd")
 
 	// default `scripts` properties
 	viper.SetDefault("scripts.enableBuiltIn", true)
-	viper.SetDefault("scripts.builtInPath", "./builtin")
 	viper.SetDefault("scripts.paths", stringsJoin("scripts", configPaths, path.Join))
+
+	// default `input` paths
+	viper.SetDefault("input", stringsJoin("documents", configPaths, path.Join))
 
 	// set paths to look for configuration file (first come, first serve)
 	for _, p := range configPaths {
