@@ -1,9 +1,17 @@
-logger:
+log:
   level: debug
 schema: xsd/NeTEx_publication-NoConstraint.xsd
+input:
+  - $HOME/.greenlight/documents
+  - /etc/greenlight/documents
+  - /documents
+  - /greenlight/documents
+  - ./documents
 scripts:
-  enableBuiltIn: true # https://pkg.go.dev/strconv#ParseBool
-  builtInPath: ./builtint
+  enableBuiltIn: true
   paths:
     - $HOME/.greenlight/scripts
+    - /etc/greenlight/scripts
+    - /scripts
+    - /greenlight/scripts
     - ./scripts
