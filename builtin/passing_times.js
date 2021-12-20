@@ -7,7 +7,7 @@ function main(context, stdlib) {
   const { nodeList } = stdlib
   const journeyPatterns = nodeList(nodeContext.Find(".//netex:journeyPatterns/*[contains(name(), 'JourneyPattern')]"))
 
-  log.info(`creating '${journeyPatterns.length}' tasks`)
+  log.debug(`creating '${journeyPatterns.length}' tasks`)
 
   // queue worker tasks
   journeyPatterns.forEach(node => context.queue("worker", node))
