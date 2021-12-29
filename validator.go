@@ -18,6 +18,7 @@ type ValidatorOption func(*Validator) error
 type Validator struct {
 	schema      *xsd.Schema
 	useBuiltIn  bool
+	logger      *Logger
 	scriptPaths []string
 	scripts     ScriptMap
 }
@@ -67,7 +68,7 @@ func (v *Validator) Validate(doc types.Document, name string) *FileValidationRes
 	maxScriptWidth := stringMaxWidth(v.scripts.Keys())
 	for _, script := range v.scripts {
 		script.SetLogger(
-			script.logger.Copy().
+			v.logger.Copy().
 				AddTag("name", "main", 10).
 				AddTag("script", script.name, maxScriptWidth).
 				AddTag("document", name, 0),
@@ -147,9 +148,16 @@ func WithSchemaFile(filePath string) ValidatorOption {
 	}
 }
 
-func WithDisabledBuiltInScripts() ValidatorOption {
+func WithBuiltinScripts(enabled bool) ValidatorOption {
 	return func(v *Validator) error {
-		v.useBuiltIn = false
+		v.useBuiltIn = enabled
+		return nil
+	}
+}
+
+func WithLogger(logger *Logger) ValidatorOption {
+	return func(v *Validator) error {
+		v.logger = logger
 		return nil
 	}
 }

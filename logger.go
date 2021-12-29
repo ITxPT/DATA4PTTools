@@ -4,8 +4,6 @@ import (
 	"fmt"
 	"strings"
 	"time"
-
-	"github.com/spf13/viper"
 )
 
 type LogLevel string
@@ -85,14 +83,24 @@ func NewLogEntry(level LogLevel, tags TagSlice, format string, args ...interface
 }
 
 type Logger struct {
-	tags TagSlice
+	level LogLevel
+	tags  TagSlice
 }
 
-func (a *Logger) Copy() *Logger {
-	tags := TagSlice{}
-	tags = append(tags, a.tags...)
+func (l *Logger) SetLogLevel(level LogLevel) *Logger {
+	l.level = level
 
-	return &Logger{tags}
+	return l
+}
+
+func (l *Logger) Copy() *Logger {
+	tags := TagSlice{}
+	tags = append(tags, l.tags...)
+
+	return &Logger{
+		level: l.level,
+		tags:  tags,
+	}
 }
 
 func (l *Logger) AddTag(field, value string, width int) *Logger {
@@ -125,9 +133,8 @@ func (l Logger) JSObject() jsObject {
 
 func (l Logger) Logf(level LogLevel, v string, args ...interface{}) {
 	entry := NewLogEntry(level, l.tags, v, args...)
-	envLevel := LogLevel(viper.GetString("log.level"))
 
-	if logLevelMap[envLevel] <= logLevelMap[level] {
+	if logLevelMap[l.level] <= logLevelMap[level] {
 		fmt.Println(entry)
 	}
 }
