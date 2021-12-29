@@ -18,11 +18,19 @@ var (
 	validateCmd = &cobra.Command{
 		Use:   "validate",
 		Short: "Validate NeTEx files",
-		Run: func(cmd *cobra.Command, args []string) {
-			validate()
-		},
+		Run:   validate,
 	}
 )
+
+func init() {
+	validateCmd.Flags().StringP("input", "i", "", "XML file, dir or archive to validate")
+	validateCmd.Flags().StringP("schema", "s", "", "do validation against the schema")
+
+	viper.BindPFlag("input", validateCmd.Flags().Lookup("input"))
+	viper.BindPFlag("schema", validateCmd.Flags().Lookup("schema"))
+
+	rootCmd.AddCommand(validateCmd)
+}
 
 type ValidationResult struct {
 	*greenlight.Measure
@@ -30,14 +38,6 @@ type ValidationResult struct {
 	SchemaParseTime float64                            `json:"schema_parse_time"`
 	Validations     []*greenlight.FileValidationResult `json:"validations"`
 	GeneralError    string                             `json:"general_error,omitempty"`
-}
-
-func init() {
-	validateCmd.Flags().StringP("input", "i", "", "XML file, dir or archive to validate")
-	validateCmd.Flags().StringP("schema", "s", "", "do validation against the schema")
-	viper.BindPFlag("input", validateCmd.Flags().Lookup("input"))
-	viper.BindPFlag("schema", validateCmd.Flags().Lookup("schema"))
-	rootCmd.AddCommand(validateCmd)
 }
 
 func validatePath(v *greenlight.Validator, input string) ([]*greenlight.FileValidationResult, error) {
@@ -53,14 +53,19 @@ func validatePath(v *greenlight.Validator, input string) ([]*greenlight.FileVali
 		}
 
 		res := []*greenlight.FileValidationResult{}
+		filePaths := []string{}
 		for _, entry := range fileEntries {
-			vr, err := validatePath(v, input+"/"+entry.Name())
-			if err != nil {
+			filePath := input + "/" + entry.Name()
 
+			if path.Ext(entry.Name()) == ".xml" {
+				filePaths = append(filePaths, filePath)
+			} else {
+				vr, _ := validatePath(v, input+"/"+entry.Name()) // TODO we currently dont care about errors on os level
+				res = append(res, vr...)
 			}
-
-			res = append(res, vr...)
 		}
+
+		res = append(res, v.ValidateFiles(filePaths)...)
 
 		return res, nil
 	} else {
@@ -98,7 +103,7 @@ func validatePath(v *greenlight.Validator, input string) ([]*greenlight.FileVali
 	}
 }
 
-func validate() {
+func validate(cmd *cobra.Command, args []string) {
 	start := time.Now()
 	result := ValidationResult{
 		Measure:     &greenlight.Measure{},
