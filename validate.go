@@ -95,7 +95,7 @@ func NewValidator(schemaPath string) (*Validator, error) {
 		scriptDirs = append(scriptDirs, builtInPath)
 	}
 
-	// TODO scripts should be defined as a map in order to handle dependencies
+	scriptDirs = append(scriptDirs, viper.GetStringSlice("scripts.paths")...)
 
 	if v.scripts, err = CompileDirs(scriptDirs); err != nil {
 		return nil, err
