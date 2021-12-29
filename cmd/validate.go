@@ -112,7 +112,9 @@ func validate(cmd *cobra.Command, args []string) {
 
 	result.Start()
 
-	validator, err := greenlight.NewValidator(viper.GetString("schema"))
+	validator, err := greenlight.NewValidator(
+		greenlight.WithSchemaFile(viper.GetString("schema")),
+	)
 	if err != nil {
 		result.GeneralError = err.Error()
 		logResult(result)

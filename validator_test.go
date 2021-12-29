@@ -27,7 +27,7 @@ var (
 
 func TestMain(m *testing.M) {
 	var err error
-	validator, err = NewValidator(xsdFilePath)
+	validator, err = NewValidator(WithSchemaFile(xsdFilePath))
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -58,7 +58,7 @@ func BenchmarkValidateFileNLARR(b *testing.B) {
 func BenchmarkValidateFileDemo1(b *testing.B)     { benchmarkValidateFile(b, xmlFileDemo1) }
 func BenchmarkValidateFileDemoSmall(b *testing.B) { benchmarkValidateFile(b, xmlFileDemoSmall) }
 func TestValidateFileDemoSmall(t *testing.T) {
-	v, err := NewValidator(xsdNoConstraintFilePath)
+	v, err := NewValidator(WithSchemaFile(xsdNoConstraintFilePath))
 	if err != nil {
 		t.Error(err)
 	}

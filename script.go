@@ -1,6 +1,7 @@
 package greenlight
 
 import (
+	"crypto/sha256"
 	"fmt"
 	"os"
 	"path"
@@ -18,9 +19,18 @@ type Script struct {
 	name        string
 	description string
 	source      []byte
+	checksum    string
 	filePath    string
 	program     *goja.Program
 	logger      *Logger
+}
+
+func (s *Script) Name() string {
+	return s.name
+}
+
+func (s *Script) Description() string {
+	return s.description
 }
 
 func (s *Script) SetLogger(logger *Logger) {
@@ -42,6 +52,7 @@ func NewScript(filePath string) (*Script, error) {
 
 	script := &Script{
 		source:   source,
+		checksum: fmt.Sprintf("%x", sha256.Sum256(source)),
 		filePath: filePath,
 		logger:   NewLogger(),
 	}
@@ -62,7 +73,7 @@ func NewScript(filePath string) (*Script, error) {
 
 	exportVariable("description", vm, &script.description)
 
-	// TODO get dependencies
+	// TODO handle dependencies
 
 	return script, nil
 }
@@ -122,78 +133,74 @@ func executeScript(script *Script, schema *xsd.Schema, doc types.Document) *Vali
 	return res
 }
 
-func CompileDir(dirPath string) (map[string]*Script, error) {
-	scripts := map[string]*Script{}
-	entries, err := os.ReadDir(dirPath)
-	if err != nil {
-		if _, ok := err.(*os.PathError); ok {
-			return scripts, nil
+type ScriptMap map[string]*Script
+
+func (m ScriptMap) Add(s *Script) error {
+	if existing := m[s.name]; existing != nil {
+		if existing.checksum != s.checksum {
+			return fmt.Errorf("script with the same name '%s' and different checksum already exist", s.name)
 		}
 
-		return nil, err
+		return nil // script already loaded
 	}
 
-	for _, entry := range entries {
-		fullPath := fmt.Sprintf("%s/%s", dirPath, entry.Name())
+	m[s.name] = s
 
-		if entry.IsDir() {
-			sm, err := CompileDir(fullPath)
-			if err != nil {
-				return nil, err
-			}
-
-			for k, v := range sm {
-				if scripts[k] != nil {
-					return nil, fmt.Errorf("script with the name '%s' already exist", k)
-				}
-
-				scripts[k] = v
-			}
-		} else if path.Ext(entry.Name()) == ".js" {
-			s, err := NewScript(fullPath)
-			if err != nil {
-				return nil, err
-			}
-
-			if scripts[s.name] != nil {
-				return nil, fmt.Errorf("script with the name '%s' already exist", s.name)
-			}
-
-			scripts[s.name] = s
-		}
-	}
-
-	return scripts, nil
+	return nil
 }
 
-func CompileDirs(dirPaths []string) (map[string]*Script, error) {
-	scripts := map[string]*Script{}
-
-	for _, dirPath := range dirPaths {
-		ss, err := CompileDir(EnvPath(dirPath))
-		if err != nil {
-			return nil, err
-		}
-
-		for k, v := range ss {
-			if scripts[k] != nil {
-				return nil, fmt.Errorf("script with the name '%s' alredy exist", k)
-			}
-
-			scripts[k] = v
-		}
-	}
-
-	return scripts, nil
-}
-
-func scriptMapKeys(v map[string]*Script) []string {
+func (m ScriptMap) Keys() []string {
 	i := 0
-	keys := make([]string, len(v))
-	for k := range v {
+	keys := make([]string, len(m))
+	for k := range m {
 		keys[i] = k
 		i++
 	}
 
 	return keys
+}
+
+func compilePath(scriptMap ScriptMap, filePath string) error {
+	fi, err := os.Stat(EnvPath(filePath))
+	if err != nil {
+		if _, ok := err.(*os.PathError); ok {
+			return nil
+		}
+
+		return err
+	}
+
+	if !fi.IsDir() && path.Ext(fi.Name()) == ".js" {
+		s, err := NewScript(filePath)
+		if err != nil {
+			return err
+		}
+
+		return scriptMap.Add(s)
+	} else if fi.IsDir() {
+		entries, err := os.ReadDir(filePath)
+		if err != nil {
+			return err
+		}
+
+		for _, entry := range entries {
+			err := compilePath(scriptMap, filePath+"/"+entry.Name())
+			if err != nil {
+				return err
+			}
+		}
+	}
+
+	return nil
+}
+
+func CompilePath(filePaths ...string) (ScriptMap, error) {
+	scriptMap := ScriptMap{}
+	for _, filePath := range filePaths {
+		if err := compilePath(scriptMap, filePath); err != nil {
+			return nil, err
+		}
+	}
+
+	return scriptMap, nil
 }
