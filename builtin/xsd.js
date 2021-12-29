@@ -1,14 +1,16 @@
 const name = "xsd"
 const description = "General XSD schema validation"
 
-function main(context, stdlib) {
+function main(context, lib) {
   const { log, schema, document } = context
+  const { validateSchema } = lib
+  const [n, errors] = validateSchema(schema, document)
 
-  log.info("starting xsd validation")
-
-  const [n, errors] = schema.Validate(document)
-
-  log.info("completed xsd validation with '%d' error(s)", n)
+  if (!n) {
+    log.info("validation completed without any errors")
+  } else {
+    log.info("validation completed with '%d' errors", n)
+  }
 
   return errors
 }

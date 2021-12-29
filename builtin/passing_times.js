@@ -1,11 +1,14 @@
 const name = "passing-times"
-const description = "Make sure that every StopPointInJourneyPattern contains a arrival and departure time"
+const description = `Make sure that every StopPointInJourneyPattern contains a arrival and departure time`
 
 // entry point in script
-function main(context, stdlib) {
+function main(context, lib) {
   const { log, nodeContext } = context
-  const { nodeList } = stdlib
-  const journeyPatterns = nodeList(nodeContext.Find(".//netex:journeyPatterns/*[contains(name(), 'JourneyPattern')]"))
+  const { findNodes } = lib
+  const [journeyPatterns, err] = findNodes(nodeContext, ".//netex:journeyPatterns/*[contains(name(), 'JourneyPattern')]")
+  if (err) {
+    return [err]
+  }
 
   log.debug(`creating '${journeyPatterns.length}' tasks`)
 
@@ -13,46 +16,63 @@ function main(context, stdlib) {
   journeyPatterns.forEach(node => context.queue("worker", node))
 
   // execute worker tasks
-  return context.execute()
+  const errors = context.execute()
+
+  if (errors.length === 0) {
+    log.info("validation without any errors")
+  } else {
+    log.info("validation completed with '%d' errors", errors.length)
+  }
+
+  return errors
 }
 
 // worker logic done in separate threads
-function worker(workerContext, stdlib) {
+function worker(workerContext, lib) {
   const { log, nodeContext, document } = workerContext
-  const { nodeList, nodeValue } = stdlib
+  const { findNodes, findValue, nodeValue, parentNode, setContextNode } = lib
   const errors = []
-  const stopPoints = nodeList(nodeContext.Find(".//netex:pointsInSequence/netex:StopPointInJourneyPattern/@id"))
+  const [stopPoints, err] = findNodes(nodeContext, ".//netex:pointsInSequence/netex:StopPointInJourneyPattern/@id")
+  if (err) {
+    return [err]
+  }
 
   for (let i = 0; i < stopPoints.length; i++) {
-    nodeContext.SetContextNode(document) // switch to root context (time tabled passing times are located elsewhere)
+    setContextNode(nodeContext, document) // switch to root context (time tabled passing times are located elsewhere)
 
     const stopPoint = stopPoints[i]
-    const id = stopPoint.NodeValue()
+    const id = nodeValue(stopPoint)
     const passingTimesPath = `.//netex:TimetabledPassingTime/netex:StopPointInJourneyPatternRef[@ref = '${id}']`
-    const passingTimes = nodeList(nodeContext.Find(passingTimesPath))
     const errorMessageBase = `for StopPointInJourneyPattern(@id='${id}')`
-
-    if (passingTimes.length === 0) {
+    const [passingTimes, err] = findNodes(nodeContext, passingTimesPath)
+    if (err) {
+      errors.push(err)
+      continue
+    } else if (passingTimes.length === 0) {
       errors.push(`Expected passing times ${errorMessageBase}`)
       continue
     }
 
     for (let n = 0; n < passingTimes.length; n++) {
       const passingTime = passingTimes[n]
-      const timetabledPassingTime = passingTime.ParentNode()
+      const [timetabledPassingTime, err] = parentNode(passingTime)
+      if (err) {
+        errors.push(err)
+        continue
+      }
 
-      nodeContext.SetContextNode(timetabledPassingTime) // traverse down the tree
+      setContextNode(nodeContext, timetabledPassingTime) // traverse down the tree
 
-      const tid = nodeValue(nodeContext.Find("@id"))
+      const tid = findValue(nodeContext, "@id")
 
       if (i !== stopPoints.length - 1) {
-        const departureTime = nodeValue(nodeContext.Find("./netex:DepartureTime"))
+        const departureTime = findValue(nodeContext, "./netex:DepartureTime")
         if (departureTime === "") {
           errors.push(`Expected departure time in TimetabledpassingTime(@id='${tid}') ${errorMessageBase}`)
         }
       }
       if (i !== 0) {
-        const arrivalTime = nodeValue(nodeContext.Find("./netex:ArrivalTime"))
+        const arrivalTime = findValue(nodeContext, "./netex:ArrivalTime")
         if (arrivalTime === "") {
           errors.push(`Expected arrival time in TimetabledpassingTime(@id='${tid}') ${errorMessageBase}`)
         }
