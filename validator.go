@@ -162,7 +162,7 @@ func WithLogger(logger *Logger) ValidatorOption {
 	}
 }
 
-func WithScriptPaths(paths []string) ValidatorOption {
+func WithScriptingPaths(paths []string) ValidatorOption {
 	return func(v *Validator) error {
 		v.scriptPaths = append(v.scriptPaths, paths...)
 		return nil

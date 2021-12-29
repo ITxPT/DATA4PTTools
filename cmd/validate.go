@@ -165,6 +165,7 @@ func validate(cmd *cobra.Command, args []string) {
 		greenlight.WithSchemaFile(viper.GetString("schema")),
 		greenlight.WithLogger(logger),
 		greenlight.WithBuiltinScripts(!viper.GetBool("scripting.disableBuiltin")),
+		greenlight.WithScriptingPaths(viper.GetStringSlice("scripting.paths")),
 	)
 	if err != nil {
 		result.GeneralError = err.Error()

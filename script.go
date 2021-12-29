@@ -138,10 +138,10 @@ type ScriptMap map[string]*Script
 func (m ScriptMap) Add(s *Script) error {
 	if existing := m[s.name]; existing != nil {
 		if existing.checksum != s.checksum {
-			return fmt.Errorf("script with the same name '%s' and different checksum already exist", s.name)
+			return fmt.Errorf("script with the name '%s' already exist with a different checksum", s.name)
 		}
 
-		return nil // script already loaded
+		return nil // identical script alridentical eady loaded
 	}
 
 	m[s.name] = s
@@ -161,7 +161,8 @@ func (m ScriptMap) Keys() []string {
 }
 
 func compilePath(scriptMap ScriptMap, filePath string) error {
-	fi, err := os.Stat(EnvPath(filePath))
+	resolvedPath := EnvPath(filePath)
+	fi, err := os.Stat(resolvedPath)
 	if err != nil {
 		if _, ok := err.(*os.PathError); ok {
 			return nil
@@ -171,20 +172,20 @@ func compilePath(scriptMap ScriptMap, filePath string) error {
 	}
 
 	if !fi.IsDir() && path.Ext(fi.Name()) == ".js" {
-		s, err := NewScript(filePath)
+		s, err := NewScript(resolvedPath)
 		if err != nil {
 			return err
 		}
 
 		return scriptMap.Add(s)
 	} else if fi.IsDir() {
-		entries, err := os.ReadDir(filePath)
+		entries, err := os.ReadDir(resolvedPath)
 		if err != nil {
 			return err
 		}
 
 		for _, entry := range entries {
-			err := compilePath(scriptMap, filePath+"/"+entry.Name())
+			err := compilePath(scriptMap, resolvedPath+"/"+entry.Name())
 			if err != nil {
 				return err
 			}
