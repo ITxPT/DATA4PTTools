@@ -126,6 +126,10 @@ func CompileDir(dirPath string) (map[string]*Script, error) {
 	scripts := map[string]*Script{}
 	entries, err := os.ReadDir(dirPath)
 	if err != nil {
+		if _, ok := err.(*os.PathError); ok {
+			return scripts, nil
+		}
+
 		return nil, err
 	}
 
@@ -166,7 +170,7 @@ func CompileDirs(dirPaths []string) (map[string]*Script, error) {
 	scripts := map[string]*Script{}
 
 	for _, dirPath := range dirPaths {
-		ss, err := CompileDir(dirPath)
+		ss, err := CompileDir(EnvPath(dirPath))
 		if err != nil {
 			return nil, err
 		}
