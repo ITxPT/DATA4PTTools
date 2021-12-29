@@ -89,10 +89,10 @@ type Logger struct {
 }
 
 func (a *Logger) Copy() *Logger {
-	b := &Logger{}
-	*b = *a
+	tags := TagSlice{}
+	tags = append(tags, a.tags...)
 
-	return b
+	return &Logger{tags}
 }
 
 func (l *Logger) AddTag(field, value string, width int) *Logger {
