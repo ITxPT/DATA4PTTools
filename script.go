@@ -8,6 +8,7 @@ import (
 
 	"github.com/concreteit/greenlight/libxml2/types"
 	"github.com/concreteit/greenlight/libxml2/xsd"
+	"github.com/concreteit/greenlight/logger"
 	"github.com/dop251/goja"
 )
 
@@ -22,7 +23,7 @@ type Script struct {
 	checksum    string
 	filePath    string
 	program     *goja.Program
-	logger      *Logger
+	logger      *logger.Logger
 }
 
 func (s *Script) Name() string {
@@ -33,8 +34,8 @@ func (s *Script) Description() string {
 	return s.description
 }
 
-func (s *Script) SetLogger(logger *Logger) {
-	s.logger = logger
+func (s *Script) SetLogger(l *logger.Logger) {
+	s.logger = l
 }
 
 func (s *Script) Runtime() *goja.Runtime {
@@ -54,7 +55,7 @@ func NewScript(filePath string) (*Script, error) {
 		source:   source,
 		checksum: fmt.Sprintf("%x", sha256.Sum256(source)),
 		filePath: filePath,
-		logger:   NewLogger(),
+		logger:   logger.New(),
 	}
 
 	program, err := goja.Compile(filePath, string(source), true)

@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/concreteit/greenlight"
+	"github.com/concreteit/greenlight/logger"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -27,7 +28,7 @@ var (
 		"/greenlight",
 		".",
 	}
-	logger *greenlight.Logger
+	l *logger.Logger
 )
 
 func stringsJoin(v string, o []string, joinHandler func(elem ...string) string) []string {
@@ -75,6 +76,12 @@ func init() {
 	viper.BindPFlag("schema", validateCmd.Flags().Lookup("schema"))
 	viper.BindPFlag("scripting.disableBuiltin", validateCmd.Flags().Lookup("disable-builtin-scripts"))
 	viper.BindPFlag("scripting.paths", validateCmd.Flags().Lookup("script-path"))
+
+	stdOut := logger.DefaultOutput()
+
+	l = logger.New()
+	l.SetLogLevel(logger.LogLevel(viper.GetString("log.level")))
+	l.AddOutput(stdOut)
 
 	rootCmd.AddCommand(validateCmd)
 }
@@ -151,8 +158,6 @@ func validatePath(v *greenlight.Validator, input string) ([]*greenlight.FileVali
 }
 
 func validate(cmd *cobra.Command, args []string) {
-	logger := greenlight.NewLogger().
-		SetLogLevel(greenlight.LogLevel(viper.GetString("log.level")))
 	start := time.Now()
 	result := ValidationResult{
 		Measure:     &greenlight.Measure{},
@@ -163,7 +168,7 @@ func validate(cmd *cobra.Command, args []string) {
 
 	validator, err := greenlight.NewValidator(
 		greenlight.WithSchemaFile(viper.GetString("schema")),
-		greenlight.WithLogger(logger),
+		greenlight.WithLogger(l),
 		greenlight.WithBuiltinScripts(!viper.GetBool("scripting.disableBuiltin")),
 		greenlight.WithScriptingPaths(viper.GetStringSlice("scripting.paths")),
 	)

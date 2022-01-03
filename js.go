@@ -7,6 +7,7 @@ import (
 	"github.com/concreteit/greenlight/libxml2/types"
 	"github.com/concreteit/greenlight/libxml2/xpath"
 	"github.com/concreteit/greenlight/libxml2/xsd"
+	"github.com/concreteit/greenlight/logger"
 	"github.com/dop251/goja"
 )
 
@@ -37,7 +38,7 @@ type JSMainContext struct {
 
 func (c *JSMainContext) JSObject() jsObject {
 	return jsObject{
-		"log":         c.script.logger.JSObject(),
+		"log":         jsLogger(c.script.logger),
 		"schema":      c.Schema,
 		"document":    c.Document,
 		"nodeContext": c.NodeContext,
@@ -98,11 +99,11 @@ type JSWorkerContext struct {
 }
 
 func (c *JSWorkerContext) JSObject(id int) jsObject {
-	logger := c.script.logger.Copy().
-		AddTag("name", fmt.Sprintf("worker-%d", id), 10)
+	l := c.script.logger.Copy()
+	l.AddTag(logger.NewTag("name", fmt.Sprintf("worker-%d", id), logger.WithTagWidth(10)))
 
 	return jsObject{
-		"log":         logger.JSObject(),
+		"log":         jsLogger(l),
 		"document":    c.Document,
 		"nodeContext": c.NodeContext,
 	}
@@ -142,4 +143,13 @@ func (t jsTask) Execute(id int) interface{} { // TODO define response type
 	}
 
 	return errorSlice
+}
+
+func jsLogger(l *logger.Logger) jsObject {
+	return jsObject{
+		"debug": l.Debugf,
+		"info":  l.Infof,
+		"warn":  l.Warnf,
+		"error": l.Errorf,
+	}
 }

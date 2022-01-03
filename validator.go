@@ -7,6 +7,7 @@ import (
 	"github.com/concreteit/greenlight/libxml2"
 	"github.com/concreteit/greenlight/libxml2/types"
 	"github.com/concreteit/greenlight/libxml2/xsd"
+	"github.com/concreteit/greenlight/logger"
 )
 
 const (
@@ -18,7 +19,7 @@ type ValidatorOption func(*Validator) error
 type Validator struct {
 	schema      *xsd.Schema
 	useBuiltIn  bool
-	logger      *Logger
+	logger      *logger.Logger
 	scriptPaths []string
 	scripts     ScriptMap
 }
@@ -65,15 +66,12 @@ func (v *Validator) Validate(doc types.Document, name string) *FileValidationRes
 
 	result.Start()
 
-	maxScriptWidth := stringMaxWidth(v.scripts.Keys())
 	for _, script := range v.scripts {
-		script.SetLogger(
-			v.logger.Copy().
-				AddTag("name", "main", 10).
-				AddTag("script", script.name, maxScriptWidth).
-				AddTag("document", name, 0),
-		)
-
+		l := v.logger.Copy()
+		l.AddTag(logger.NewTag("name", "main", logger.WithTagWidth(10)))
+		l.AddTag(logger.NewTag("script", script.name, logger.WithTagMaxWidth(v.scripts.Keys())))
+		l.AddTag(logger.NewTag("document", name))
+		script.SetLogger(l)
 		result.ValidationRules = append(result.ValidationRules, executeScript(script, v.schema, doc))
 	}
 
@@ -155,7 +153,7 @@ func WithBuiltinScripts(enabled bool) ValidatorOption {
 	}
 }
 
-func WithLogger(logger *Logger) ValidatorOption {
+func WithLogger(logger *logger.Logger) ValidatorOption {
 	return func(v *Validator) error {
 		v.logger = logger
 		return nil
