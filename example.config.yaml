@@ -7,8 +7,8 @@ input:
   - /documents
   - /greenlight/documents
   - ./documents
-scripts:
-  enableBuiltIn: true
+scripting:
+  disableBuiltin: false
   paths:
     - $HOME/.greenlight/scripts
     - /etc/greenlight/scripts
