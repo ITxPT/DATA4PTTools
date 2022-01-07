@@ -1,84 +1,95 @@
-const name = "passing-times"
-const description = `Make sure that every StopPointInJourneyPattern contains a arrival and departure time`
+const name = "passing-times";
+const description = "Makes sure passing times have increasing have increasing times and day offsets";
+const framesPath = xpath.join(".", "PublicationDelivery", "dataObjects", "CompositeFrame", "frames");
+const timetablePath = xpath.join(framesPath, "TimetableFrame", "vehicleJourneys", "ServiceJourney", "passingTimes");
+const stopPointPath = xpath.join(framesPath, "ServiceFrame", "journeyPatterns", "*[contains(name(), 'JourneyPattern')]", "pointsInSequence");
 
-// entry point in script
-function main(context, lib) {
-  const { log, nodeContext } = context
-  const { findNodes } = lib
-  const [journeyPatterns, err] = findNodes(nodeContext, ".//netex:journeyPatterns/*[contains(name(), 'JourneyPattern')]")
+function main(context) {
+  const { log, nodeContext } = context;
+  const [passingTimes, err] = xpath.find(nodeContext, timetablePath);
   if (err) {
-    return [err]
+    return [err];
   }
 
-  log.debug(`creating '${journeyPatterns.length}' tasks`)
+  log.debug(`creating '${passingTimes.length} tasks`);
 
   // queue worker tasks
-  journeyPatterns.forEach(node => context.queue("worker", node))
+  passingTimes.forEach(node => context.queue("worker", node));
 
   // execute worker tasks
-  const errors = context.execute()
+  const errors = context.execute();
 
   if (errors.length === 0) {
-    log.info("validation without any errors")
+    log.info("validation without any errors");
   } else {
-    log.info("validation completed with '%d' errors", errors.length)
+    log.info("validation completed with '%d' errors", errors.length);
   }
 
-  return errors
+  return errors;
 }
 
-// worker logic done in separate threads
-function worker(workerContext, lib) {
-  const { log, nodeContext, document } = workerContext
-  const { findNodes, findValue, nodeValue, parentNode, setContextNode } = lib
-  const errors = []
-  const [stopPoints, err] = findNodes(nodeContext, ".//netex:pointsInSequence/netex:StopPointInJourneyPattern/@id")
+function worker(workerContext) {
+  const { log, nodeContext } = workerContext;
+  const errors = [];
+  const [serviceJourney, serr] = xpath.first(nodeContext, "./parent::netex:ServiceJourney");
+  if (serr) {
+    return [serr];
+  }
+  const [passingTimes, err] = xpath.find(nodeContext, xpath.join(".", "TimetabledPassingTime"));
   if (err) {
-    return [err]
+    return [err];
   }
 
-  for (let i = 0; i < stopPoints.length; i++) {
-    setContextNode(nodeContext, document) // switch to root context (time tabled passing times are located elsewhere)
+  setContextNode(nodeContext, serviceJourney);
 
-    const stopPoint = stopPoints[i]
-    const id = nodeValue(stopPoint)
-    const passingTimesPath = `.//netex:TimetabledPassingTime/netex:StopPointInJourneyPatternRef[@ref = '${id}']`
-    const errorMessageBase = `for StopPointInJourneyPattern(@id='${id}')`
-    const [passingTimes, err] = findNodes(nodeContext, passingTimesPath)
-    if (err) {
-      errors.push(err)
-      continue
-    } else if (passingTimes.length === 0) {
-      errors.push(`Expected passing times ${errorMessageBase}`)
-      continue
+  const [id] = xpath.findValue(nodeContext, "@id");
+  let prevDepartureTime;
+  let prevDepartureDayOffset;
+  for (let i = 0; i < passingTimes.length; i++) {
+    const passingTime = passingTimes[i];
+
+    setContextNode(nodeContext, passingTime);
+
+    const stopPointID = xpath.findValue(nodeContext, xpath.join(".", "StopPointInJourneyPatternRef/@ref"));
+    const arrivalTime = xpath.findValue(nodeContext, xpath.join(".", "ArrivalTime"));
+    const arrivalDayOffset = xpath.findValue(nodeContext, "./netex:ArrivalDayOffset");
+    const departureTime = xpath.findValue(nodeContext, "./netex:DepartureTime");
+    const departureDayOffset = xpath.findValue(nodeContext, "./netex:DepartureDayOffset");
+    const [tid] = xpath.findValue(nodeContext, "@id");
+    if (i !== 0) {
+      if (prevDepartureTime >= arrivalTime) {
+        errors.push(`Passing time does not increase in ServiceJourney(@id=${id}), TimetabledPassingTime(@id=${tid})`);
+      }
+    }
+    if (arrivalDayOffset && prevDepartureDayOffset && arrivalDayOffset < prevDepartureDayOffset) {
+      errors.push(`DayOffset must not decrease in sequence in ServiceJourney(@id=${id}), TimetabledPassingTime(@id=${tid})`);
+    }
+    if (
+      departureDayOffset &&
+      (!arrivalDayOffset || departureDayOffset < arrivalDayOffset) &&
+      (!prevDepartureDayOffset || departureDayOffset < prevDepartureDayOffset)
+    ) {
+      errors.push(`DayOffset must not decrease in sequence in ServiceJourney(@id=${id}), TimetabledPassingTime(@id=${tid})`);
     }
 
-    for (let n = 0; n < passingTimes.length; n++) {
-      const passingTime = passingTimes[n]
-      const [timetabledPassingTime, err] = parentNode(passingTime)
-      if (err) {
-        errors.push(err)
-        continue
-      }
+    prevDepartureTime = departureTime;
+    prevDepartureDayOffset = departureDayOffset;
 
-      setContextNode(nodeContext, timetabledPassingTime) // traverse down the tree
-
-      const tid = findValue(nodeContext, "@id")
-
-      if (i !== stopPoints.length - 1) {
-        const departureTime = findValue(nodeContext, "./netex:DepartureTime")
-        if (departureTime === "") {
-          errors.push(`Expected departure time in TimetabledpassingTime(@id='${tid}') ${errorMessageBase}`)
-        }
-      }
-      if (i !== 0) {
-        const arrivalTime = findValue(nodeContext, "./netex:ArrivalTime")
-        if (arrivalTime === "") {
-          errors.push(`Expected arrival time in TimetabledpassingTime(@id='${tid}') ${errorMessageBase}`)
-        }
-      }
+    if (!stopPointExist(workerContext, id)) {
+      errors.push(`Expected StoPointInJourneyPattern(@id=${id}`);
     }
   }
 
-  return errors
+  return errors;
+}
+
+function stopPointExist(ctx, id) {
+  const { nodeContext, document } = ctx
+  const stopIDPath = xpath.join(stopPointPath, `StopPointInJourneyPattern[@id = '${id}']`);
+
+  setContextNode(nodeContext, document);
+
+  const [n] = xpath.first(nodeContext, stopPointPath);
+
+  return !!n;
 }
