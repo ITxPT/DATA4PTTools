@@ -23,7 +23,6 @@ type Script struct {
 	checksum    string
 	filePath    string
 	program     *goja.Program
-	logger      *logger.Logger
 }
 
 func (s *Script) Name() string {
@@ -34,15 +33,70 @@ func (s *Script) Description() string {
 	return s.description
 }
 
-func (s *Script) SetLogger(l *logger.Logger) {
-	s.logger = l
-}
-
-func (s *Script) Runtime() *goja.Runtime {
+func (s *Script) Runtime() (*goja.Runtime, error) {
 	vm := goja.New()
+
+	for k, v := range jsStandardLib {
+		if err := vm.GlobalObject().Set(k, v); err != nil {
+			return nil, err
+		}
+	}
+
 	vm.RunProgram(s.program)
 
-	return vm
+	return vm, nil
+}
+
+func (s *Script) Execute(schema *xsd.Schema, l *logger.Logger, doc types.Document, docs map[string]types.Document) *ValidationResult {
+	res := &ValidationResult{
+		Measure:     &Measure{},
+		Name:        s.name,
+		Description: s.description,
+		Valid:       true,
+		Errors:      []string{},
+	}
+	defer func() {
+		res.Stop()
+	}()
+
+	res.Start()
+
+	ctx, err := netexContext(doc)
+	if err != nil {
+		res.AddError(err)
+		return res
+	}
+
+	var validateHandler func(ctx jsObject, xpath jsObject) []string
+
+	vm, err := s.Runtime()
+	if err != nil {
+		res.AddError(err)
+		return res
+	}
+
+	if err := vm.ExportTo(vm.Get("main"), &validateHandler); err != nil {
+		res.AddError(err)
+		return res
+	}
+
+	jsCtx := JSMainContext{
+		script:      s,
+		logger:      l,
+		tasks:       []jsTask{},
+		Schema:      schema,
+		Document:    doc,
+		Documents:   docs,
+		NodeContext: ctx,
+	}
+
+	if errors := validateHandler(jsCtx.JSObject(), jsStandardLib); errors != nil {
+		for _, err := range errors {
+			res.AddError(fmt.Errorf(err))
+		}
+	}
+
+	return res
 }
 
 func NewScript(filePath string) (*Script, error) {
@@ -55,7 +109,6 @@ func NewScript(filePath string) (*Script, error) {
 		source:   source,
 		checksum: fmt.Sprintf("%x", sha256.Sum256(source)),
 		filePath: filePath,
-		logger:   logger.New(),
 	}
 
 	program, err := goja.Compile(filePath, string(source), true)
@@ -74,8 +127,6 @@ func NewScript(filePath string) (*Script, error) {
 
 	exportVariable("description", vm, &script.description)
 
-	// TODO handle dependencies
-
 	return script, nil
 }
 
@@ -86,52 +137,6 @@ func exportVariable(field string, vm *goja.Runtime, target interface{}) error {
 	}
 
 	return vm.ExportTo(v, target)
-}
-
-func executeScript(script *Script, schema *xsd.Schema, doc types.Document) *ValidationResult {
-	res := &ValidationResult{
-		Measure:     &Measure{},
-		Name:        script.name,
-		Description: script.description,
-		Valid:       true,
-		Errors:      []string{},
-	}
-	defer func() {
-		res.Stop()
-	}()
-
-	res.Start()
-
-	ctx, err := netexContext(doc)
-	if err != nil {
-		res.AddError(err)
-		return res
-	}
-
-	var validateHandler func(ctx jsObject, xpath jsObject) []string
-
-	vm := script.Runtime()
-	if err := vm.ExportTo(vm.Get("main"), &validateHandler); err != nil {
-		res.AddError(err)
-		return res
-	}
-
-	jsCtx := JSMainContext{
-		script: script,
-		tasks:  []jsTask{},
-
-		Schema:      schema,
-		Document:    doc,
-		NodeContext: ctx,
-	}
-
-	if errors := validateHandler(jsCtx.JSObject(), jsStandardLib); errors != nil {
-		for _, err := range errors {
-			res.AddError(fmt.Errorf(err))
-		}
-	}
-
-	return res
 }
 
 type ScriptMap map[string]*Script

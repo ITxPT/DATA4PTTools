@@ -1,13 +1,21 @@
 package greenlight
 
 import (
+	"regexp"
+	"strings"
+	"time"
+
 	"github.com/concreteit/greenlight/libxml2/types"
 	"github.com/concreteit/greenlight/libxml2/xpath"
 	"github.com/concreteit/greenlight/libxml2/xsd"
 )
 
+var (
+	xpathEleRe = regexp.MustCompile("^(?i)[a-z]")
+)
+
 // TODO xpath context should not be directly exposed in runtime
-func findNodes(ctx *xpath.Context, pattern string) ([]types.Node, string) {
+func findNodes(ctx *xpath.Context, pattern string) (types.NodeList, string) {
 	res, err := ctx.Find(pattern)
 	if err != nil {
 		return nil, err.Error()
@@ -16,14 +24,36 @@ func findNodes(ctx *xpath.Context, pattern string) ([]types.Node, string) {
 	return xpath.NodeList(res, err), ""
 }
 
-// TODO xpath context should not be directly exposed in runtime
-func findValue(ctx *xpath.Context, pattern string) (string, string) {
-	res, err := ctx.Find(pattern)
-	if err != nil {
-		return "", err.Error()
+func findNode(ctx *xpath.Context, pattern string) (types.Node, string) {
+	nodeList, err := findNodes(ctx, pattern)
+	if err != "" {
+		return nil, err
 	}
 
-	return xpath.String(res, err), ""
+	return nodeList.First(), ""
+}
+
+// TODO xpath context should not be directly exposed in runtime
+func findValue(ctx *xpath.Context, pattern string) (string, string) {
+	n, err := findNode(ctx, pattern)
+	if err != "" {
+		return "", err
+	}
+	if n == nil {
+		return "", ""
+	}
+
+	return n.NodeValue(), ""
+}
+
+func netexPath(values ...string) string {
+	for i, v := range values {
+		if xpathEleRe.MatchString(v) {
+			values[i] = "netex:" + v
+		}
+	}
+
+	return strings.Join(values, "/")
 }
 
 // TODO xml node should not be directly exposed in runtime
@@ -39,6 +69,15 @@ func parentNode(node types.Node) (types.Node, string) {
 	}
 
 	return n, ""
+}
+
+func validLocation(name string) (bool, string) {
+	_, err := time.LoadLocation(name)
+	if err != nil {
+		return false, err.Error()
+	}
+
+	return true, ""
 }
 
 // TODO xsd schema and xml doc should not be directly exposed in runtime

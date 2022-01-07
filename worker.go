@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"runtime"
 	"time"
+
+	"github.com/concreteit/greenlight/libxml2/types"
 )
 
 type task interface {
@@ -28,13 +30,15 @@ func startWorkers(tasks <-chan task, results chan<- interface{}) {
 	}
 }
 
-type taskValidateFile struct {
+type taskValidateDocument struct {
 	validator *Validator
-	filePath  string
+	name      string
+	document  types.Document
+	documents map[string]types.Document
 }
 
-func (t taskValidateFile) Execute(id int) interface{} {
-	return t.validator.ValidateFile(t.filePath)
+func (t taskValidateDocument) Execute(id int) interface{} {
+	return t.validator.Validate(t.document, t.name, t.documents)
 }
 
 type Measure struct {

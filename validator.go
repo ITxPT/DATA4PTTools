@@ -3,6 +3,8 @@ package greenlight
 import (
 	"io"
 	"os"
+	"path"
+	"strings"
 
 	"github.com/concreteit/greenlight/libxml2"
 	"github.com/concreteit/greenlight/libxml2/types"
@@ -52,7 +54,7 @@ func NewValidator(options ...ValidatorOption) (*Validator, error) {
 	return v, nil
 }
 
-func (v *Validator) Validate(doc types.Document, name string) *FileValidationResult {
+func (v *Validator) Validate(doc types.Document, name string, documents map[string]types.Document) *FileValidationResult {
 	result := &FileValidationResult{
 		Measure:         &Measure{},
 		FileName:        name,
@@ -71,8 +73,8 @@ func (v *Validator) Validate(doc types.Document, name string) *FileValidationRes
 		l.AddTag(logger.NewTag("name", "main", logger.WithTagWidth(10)))
 		l.AddTag(logger.NewTag("script", script.name, logger.WithTagMaxWidth(v.scripts.Keys())))
 		l.AddTag(logger.NewTag("document", name))
-		script.SetLogger(l)
-		result.ValidationRules = append(result.ValidationRules, executeScript(script, v.schema, doc))
+
+		result.ValidationRules = append(result.ValidationRules, script.Execute(v.schema, l, doc, documents))
 	}
 
 	return result
@@ -84,7 +86,7 @@ func (v *Validator) ValidateReader(reader io.Reader, name string) *FileValidatio
 		return generalValidationError(name, err)
 	}
 
-	return v.Validate(doc, name)
+	return v.Validate(doc, name, nil)
 }
 
 func (v *Validator) ValidateFile(filePath string) *FileValidationResult {
@@ -100,7 +102,7 @@ func (v *Validator) ValidateFile(filePath string) *FileValidationResult {
 		return generalValidationError(filePath, err)
 	}
 
-	result := v.Validate(doc, filePath)
+	result := v.Validate(doc, filePath, nil)
 
 	if fi, err := file.Stat(); err == nil {
 		result.FileSize = fi.Size()
@@ -111,18 +113,42 @@ func (v *Validator) ValidateFile(filePath string) *FileValidationResult {
 
 func (v *Validator) ValidateFiles(filePaths []string) []*FileValidationResult {
 	results := []*FileValidationResult{}
-	numTasks := len(filePaths)
+	documents := map[string]types.Document{}
+
+	for _, filePath := range filePaths {
+		name := strings.Replace(path.Base(filePath), path.Ext(filePath), "", 1)
+		file, err := os.Open(filePath)
+		if err != nil {
+			results = append(results, generalValidationError(filePath, err))
+			continue
+		}
+
+		doc, err := libxml2.ParseReader(file)
+		if err != nil {
+			results = append(results, generalValidationError(filePath, err))
+			continue
+		}
+
+		file.Close()
+
+		documents[name] = doc
+	}
+
+	numTasks := len(documents)
 	tasks := make(chan task, numTasks)
 	res := make(chan interface{}, numTasks)
 
 	startWorkers(tasks, res)
 
-	for _, filePath := range filePaths {
-		tasks <- taskValidateFile{
+	for name, doc := range documents {
+		tasks <- taskValidateDocument{
 			validator: v,
-			filePath:  filePath,
+			name:      name,
+			document:  doc,
+			documents: documents,
 		}
 	}
+
 	close(tasks)
 
 	for i := 0; i < numTasks; i++ {
