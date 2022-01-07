@@ -2,7 +2,7 @@ package greenlight
 
 import (
 	"fmt"
-	"log"
+	"sync"
 
 	"github.com/concreteit/greenlight/libxml2/types"
 	"github.com/concreteit/greenlight/libxml2/xpath"
@@ -14,12 +14,21 @@ import (
 // TODO this file is in desperate need of refactoring
 var (
 	jsStandardLib = jsObject{
-		"findNodes":      findNodes,
-		"findValue":      findValue,
-		"nodeValue":      nodeValue,
-		"parentNode":     parentNode,
-		"validateSchema": validateSchema,
-		"setContextNode": setContextNode,
+		"xpath": jsObject{
+			"find":      findNodes,  // find nodes
+			"first":     findNode,   // find the first node
+			"findValue": findValue,  // find the first node and return its value
+			"join":      netexPath,  // join xpath pattern
+			"parent":    parentNode, // get scope parent
+			"value":     nodeValue,  // extract node value
+		},
+		"time": jsObject{
+			"validLocation": validLocation,
+		},
+		"xsd": jsObject{
+			"validate": validateSchema,
+		},
+		"setContextNode": setContextNode, // TODO should be scoped out
 	}
 )
 
@@ -28,23 +37,44 @@ type jsObject map[string]interface{}
 type jsTaskHandler func(ctx jsObject, stdlib jsObject, args ...interface{}) goja.Value
 
 type JSMainContext struct {
+	rw     sync.Mutex
 	script *Script
+	logger *logger.Logger
 	tasks  []jsTask
 
 	Schema      *xsd.Schema    // TODO should wrap this in order to securely be passed down to script runtime
 	Document    types.Document // TODO should wrap this in order to securely be passed down to script runtime
+	Documents   map[string]types.Document
 	NodeContext *xpath.Context // TODO should wrap this in order to securely be passed down to script runtime
 }
 
 func (c *JSMainContext) JSObject() jsObject {
 	return jsObject{
-		"log":         jsLogger(c.script.logger),
-		"schema":      c.Schema,
-		"document":    c.Document,
-		"nodeContext": c.NodeContext,
-		"queue":       c.Queue,
-		"execute":     c.Execute,
+		"document":       c.Document,
+		"execute":        c.Execute,
+		"importDocument": c.ImportDocument,
+		"log":            jsLogger(c.logger),
+		"nodeContext":    c.NodeContext,
+		"queue":          c.Queue,
+		"schema":         c.Schema,
 	}
+}
+
+func (c *JSMainContext) ImportDocument(name string) (*xpath.Context, string) {
+	c.rw.Lock()
+	defer c.rw.Unlock()
+
+	doc := c.Documents[name]
+	if doc == nil {
+		return nil, "document not found"
+	}
+
+	ctx, err := netexContext(doc)
+	if err != nil {
+		return nil, err.Error()
+	}
+
+	return ctx, ""
 }
 
 func (c *JSMainContext) Queue(handler string, node types.Node, args ...interface{}) error {
@@ -55,9 +85,10 @@ func (c *JSMainContext) Queue(handler string, node types.Node, args ...interface
 
 	c.tasks = append(c.tasks, jsTask{
 		context: &JSWorkerContext{
-			script: c.script,
-
+			script:      c.script,
+			logger:      c.logger,
 			Document:    c.Document,
+			Documents:   c.Documents,
 			NodeContext: ctx,
 		},
 		handler: handler,
@@ -92,21 +123,37 @@ func (c *JSMainContext) Execute() []string {
 }
 
 type JSWorkerContext struct {
-	script *Script
-
+	script      *Script
+	logger      *logger.Logger
 	Document    types.Document // TODO should wrap this in order to securely be passed down to script runtime
+	Documents   map[string]types.Document
 	NodeContext *xpath.Context // TODO should wrap this in order to securely be passed down to script runtime
 }
 
 func (c *JSWorkerContext) JSObject(id int) jsObject {
-	l := c.script.logger.Copy()
+	l := c.logger.Copy()
 	l.AddTag(logger.NewTag("name", fmt.Sprintf("worker-%d", id), logger.WithTagWidth(10)))
 
 	return jsObject{
-		"log":         jsLogger(l),
-		"document":    c.Document,
-		"nodeContext": c.NodeContext,
+		"document":       c.Document,
+		"importDocument": c.ImportDocument,
+		"log":            jsLogger(l),
+		"nodeContext":    c.NodeContext,
 	}
+}
+
+func (c *JSWorkerContext) ImportDocument(name string) (*xpath.Context, string) {
+	doc := c.Documents[name]
+	if doc == nil {
+		return nil, "document not found"
+	}
+
+	ctx, err := netexContext(doc)
+	if err != nil {
+		return nil, err.Error()
+	}
+
+	return ctx, ""
 }
 
 type jsTask struct {
@@ -119,14 +166,13 @@ func (t jsTask) Execute(id int) interface{} { // TODO define response type
 	var handler jsTaskHandler
 
 	errorSlice := []error{}
-	vm := t.context.script.Runtime()
-	if err := vm.ExportTo(vm.Get(t.handler), &handler); err != nil {
-		log.Print("ERR", err) // TODO handle me
+	vm, err := t.context.script.Runtime()
+	if err != nil {
+		return []string{err.Error()}
 	}
 
-	var name string
-	if err := vm.ExportTo(vm.Get("name"), &name); err != nil {
-		log.Print("ERR", err) // TODO handle me
+	if err := vm.ExportTo(vm.Get(t.handler), &handler); err != nil {
+		return []string{err.Error()}
 	}
 
 	if res := handler(t.context.JSObject(id), jsStandardLib, t.args...); res != nil {
