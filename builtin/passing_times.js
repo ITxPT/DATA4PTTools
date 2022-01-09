@@ -5,11 +5,8 @@ const timetablePath = xpath.join(framesPath, "TimetableFrame", "vehicleJourneys"
 const stopPointPath = xpath.join(framesPath, "ServiceFrame", "journeyPatterns", "*[contains(name(), 'JourneyPattern')]", "pointsInSequence");
 
 function main(context) {
-  const { log, nodeContext } = context;
-  const [passingTimes, err] = xpath.find(nodeContext, timetablePath);
-  if (err) {
-    return [err];
-  }
+  const { log, nodeContext, document } = context;
+  const passingTimes = xpath.find(nodeContext, timetablePath);
 
   log.debug(`creating '${passingTimes.length} tasks`);
 
@@ -29,53 +26,40 @@ function main(context) {
 }
 
 function worker(workerContext) {
-  const { log, nodeContext } = workerContext;
+  const { log, nodeContext, document, node } = workerContext;
   const errors = [];
-  const [serviceJourney, serr] = xpath.first(nodeContext, "./parent::netex:ServiceJourney");
-  if (serr) {
-    return [serr];
-  }
-  const [passingTimes, err] = xpath.find(nodeContext, xpath.join(".", "TimetabledPassingTime"));
-  if (err) {
-    return [err];
-  }
-
-  setContextNode(nodeContext, serviceJourney);
-
-  const [id] = xpath.findValue(nodeContext, "@id");
+  const serviceJourney = xpath.first(nodeContext, "./parent::netex:ServiceJourney", node);
+  const passingTimes = xpath.find(nodeContext, xpath.join(".", "TimetabledPassingTime"), node);
+  const id = xpath.findValue(nodeContext, "@id", serviceJourney);
+  let prevArrivalDayOffset;
   let prevDepartureTime;
   let prevDepartureDayOffset;
+
   for (let i = 0; i < passingTimes.length; i++) {
     const passingTime = passingTimes[i];
-
-    setContextNode(nodeContext, passingTime);
-
-    const stopPointID = xpath.findValue(nodeContext, xpath.join(".", "StopPointInJourneyPatternRef/@ref"));
-    const arrivalTime = xpath.findValue(nodeContext, xpath.join(".", "ArrivalTime"));
-    const arrivalDayOffset = xpath.findValue(nodeContext, "./netex:ArrivalDayOffset");
-    const departureTime = xpath.findValue(nodeContext, "./netex:DepartureTime");
-    const departureDayOffset = xpath.findValue(nodeContext, "./netex:DepartureDayOffset");
-    const [tid] = xpath.findValue(nodeContext, "@id");
+    const stopPointID = xpath.findValue(nodeContext, xpath.join(".", "StopPointInJourneyPatternRef/@ref"), passingTime);
+    const arrivalTime = xpath.findValue(nodeContext, xpath.join(".", "ArrivalTime"), passingTime);
+    const arrivalDayOffset = xpath.findValue(nodeContext, "./netex:ArrivalDayOffset", passingTime);
+    const departureTime = xpath.findValue(nodeContext, "./netex:DepartureTime", passingTime);
+    const departureDayOffset = xpath.findValue(nodeContext, "./netex:DepartureDayOffset", passingTime);
+    const tid = xpath.findValue(nodeContext, "@id", passingTime);
     if (i !== 0) {
-      if (prevDepartureTime >= arrivalTime) {
-        errors.push(`Passing time does not increase in ServiceJourney(@id=${id}), TimetabledPassingTime(@id=${tid})`);
+      if (prevDepartureTime >= arrivalTime && arrivalDayOffset === prevArrivalDayOffset) {
+        errors.push(`Expected passing time to increase in ServiceJourney(@id=${id}), TimetabledPassingTime(@id=${tid})`);
       }
     }
-    if (arrivalDayOffset && prevDepartureDayOffset && arrivalDayOffset < prevDepartureDayOffset) {
-      errors.push(`DayOffset must not decrease in sequence in ServiceJourney(@id=${id}), TimetabledPassingTime(@id=${tid})`);
+    if (arrivalDayOffset && prevArrivalDayOffset && arrivalDayOffset < prevArrivalDayOffset) {
+      errors.push(`ArrivalDayOffset must not decrease in sequence in ServiceJourney(@id=${id}), TimetabledPassingTime(@id=${tid})`);
     }
-    if (
-      departureDayOffset &&
-      (!arrivalDayOffset || departureDayOffset < arrivalDayOffset) &&
-      (!prevDepartureDayOffset || departureDayOffset < prevDepartureDayOffset)
-    ) {
-      errors.push(`DayOffset must not decrease in sequence in ServiceJourney(@id=${id}), TimetabledPassingTime(@id=${tid})`);
+    if (departureDayOffset && prevDepartureDayOffset && departureDayOffset < prevDepartureDayOffset) {
+      errors.push(`DepartureDayOffset must not decrease in sequence in ServiceJourney(@id=${id}), TimetabledPassingTime(@id=${tid})`);
     }
 
+    prevArrivalDayOffset = arrivalDayOffset;
     prevDepartureTime = departureTime;
     prevDepartureDayOffset = departureDayOffset;
 
-    if (!stopPointExist(workerContext, id)) {
+    if (!stopPointExist(workerContext, stopPointID)) {
       errors.push(`Expected StoPointInJourneyPattern(@id=${id}`);
     }
   }
@@ -84,12 +68,8 @@ function worker(workerContext) {
 }
 
 function stopPointExist(ctx, id) {
-  const { nodeContext, document } = ctx
+  const { log, nodeContext, document } = ctx
   const stopIDPath = xpath.join(stopPointPath, `StopPointInJourneyPattern[@id = '${id}']`);
 
-  setContextNode(nodeContext, document);
-
-  const [n] = xpath.first(nodeContext, stopPointPath);
-
-  return !!n;
+  return !!xpath.first(nodeContext, stopIDPath, document);
 }

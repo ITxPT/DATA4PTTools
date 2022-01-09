@@ -80,17 +80,18 @@ func (s *Script) Execute(schema *xsd.Schema, l *logger.Logger, doc types.Documen
 		return res
 	}
 
-	jsCtx := JSMainContext{
+	jsCtx := jsContext{
 		script:      s,
 		logger:      l,
 		tasks:       []jsTask{},
-		Schema:      schema,
-		Document:    doc,
-		Documents:   docs,
-		NodeContext: ctx,
+		schema:      schema,
+		document:    doc,
+		documents:   docs,
+		nodeContext: ctx,
+		node:        doc,
 	}
 
-	if errors := validateHandler(jsCtx.JSObject(), jsStandardLib); errors != nil {
+	if errors := validateHandler(jsCtx.object(0), jsStandardLib); errors != nil {
 		for _, err := range errors {
 			res.AddError(fmt.Errorf(err))
 		}

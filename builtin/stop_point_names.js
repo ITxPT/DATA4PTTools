@@ -6,13 +6,11 @@ const scheduledStopPointsPath = xpath.join(framesPath, "ServiceFrame", "schedule
 function main(context) {
   const { log, nodeContext } = context;
   const errors = [];
-  const [stopPoints] = xpath.find(nodeContext, scheduledStopPointsPath);
+  const stopPoints = xpath.find(nodeContext, scheduledStopPointsPath);
 
   stopPoints.forEach(stopPoint => {
-    setContextNode(nodeContext, stopPoint);
-
-    const [id] = xpath.findValue(nodeContext, "@id");
-    const [name] = xpath.findValue(nodeContext, xpath.join("Name"));
+    const id = xpath.findValue(nodeContext, "@id", stopPoint);
+    const name = xpath.findValue(nodeContext, xpath.join("Name"), stopPoint);
     if (!name) {
       errors.push(`Missing name in ScheduledStopPoint(@id=${id})`);
     }

@@ -8,11 +8,8 @@ const timetablePath = xpath.join(framesPath, "TimetableFrame", "vehicleJourneys"
 
 // entry point in script
 function main(context) {
-  const { log, nodeContext } = context;
-  const [journeyPatterns, err] = xpath.find(nodeContext, journeyPatternsPath);
-  if (err) {
-    return [err];
-  }
+  const { log, document, nodeContext } = context;
+  const journeyPatterns = xpath.find(nodeContext, journeyPatternsPath);
 
   log.debug(`creating '${journeyPatterns.length}' tasks`);
 
@@ -40,24 +37,18 @@ function worker(workerContext) {
 }
 
 function validateStopPointReferences(workerContext) {
-  const { log, document, nodeContext, importDocument } = workerContext;
+  const { log, document, nodeContext, node, importDocument } = workerContext;
   const errors = [];
-  const [refNodes, refErr] = xpath.find(nodeContext, stopPointRefPath);
-  if (refErr) {
-    return [err];
-  }
-
-  const [sharedDataDoc] = importDocument("_shared_data");
-
-  setContextNode(nodeContext, document);
+  const refNodes = xpath.find(nodeContext, stopPointRefPath, node);
+  const sharedDataDoc = importDocument("_shared_data");
 
   return refNodes.map(n => xpath.value(n))
     .reduce((errors, ref) => {
       const stopPath = xpath.join(scheduledStopPointsPath, `ScheduledStopPoint[@id = '${ref}']`);
-      const [n] = xpath.first(sharedDataDoc || nodeContext, stopPath);
+      const n = xpath.first(sharedDataDoc || nodeContext, stopPath);
 
       if (!n) {
-        errors.push('missing node');
+        errors.push(`Missing ScheduledStopPoint(@id=${ref})`);
       }
 
       return errors;
@@ -65,49 +56,35 @@ function validateStopPointReferences(workerContext) {
 }
 
 function validatePassingTimes(workerContext) {
-  const { log, nodeContext, document, importDocument } = workerContext;
+  const { log, nodeContext, document, node } = workerContext;
   const errors = [];
-  const [stopPoints, err] = xpath.find(nodeContext, "./netex:pointsInSequence/netex:StopPointInJourneyPattern/@id");
-  if (err) {
-    return [err];
-  }
+  const stopPoints = xpath.find(nodeContext, "./netex:pointsInSequence/netex:StopPointInJourneyPattern/@id", node);
 
   for (let i = 0; i < stopPoints.length; i++) {
-    setContextNode(nodeContext, document); // switch to root context (time tabled passing times are located elsewhere)
-
     const stopPoint = stopPoints[i]
     const id = xpath.value(stopPoint);
     const passingTimesPath = xpath.join(timetablePath, `StopPointInJourneyPatternRef[@ref = '${id}']`);
     const errorMessageBase = `for StopPointInJourneyPattern(@id='${id}')`;
-    const [passingTimes, err] = xpath.find(nodeContext, passingTimesPath);
-    if (err) {
-      errors.push(err);
-      continue;
-    } else if (passingTimes.length === 0) {
+    const passingTimes = xpath.find(nodeContext, passingTimesPath, document);
+    if (passingTimes.length === 0) {
       errors.push(`Expected passing times ${errorMessageBase}`);
       continue;
     }
 
     for (let n = 0; n < passingTimes.length; n++) {
       const passingTime = passingTimes[n];
-      const [timetabledPassingTime, err] = xpath.parent(passingTime);
-      if (err) {
-        errors.push(err);
-        continue;
-      }
+      const timetabledPassingTime = xpath.parent(passingTime);
 
-      setContextNode(nodeContext, timetabledPassingTime); // traverse down the tree
-
-      const [tid] = xpath.findValue(nodeContext, "@id");
+      const tid = xpath.findValue(nodeContext, "@id", timetabledPassingTime);
 
       if (i !== stopPoints.length - 1) {
-        const departureTime = xpath.findValue(nodeContext, xpath.join(".", "DepartureTime"));
+        const departureTime = xpath.findValue(nodeContext, xpath.join(".", "DepartureTime"), timetabledPassingTime);
         if (departureTime === "") {
           errors.push(`Expected departure time in TimetabledpassingTime(@id='${tid}') ${errorMessageBase}`);
         }
       }
       if (i !== 0) {
-        const arrivalTime = xpath.findValue(nodeContext, xpath.join(".", "ArrivalTime"));
+        const arrivalTime = xpath.findValue(nodeContext, xpath.join(".", "ArrivalTime"), timetabledPassingTime);
         if (arrivalTime === "") {
           errors.push(`Expected arrival time in TimetabledpassingTime(@id='${tid}') ${errorMessageBase}`);
         }

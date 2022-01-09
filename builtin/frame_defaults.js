@@ -34,48 +34,34 @@ const countryCodes = [ // ISO 639-1 country codes
  * ```
  **/
 function main(context) {
-  const { log, nodeContext } = context;
-  const [frameDefaults, fdErr] = xpath.first(nodeContext, ".//netex:FrameDefaults");
-  if (fdErr) {
-    return [fdErr];
-  }
-
+  const { log, document, nodeContext } = context;
+  const frameDefaults = xpath.first(nodeContext, ".//netex:FrameDefaults");
   if (!frameDefaults) {
     return ["Document is missing element FrameDefaults"];
   }
 
   const errors = [];
 
-  // since this is a single element per document there's no reason to run it in a worker
-  setContextNode(nodeContext, frameDefaults);
-
   // not to bothered by errors since its optional according to  xsd schema
-  let [defaultLocale] = xpath.first(nodeContext, "./netex:DefaultLocale");
+  let defaultLocale = xpath.first(nodeContext, "./netex:DefaultLocale", frameDefaults);
   if (defaultLocale) {
-    setContextNode(nodeContext, defaultLocale);
-
-    const [tzo] = xpath.findValue(nodeContext, "./netex:TimeZoneOffset");
-    if (tzo && !validTimeZoneOffset(tzo)) {
+    if (!validTimeZoneOffset(xpath.findValue(nodeContext, "./netex:TimeZoneOffset", defaultLocale))) {
       errors.push("Invalid TimeZoneOffset");
     }
 
-    const [tz] = xpath.findValue(nodeContext, "./netex:TimeZone");
-    if (tz && !validTimeZone(tz)) {
+    if (!validTimeZone(xpath.findValue(nodeContext, "./netex:TimeZone", defaultLocale))) {
       errors.push("Invalid TimeZone");
     }
 
-    const [stzo] = xpath.findValue(nodeContext, "./netex:SummerTimeZoneOffset");
-    if (stzo && !validTimeZoneOffset(stzo)) {
+    if (!validTimeZoneOffset(xpath.findValue(nodeContext, "./netex:SummerTimeZoneOffset", defaultLocale))) {
       errors.push("Invalid SummerTimeZoneOffset");
     }
 
-    const [stz] = xpath.findValue(nodeContext, "./netex:SummerTimeZone");
-    if (stz && !validTimeZone(stz)) {
+    if (!validTimeZone(xpath.findValue(nodeContext, "./netex:SummerTimeZone", defaultLocale))) {
       errors.push("Invalid SummerTimeZone");
     }
 
-    const [lang] = xpath.findValue(nodeContext, "./netex:DefaultLanguage");
-    if (lang && !validLanguage(lang)) {
+    if (!validLanguage(xpath.findValue(nodeContext, "./netex:DefaultLanguage", defaultLocale))) {
       errors.push("Invalid DefaultLanguage");
     }
   }
@@ -90,16 +76,28 @@ function main(context) {
 }
 
 function validTimeZoneOffset(offset) {
+  if (!offset) {
+    return true; // not required according to xsd
+  }
+
   return offset.match(/^[\+\-]\d{1,2}$/);
 }
 
 // validated against IANA Time Zone database (https://www.iana.org/time-zones)
 function validTimeZone(tz) {
+  if (!tz) {
+    return true; // not required according to xsd
+  }
+
   const [valid] = time.validLocation(tz);
 
   return valid;
 }
 
 function validLanguage(lang) {
+  if (!lang) {
+    return true; // not required according to xsd
+  }
+
   return countryCodes.includes(lang);
 }

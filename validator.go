@@ -26,12 +26,17 @@ type Validator struct {
 	scripts     ScriptMap
 }
 
+func (v *Validator) Schema() *xsd.Schema {
+	return v.schema
+}
+
 func NewValidator(options ...ValidatorOption) (*Validator, error) {
 	var err error
 	v := &Validator{
 		useBuiltIn:  true,
 		scriptPaths: []string{},
 		scripts:     map[string]*Script{},
+		logger:      logger.New(),
 	}
 
 	for _, option := range options {

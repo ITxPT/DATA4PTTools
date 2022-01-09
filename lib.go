@@ -14,36 +14,44 @@ var (
 	xpathEleRe = regexp.MustCompile("^(?i)[a-z]")
 )
 
-// TODO xpath context should not be directly exposed in runtime
-func findNodes(ctx *xpath.Context, pattern string) (types.NodeList, string) {
-	res, err := ctx.Find(pattern)
+func netexContext(n types.Node) (*xpath.Context, error) {
+	ctx, err := xpath.NewContext(n)
 	if err != nil {
-		return nil, err.Error()
-	}
-
-	return xpath.NodeList(res, err), ""
-}
-
-func findNode(ctx *xpath.Context, pattern string) (types.Node, string) {
-	nodeList, err := findNodes(ctx, pattern)
-	if err != "" {
 		return nil, err
 	}
 
-	return nodeList.First(), ""
+	if err := ctx.RegisterNS("xsd", "http://www.w3.org/2001/XMLSchema"); err != nil {
+		return nil, err
+	}
+	if err := ctx.RegisterNS("netex", "http://www.netex.org.uk/netex"); err != nil {
+		return nil, err
+	}
+
+	return ctx, nil
 }
 
-// TODO xpath context should not be directly exposed in runtime
-func findValue(ctx *xpath.Context, pattern string) (string, string) {
-	n, err := findNode(ctx, pattern)
-	if err != "" {
-		return "", err
-	}
-	if n == nil {
-		return "", ""
+func findNodes(ctx *xpath.Context, pattern string, node types.Node) types.NodeList {
+	if node != nil {
+		ctx.SetContextNode(node)
 	}
 
-	return n.NodeValue(), ""
+	return xpath.NodeList(ctx.Find(pattern))
+}
+
+func findNode(ctx *xpath.Context, pattern string, node types.Node) types.Node {
+	if nodeList := findNodes(ctx, pattern, node); nodeList != nil {
+		return nodeList.First()
+	}
+
+	return nil
+}
+
+func findValue(ctx *xpath.Context, pattern string, nodes types.Node) string {
+	if node := findNode(ctx, pattern, nodes); node != nil {
+		return node.NodeValue()
+	}
+
+	return ""
 }
 
 func netexPath(values ...string) string {
@@ -61,14 +69,17 @@ func nodeValue(node types.Node) string {
 	return node.NodeValue()
 }
 
-// TODO xml node should not be directly exposed in runtime
-func parentNode(node types.Node) (types.Node, string) {
-	n, err := node.ParentNode()
-	if err != nil {
-		return n, err.Error()
+func parentNode(node types.Node) types.Node {
+	if node == nil {
+		return nil
 	}
 
-	return n, ""
+	parent, err := node.ParentNode()
+	if err != nil {
+		return nil
+	}
+
+	return parent
 }
 
 func validLocation(name string) (bool, string) {
