@@ -5,9 +5,9 @@ import (
 	"os"
 	"testing"
 
-	"github.com/concreteit/greenlight/libxml2"
-	"github.com/concreteit/greenlight/libxml2/xpath"
-	"github.com/concreteit/greenlight/libxml2/xsd"
+	"github.com/lestrrat-go/libxml2"
+	"github.com/lestrrat-go/libxml2/xpath"
+	"github.com/lestrrat-go/libxml2/xsd"
 )
 
 const (

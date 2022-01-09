@@ -5,7 +5,7 @@ import (
 	"runtime"
 	"time"
 
-	"github.com/concreteit/greenlight/libxml2/types"
+	"github.com/lestrrat-go/libxml2/types"
 )
 
 type task interface {

@@ -5,9 +5,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/concreteit/greenlight/libxml2/types"
-	"github.com/concreteit/greenlight/libxml2/xpath"
-	"github.com/concreteit/greenlight/libxml2/xsd"
+	"github.com/lestrrat-go/libxml2/types"
+	"github.com/lestrrat-go/libxml2/xpath"
+	"github.com/lestrrat-go/libxml2/xsd"
 )
 
 var (

@@ -2,10 +2,12 @@ module github.com/concreteit/greenlight
 
 go 1.17
 
+replace github.com/lestrrat-go/libxml2 v0.0.0-00010101000000-000000000000 => ./fork/libxml2
+
 require (
 	github.com/dop251/goja v0.0.0-20211207134806-acd374ca9c94
-	github.com/lestrrat-go/libxml2 v0.0.0-20201123224832-e6d9de61b80d
-	github.com/pkg/errors v0.8.1
+	github.com/lestrrat-go/libxml2 v0.0.0-00010101000000-000000000000
+	github.com/pkg/errors v0.9.1
 	github.com/spf13/cobra v1.2.1
 	github.com/spf13/viper v1.10.1
 	github.com/stretchr/testify v1.7.0
@@ -30,7 +32,6 @@ require (
 	golang.org/x/sys v0.0.0-20211210111614-af8b64212486 // indirect
 	golang.org/x/text v0.3.7 // indirect
 	gopkg.in/ini.v1 v1.66.2 // indirect
-	gopkg.in/xmlpath.v1 v1.0.0-20140413065638-a146725ea6e7 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b // indirect
 )

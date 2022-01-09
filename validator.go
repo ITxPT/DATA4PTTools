@@ -6,9 +6,9 @@ import (
 	"path"
 	"strings"
 
-	"github.com/concreteit/greenlight/libxml2"
-	"github.com/concreteit/greenlight/libxml2/types"
-	"github.com/concreteit/greenlight/libxml2/xsd"
+	"github.com/lestrrat-go/libxml2"
+	"github.com/lestrrat-go/libxml2/types"
+	"github.com/lestrrat-go/libxml2/xsd"
 	"github.com/concreteit/greenlight/logger"
 )
 
