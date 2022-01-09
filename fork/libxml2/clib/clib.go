@@ -1,23 +1,3 @@
-/*
-
-Package clib holds all of the dirty C interaction for go-libxml2.
-
-Although this package is visible to the outside world, the API in this
-package is in NO WAY guaranteed to be stable. This package was
-initially meant to be placed in an internal package so that the
-API was not available to the outside world.
-
-The only reason this is visible is so that the REALLY advanced users
-can abuse the quasi-direct-C-API to overcome shortcomings of the
-"public" API, if any (and of course, you WILL send me a pull request
-later... won't you?)
-
-Please DO NOT rely on this API and expect that it will keep backcompat.
-When the need arises, it WILL be changed, and if you are not ready
-for it, your code WILL break in horrible horrible ways. You have been
-warned.
-
-*/
 package clib
 
 /*
@@ -77,7 +57,6 @@ static inline int MY_setXmlIndentTreeOutput(int i) {
 }
 
 // Parse a single char out of cur
-// Stolen from XML::LibXML
 static inline int
 MY_parseChar( xmlChar *cur, int *len )
 {
@@ -135,7 +114,6 @@ MY_parseChar( xmlChar *cur, int *len )
 }
 
 // Checks if the given name is a valid name in XML
-// stolen from XML::LibXML
 static inline int
 MY_test_node_name( xmlChar * name )
 {
@@ -257,38 +235,33 @@ CLEANUP:
 	return node;
 }
 
-#define GO_LIBXML2_ERRWARN_ACCUMULATOR_SIZE 32
-typedef struct go_libxml2_errwarn_accumulator {
-	char *errors[GO_LIBXML2_ERRWARN_ACCUMULATOR_SIZE];
-	char *warnings[GO_LIBXML2_ERRWARN_ACCUMULATOR_SIZE];
-	int erridx;
-	int warnidx;
-} go_libxml2_errwarn_accumulator;
+#define GO_LIBXML2_ERR_ACCUMULATOR_SIZE 32
+typedef struct go_libxml2_err_accumulator {
+	char *errors[GO_LIBXML2_ERR_ACCUMULATOR_SIZE];
+	int index;
+  int count;
+} go_libxml2_err_accumulator;
 
 static
-go_libxml2_errwarn_accumulator*
-MY_createErrWarnAccumulator() {
+go_libxml2_err_accumulator*
+createErrAccumulator() {
 	int i;
-	go_libxml2_errwarn_accumulator *ctx;
-	ctx = (go_libxml2_errwarn_accumulator *) malloc(sizeof(go_libxml2_errwarn_accumulator));
-	for (i = 0; i < GO_LIBXML2_ERRWARN_ACCUMULATOR_SIZE; i++) {
+	go_libxml2_err_accumulator *ctx;
+	ctx = (go_libxml2_err_accumulator *) malloc(sizeof(go_libxml2_err_accumulator));
+	for (i = 0; i < GO_LIBXML2_ERR_ACCUMULATOR_SIZE; i++) {
 		ctx->errors[i] = NULL;
-		ctx->warnings[i] = NULL;
 	}
-	ctx->erridx = 0;
-	ctx->warnidx = 0;
+	ctx->index = 0;
+  ctx->count = 0;
 	return ctx;
 }
 
 static
 void
-MY_freeErrWarnAccumulator(go_libxml2_errwarn_accumulator* ctx) {
+freeErrAccumulator(go_libxml2_err_accumulator* ctx) {
 	int i = 0;
-	for (i = 0; i < GO_LIBXML2_ERRWARN_ACCUMULATOR_SIZE; i++) {
+	for (i = 0; i < GO_LIBXML2_ERR_ACCUMULATOR_SIZE; i++) {
 		if (ctx->errors[i] != NULL) {
-			free(ctx->errors[i]);
-		}
-		if (ctx->warnings[i] != NULL) {
 			free(ctx->errors[i]);
 		}
 	}
@@ -297,14 +270,15 @@ MY_freeErrWarnAccumulator(go_libxml2_errwarn_accumulator* ctx) {
 
 static
 void
-MY_accumulateErr(void *ctx, const char *msg, ...) {
+accumulateErr(void *ctx, const char *msg, ...) {
   char buf[1024];
   va_list args;
-	go_libxml2_errwarn_accumulator *accum;
+	go_libxml2_err_accumulator *accum;
 	int len;
 
-	accum = (go_libxml2_errwarn_accumulator *) ctx;
-	if (accum->erridx >= GO_LIBXML2_ERRWARN_ACCUMULATOR_SIZE) {
+	accum = (go_libxml2_err_accumulator *) ctx;
+  accum->count++;
+	if (accum->index >= GO_LIBXML2_ERR_ACCUMULATOR_SIZE) {
 		return;
 	}
 
@@ -324,14 +298,14 @@ MY_accumulateErr(void *ctx, const char *msg, ...) {
 	}
 	memcpy(out, buf, len);
 
-  int i = accum->erridx++;
+  int i = accum->index++;
 	accum->errors[i] = out;
 }
 
 static
 void
-MY_setErrWarnAccumulator(xmlSchemaValidCtxtPtr ctxt, go_libxml2_errwarn_accumulator *accum) {
-	xmlSchemaSetValidErrors(ctxt, MY_accumulateErr, NULL, accum);
+setErrAccumulator(xmlSchemaValidCtxtPtr ctxt, go_libxml2_err_accumulator *accum) {
+	xmlSchemaSetValidErrors(ctxt, accumulateErr, NULL, accum);
 }
 */
 import "C"
@@ -2042,9 +2016,6 @@ func XMLXPathFreeObject(x PtrSource) {
 		return
 	}
 	C.xmlXPathFreeObject(xptr)
-	//	if xptr.nodesetval != nil {
-	//		C.xmlXPathFreeNodeSet(xptr.nodesetval)
-	//	}
 }
 
 func XMLXPathObjectNodeListLen(x PtrSource) int {
@@ -2173,41 +2144,56 @@ func XMLSchemaParse(buf []byte, options ...option.Interface) (uintptr, error) {
 	return uintptr(unsafe.Pointer(s)), nil
 }
 
-func XMLSchemaValidateDocument(schema PtrSource, document PtrSource, options ...int) []error {
+type SchemaValidationResult struct {
+	Errors     []error
+	ErrorCount int
+}
+
+func XMLSchemaValidateDocument(schema PtrSource, document PtrSource, options ...int) (res SchemaValidationResult) {
 	sptr, err := validSchemaPtr(schema)
 	if err != nil {
-		return []error{err}
+		res.Errors = []error{err}
+		res.ErrorCount = 1
+		return
 	}
 
 	dptr, err := validDocumentPtr(document)
 	if err != nil {
-		return []error{err}
+		res.Errors = []error{err}
+		res.ErrorCount = 1
+		return
 	}
 
 	ctx := C.xmlSchemaNewValidCtxt(sptr)
 	if ctx == nil {
-		return []error{errors.New("failed to build validator")}
+		res.Errors = []error{errors.New("failed to build validator")}
+		res.ErrorCount = 1
+		return
 	}
 	defer C.xmlSchemaFreeValidCtxt(ctx)
 
-	accum := C.MY_createErrWarnAccumulator()
-	defer C.MY_freeErrWarnAccumulator(accum)
+	accum := C.createErrAccumulator()
+	defer C.freeErrAccumulator(accum)
 
-	C.MY_setErrWarnAccumulator(ctx, accum)
+	C.setErrAccumulator(ctx, accum)
 
 	for _, option := range options {
 		C.xmlSchemaSetValidOptions(ctx, C.int(option))
 	}
 
 	if C.xmlSchemaValidateDoc(ctx, dptr) == 0 {
-		return nil
+		return
 	}
 
-	errs := make([]error, accum.erridx)
-	for i := 0; i < int(accum.erridx); i++ {
+	errs := make([]error, accum.index)
+	for i := 0; i < int(accum.index); i++ {
 		errs[i] = errors.New(C.GoString(accum.errors[i]))
 	}
-	return errs
+
+	res.Errors = errs
+	res.ErrorCount = int(accum.count)
+
+	return
 }
 
 func validSchemaPtr(schema PtrSource) (*C.xmlSchema, error) {
