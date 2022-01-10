@@ -21,6 +21,13 @@ const countryCodes = [ // ISO 639-1 country codes
   "uk", "ur", "uz", "ve", "vi", "vo", "wa", "wo", "xh", "yi",
   "yo", "za", "zh", "zu",
 ];
+const frameDefaultsPath = xpath.join("./", "FrameDefaults");
+const defaultLocalePath = xpath.join(".", "DefaultLocale");
+const defaultLangPath = xpath.join(".", "DefaultLanguage");
+const tzOffsetPath = xpath.join(".", "TimeZoneOffset");
+const stzOffsetPath = xpath.join(".", "SummerTimeZoneOffset");
+const tzPath = xpath.join(".", "TimeZone");
+const stzPath = xpath.join(".", "SummerTimeZone");
 
 /**
  * _example structure_
@@ -33,9 +40,8 @@ const countryCodes = [ // ISO 639-1 country codes
  *  </FrameDefaults>
  * ```
  **/
-function main(context) {
-  const { log, document, nodeContext } = context;
-  const frameDefaults = xpath.first(nodeContext, ".//netex:FrameDefaults");
+function main(ctx) {
+  const frameDefaults = ctx.xpath.first(frameDefaultsPath);
   if (!frameDefaults) {
     return ["Document is missing element FrameDefaults"];
   }
@@ -43,33 +49,33 @@ function main(context) {
   const errors = [];
 
   // not to bothered by errors since its optional according to  xsd schema
-  let defaultLocale = xpath.first(nodeContext, "./netex:DefaultLocale", frameDefaults);
+  let defaultLocale = ctx.xpath.first(defaultLocalePath, frameDefaults);
   if (defaultLocale) {
-    if (!validTimeZoneOffset(xpath.findValue(nodeContext, "./netex:TimeZoneOffset", defaultLocale))) {
+    if (!validTimeZoneOffset(ctx.xpath.findValue(tzOffsetPath, defaultLocale))) {
       errors.push("Invalid TimeZoneOffset");
     }
 
-    if (!validTimeZone(xpath.findValue(nodeContext, "./netex:TimeZone", defaultLocale))) {
+    if (!validTimeZone(ctx.xpath.findValue(tzPath, defaultLocale))) {
       errors.push("Invalid TimeZone");
     }
 
-    if (!validTimeZoneOffset(xpath.findValue(nodeContext, "./netex:SummerTimeZoneOffset", defaultLocale))) {
+    if (!validTimeZoneOffset(ctx.xpath.findValue(stzOffsetPath, defaultLocale))) {
       errors.push("Invalid SummerTimeZoneOffset");
     }
 
-    if (!validTimeZone(xpath.findValue(nodeContext, "./netex:SummerTimeZone", defaultLocale))) {
+    if (!validTimeZone(ctx.xpath.findValue(stzPath, defaultLocale))) {
       errors.push("Invalid SummerTimeZone");
     }
 
-    if (!validLanguage(xpath.findValue(nodeContext, "./netex:DefaultLanguage", defaultLocale))) {
+    if (!validLanguage(ctx.xpath.findValue(defaultLangPath, defaultLocale))) {
       errors.push("Invalid DefaultLanguage");
     }
   }
 
   if (errors.length === 0) {
-    log.info("validation without any errors");
+    ctx.log.info("validation without any errors");
   } else {
-    log.info("validation completed with '%d' errors", errors.length);
+    ctx.log.info("validation completed with '%d' errors", errors.length);
   }
 
   return errors;

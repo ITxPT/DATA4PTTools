@@ -4,33 +4,29 @@ import (
 	"fmt"
 	"sync"
 
+	"github.com/concreteit/greenlight/logger"
+	"github.com/dop251/goja"
 	"github.com/lestrrat-go/libxml2/types"
 	"github.com/lestrrat-go/libxml2/xpath"
 	"github.com/lestrrat-go/libxml2/xsd"
-	"github.com/concreteit/greenlight/logger"
-	"github.com/dop251/goja"
-)
-
-var (
-	xpathContext = jsObject{
-		"find":      findNodes,  // find nodes
-		"first":     findNode,   // find the first node
-		"findValue": findValue,  // find the first node and return its value
-		"join":      netexPath,  // join xpath pattern
-		"parent":    parentNode, // get scope parent
-		"value":     nodeValue,  // extract node value
-	}
 )
 
 // TODO this file is in desperate need of refactoring
 var (
 	jsStandardLib = jsObject{
-		"xpath": xpathContext, // move to context
 		"time": jsObject{
 			"validLocation": validLocation,
 		},
+		"xpath": jsObject{
+			"find":      xpathFindNodes,
+			"first":     xpathFindNode,
+			"findValue": xpathFindNodeValue,
+			"parent":    xpathNodeParent,
+			"value":     xpathNodeValue,
+			"join":      xpathJoin,
+		},
 		"xsd": jsObject{
-			"validate": validateSchema,
+			"validate": xsdValidateSchema,
 		},
 	}
 )
@@ -67,8 +63,21 @@ func (c *jsContext) object(id int) jsObject {
 		},
 		"nodeContext": c.nodeContext,
 		"schema":      c.schema,
-		"execute":     c.Execute,
-		"queue":       c.Queue,
+		"worker": jsObject{
+			"execute": c.Execute,
+			"queue":   c.Queue,
+		},
+		"xsd": jsObject{
+			"validate": c.validateSchema,
+		},
+		"xpath": jsObject{
+			"find":      c.findNodes,
+			"first":     c.findNode,
+			"findValue": c.findNodeValue,
+			"parent":    xpathNodeParent,
+			"value":     xpathNodeValue,
+			"join":      xpathJoin,
+		},
 	}
 }
 

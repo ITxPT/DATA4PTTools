@@ -1,14 +1,13 @@
 const name = "xsd";
 const description = "General XSD schema validation";
 
-function main(context) {
-  const { log, schema, document } = context;
-  const [n, errors] = xsd.validate(schema, document);
+function main(ctx) {
+  const [n, errors] = ctx.xsd.validate();
 
   if (!n) {
-    log.info("validation completed without any errors");
+    ctx.log.info("validation completed without any errors");
   } else {
-    log.info("validation completed with '%d' errors", n);
+    ctx.log.info("validation completed with '%d' errors", n);
   }
 
   return errors;

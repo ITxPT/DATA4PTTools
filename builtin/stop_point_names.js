@@ -3,14 +3,13 @@ const description = "Make sure every ScheduledStopPoint have a name";
 const framesPath = xpath.join(".", "PublicationDelivery", "dataObjects", "CompositeFrame", "frames")
 const scheduledStopPointsPath = xpath.join(framesPath, "ServiceFrame", "scheduledStopPoints", "ScheduledStopPoint");
 
-function main(context) {
-  const { log, nodeContext } = context;
+function main(ctx) {
   const errors = [];
-  const stopPoints = xpath.find(nodeContext, scheduledStopPointsPath);
+  const stopPoints = ctx.xpath.find(scheduledStopPointsPath);
 
   stopPoints.forEach(stopPoint => {
-    const id = xpath.findValue(nodeContext, "@id", stopPoint);
-    const name = xpath.findValue(nodeContext, xpath.join("Name"), stopPoint);
+    const id = ctx.xpath.findValue("@id", stopPoint);
+    const name = ctx.xpath.findValue(ctx.xpath.join("Name"), stopPoint);
     if (!name) {
       errors.push(`Missing name in ScheduledStopPoint(@id=${id})`);
     }

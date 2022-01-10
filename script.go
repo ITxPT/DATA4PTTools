@@ -6,10 +6,10 @@ import (
 	"os"
 	"path"
 
-	"github.com/lestrrat-go/libxml2/types"
-	"github.com/lestrrat-go/libxml2/xsd"
 	"github.com/concreteit/greenlight/logger"
 	"github.com/dop251/goja"
+	"github.com/lestrrat-go/libxml2/types"
+	"github.com/lestrrat-go/libxml2/xsd"
 )
 
 var (

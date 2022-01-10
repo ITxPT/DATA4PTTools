@@ -4,45 +4,43 @@ const framesPath = xpath.join(".", "PublicationDelivery", "dataObjects", "Compos
 const timetablePath = xpath.join(framesPath, "TimetableFrame", "vehicleJourneys", "ServiceJourney", "passingTimes");
 const stopPointPath = xpath.join(framesPath, "ServiceFrame", "journeyPatterns", "*[contains(name(), 'JourneyPattern')]", "pointsInSequence");
 
-function main(context) {
-  const { log, nodeContext, document } = context;
-  const passingTimes = xpath.find(nodeContext, timetablePath);
+function main(ctx) {
+  const passingTimes = ctx.xpath.find(timetablePath);
 
-  log.debug(`creating '${passingTimes.length} tasks`);
+  ctx.log.debug(`creating '${passingTimes.length} tasks`);
 
   // queue worker tasks
-  passingTimes.forEach(node => context.queue("worker", node));
+  passingTimes.forEach(node => ctx.worker.queue("worker", node));
 
   // execute worker tasks
-  const errors = context.execute();
+  const errors = ctx.worker.execute();
 
   if (errors.length === 0) {
-    log.info("validation without any errors");
+    ctx.log.info("validation without any errors");
   } else {
-    log.info("validation completed with '%d' errors", errors.length);
+    ctx.log.info("validation completed with '%d' errors", errors.length);
   }
 
   return errors;
 }
 
-function worker(workerContext) {
-  const { log, nodeContext, document, node } = workerContext;
+function worker(ctx) {
   const errors = [];
-  const serviceJourney = xpath.first(nodeContext, "./parent::netex:ServiceJourney", node);
-  const passingTimes = xpath.find(nodeContext, xpath.join(".", "TimetabledPassingTime"), node);
-  const id = xpath.findValue(nodeContext, "@id", serviceJourney);
+  const serviceJourney = ctx.xpath.first("./parent::netex:ServiceJourney", ctx.node);
+  const passingTimes = ctx.xpath.find(xpath.join(".", "TimetabledPassingTime"), ctx.node);
+  const id = ctx.xpath.findValue("@id", serviceJourney);
   let prevArrivalDayOffset;
   let prevDepartureTime;
   let prevDepartureDayOffset;
 
   for (let i = 0; i < passingTimes.length; i++) {
     const passingTime = passingTimes[i];
-    const stopPointID = xpath.findValue(nodeContext, xpath.join(".", "StopPointInJourneyPatternRef/@ref"), passingTime);
-    const arrivalTime = xpath.findValue(nodeContext, xpath.join(".", "ArrivalTime"), passingTime);
-    const arrivalDayOffset = xpath.findValue(nodeContext, "./netex:ArrivalDayOffset", passingTime);
-    const departureTime = xpath.findValue(nodeContext, "./netex:DepartureTime", passingTime);
-    const departureDayOffset = xpath.findValue(nodeContext, "./netex:DepartureDayOffset", passingTime);
-    const tid = xpath.findValue(nodeContext, "@id", passingTime);
+    const stopPointID = ctx.xpath.findValue(xpath.join(".", "StopPointInJourneyPatternRef/@ref"), passingTime);
+    const arrivalTime = ctx.xpath.findValue(xpath.join(".", "ArrivalTime"), passingTime);
+    const arrivalDayOffset = ctx.xpath.findValue("./netex:ArrivalDayOffset", passingTime);
+    const departureTime = ctx.xpath.findValue("./netex:DepartureTime", passingTime);
+    const departureDayOffset = ctx.xpath.findValue("./netex:DepartureDayOffset", passingTime);
+    const tid = ctx.xpath.findValue("@id", passingTime);
     if (i !== 0) {
       if (prevDepartureTime >= arrivalTime && arrivalDayOffset === prevArrivalDayOffset) {
         errors.push(`Expected passing time to increase in ServiceJourney(@id=${id}), TimetabledPassingTime(@id=${tid})`);
@@ -59,17 +57,10 @@ function worker(workerContext) {
     prevDepartureTime = departureTime;
     prevDepartureDayOffset = departureDayOffset;
 
-    if (!stopPointExist(workerContext, stopPointID)) {
+    if (!ctx.xpath.first(xpath.join(stopPointPath, `StopPointInJourneyPattern[@id = '${stopPointID}']`), ctx.document)) {
       errors.push(`Expected StoPointInJourneyPattern(@id=${id}`);
     }
   }
 
   return errors;
-}
-
-function stopPointExist(ctx, id) {
-  const { log, nodeContext, document } = ctx
-  const stopIDPath = xpath.join(stopPointPath, `StopPointInJourneyPattern[@id = '${id}']`);
-
-  return !!xpath.first(nodeContext, stopIDPath, document);
 }
