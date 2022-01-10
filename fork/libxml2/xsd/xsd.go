@@ -28,7 +28,6 @@ const ValueVCCreate = 1
 // Schema instance. Make sure to call Free() on the instance
 // when you are done with it.
 
-
 func Parse(buf []byte, options ...Option) (*Schema, error) {
 	// xsd.WithURI(...)
 	sptr, err := clib.XMLSchemaParse(buf, options...)

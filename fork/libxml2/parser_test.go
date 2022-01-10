@@ -54,16 +54,16 @@ var (
 		stdXMLDecl,                              // only XML Declaration
 		"<!--ouch-->",                           // comment only is like an empty document
 		`<!DOCTYPE ouch [<!ENTITY foo "bar">]>`, // no good either ...
-		"<ouch>",                // single tag (tag mismatch)
-		"<ouch/>foo",            // trailing junk
-		"foo<ouch/>",            // leading junk
-		"<ouch foo=bar/>",       // bad attribute
-		`<ouch foo="bar/>`,      // bad attribute
-		"<ouch>&</ouch>",        // bad char
-		`<ouch>&//0x20;</ouch>`, // bad chart
-		"<foob<e4>r/>",          // bad encoding
-		"<ouch>&foo;</ouch>",    // undefind entity
-		"<ouch>&gt</ouch>",      // unterminated entity
+		"<ouch>",                                // single tag (tag mismatch)
+		"<ouch/>foo",                            // trailing junk
+		"foo<ouch/>",                            // leading junk
+		"<ouch foo=bar/>",                       // bad attribute
+		`<ouch foo="bar/>`,                      // bad attribute
+		"<ouch>&</ouch>",                        // bad char
+		`<ouch>&//0x20;</ouch>`,                 // bad chart
+		"<foob<e4>r/>",                          // bad encoding
+		"<ouch>&foo;</ouch>",                    // undefind entity
+		"<ouch>&gt</ouch>",                      // unterminated entity
 		stdXMLDecl + `<!DOCTYPE foobar [<!ENTITY foo "bar">]><foobar &foo;="ouch"/>`,          // bad placed entity
 		stdXMLDecl + `<!DOCTYPE foobar [<!ENTITY foo "bar=&quot;foo&quot;">]><foobar &foo;/>`, // even worse
 		"<ouch><!---></ouch>",   // bad comment
