@@ -15,6 +15,11 @@ func EnvPath(v string) string {
 		if vp[0] == '$' {
 			vs[i] = os.Getenv(vp[1:])
 		}
+		if vp[0] == '~' {
+			if dir, err := os.UserHomeDir(); err == nil {
+				vs[i] = dir
+			}
+		}
 	}
 
 	return strings.Join(vs, "/")
