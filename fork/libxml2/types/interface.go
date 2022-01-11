@@ -34,8 +34,6 @@ type XPathResult interface {
 // Document defines the interface for XML document
 type Document interface {
 	Node
-	CreateElement(string) (Element, error)
-	CreateElementNS(string, string) (Element, error)
 	DocumentElement() (Node, error)
 	Dump(bool) string
 	Encoding() string
@@ -58,8 +56,6 @@ type Element interface {
 	NamespaceURI() string
 	Prefix() string
 	RemoveAttribute(string) error
-	SetAttribute(string, string) error
-	SetNamespace(string, string, ...bool) error
 }
 
 // Namespace defines the interface for XML namespace

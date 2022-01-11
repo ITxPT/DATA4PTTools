@@ -39,9 +39,10 @@ func TestXSD(t *testing.T) {
 		}
 		defer d.Free()
 
-		err = s.Validate(d)
-		if !assert.Error(t, err, "s.Validate should fail") {
-			return
+		if _, errors := s.Validate(d); len(errors) > 0 {
+			if !assert.Error(t, errors[0], "s.Validate should fail") {
+				return
+			}
 		}
 
 		serr, ok := err.(xsd.SchemaValidationError)
@@ -105,14 +106,15 @@ BrIVC58W3ydbkK+Ri4OKbaRZlYeRA==
 		}
 		defer d.Free()
 
-		err = s.Validate(d)
-		if !assert.NoError(t, err, "s.Validate should pass") {
-			if serr, ok := err.(xsd.SchemaValidationError); ok {
-				for _, e := range serr.Errors() {
-					t.Logf("err: %s", e)
+		if _, errors := s.Validate(d); len(errors) > 0 {
+			if !assert.NoError(t, errors[0], "s.Validate should pass") {
+				if serr, ok := errors[0].(xsd.SchemaValidationError); ok {
+					for _, e := range serr.Errors() {
+						t.Logf("err: %s", e)
+					}
 				}
+				return
 			}
-			return
 		}
 	}()
 }
@@ -157,8 +159,10 @@ elementFormDefault="qualified">
 		return
 	}
 	defer doc.Free()
-	if !assert.NoError(t, schema.Validate(doc, xsd.ValueVCCreate), `schema.Validate should succeed`) {
-		return
+	if _, errors := schema.Validate(doc, xsd.ValueVCCreate); len(errors) > 0 {
+		if !assert.NoError(t, errors[0], `schema.Validate should succeed`) {
+			return
+		}
 	}
 
 	t.Logf("%s", doc.String())
@@ -191,8 +195,10 @@ func TestGHIssue67(t *testing.T) {
 			return
 		}
 		defer doc.Free()
-		if !assert.NoError(t, schema.Validate(doc, xsd.ValueVCCreate), `schema.Validate should succeed`) {
-			return
+		if _, errors := schema.Validate(doc, xsd.ValueVCCreate); len(errors) > 0 {
+			if !assert.NoError(t, errors[0], `schema.Validate should succeed`) {
+				return
+			}
 		}
 
 		t.Logf("%s", doc.String())
@@ -236,8 +242,10 @@ func TestGHIssue67(t *testing.T) {
 			return
 		}
 		defer doc.Free()
-		if !assert.NoError(t, schema.Validate(doc, xsd.ValueVCCreate), `schema.Validate should succeed`) {
-			return
+		if _, errors := schema.Validate(doc, xsd.ValueVCCreate); len(errors) > 0 {
+			if !assert.NoError(t, errors[0], `schema.Validate should succeed`) {
+				return
+			}
 		}
 
 		t.Logf("%s", doc.String())

@@ -10,7 +10,6 @@ import (
 	"testing"
 
 	"github.com/lestrrat-go/libxml2"
-	"github.com/lestrrat-go/libxml2/dom"
 	"github.com/lestrrat-go/libxml2/xpath"
 	"github.com/stretchr/testify/assert"
 	"gopkg.in/xmlpath.v1"
@@ -123,38 +122,5 @@ func BenchmarkEncodingXMLDOM(b *testing.B) {
 		buf.Reset()
 		enc := xml.NewEncoder(&buf)
 		enc.Encode(f)
-	}
-}
-
-func BenchmarkLibxml2DOM(b *testing.B) {
-	var buf bytes.Buffer
-	const nsuri = `https://github.com/lestrrat-go/libxml2/foo`
-	f := Foo{
-		Field1: "Hello, World!",
-		Field2: "Hello, Attribute!",
-	}
-	for i := 0; i < b.N; i++ {
-		d := dom.CreateDocument()
-
-		root, err := d.CreateElementNS(nsuri, "foo:foo")
-		if err != nil {
-			d.Free()
-			panic(err)
-		}
-		d.SetDocumentElement(root)
-
-		f1xml, err := d.CreateElement("Field1")
-		if err != nil {
-			d.Free()
-			panic(err)
-		}
-		root.AddChild(f1xml)
-
-		f1xml.SetAttribute("Field2", f.Field2)
-
-		f1xml.AppendText(f.Field1)
-		buf.Reset()
-		buf.WriteString(d.Dump(false))
-		d.Free()
 	}
 }

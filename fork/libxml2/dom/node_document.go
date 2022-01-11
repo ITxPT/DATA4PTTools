@@ -6,17 +6,6 @@ import (
 	"github.com/pkg/errors"
 )
 
-// CreateDocument creates a new document with version="1.0", and no encoding
-func CreateDocument() *Document {
-	return NewDocument("1.0", "")
-}
-
-// NewDocument creates a new document
-func NewDocument(version, encoding string) *Document {
-	ptr := clib.XMLCreateDocument(version, encoding)
-	return WrapDocument(ptr)
-}
-
 // Pointer returns the pointer to the underlying C struct
 func (d *Document) Pointer() uintptr {
 	return d.ptr
@@ -155,73 +144,6 @@ func (d *Document) Copy() (types.Node, error) {
 // AddChild is a no op for Document
 func (d *Document) AddChild(n types.Node) error {
 	return errors.New("method AddChild is not available for Document node")
-}
-
-// CreateAttribute creates a new attribute
-func (d *Document) CreateAttribute(k, v string) (*Attribute, error) {
-	attr, err := clib.XMLNewDocProp(d, k, v)
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to get document property")
-	}
-	return wrapAttributeNode(attr), nil
-}
-
-// CreateAttributeNS creates a new attribute with the given XML namespace
-func (d *Document) CreateAttributeNS(nsuri, k, v string) (*Attribute, error) {
-	if nsuri == "" {
-		return d.CreateAttribute(k, v)
-	}
-
-	ptr, err := clib.XMLCreateAttributeNS(d, nsuri, k, v)
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to create attribute")
-	}
-	return wrapAttributeNode(ptr), nil
-}
-
-// CreateCDataSection creates a new CDATA section node
-func (d *Document) CreateCDataSection(txt string) (*CDataSection, error) {
-	cdata, err := clib.XMLNewCDataBlock(d, txt)
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to create CDATA block")
-	}
-	return wrapCDataSectionNode(cdata), nil
-}
-
-// CreateCommentNode creates a new comment node
-func (d *Document) CreateCommentNode(txt string) (*Comment, error) {
-	ptr, err := clib.XMLNewComment(txt)
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to create comment")
-	}
-	return wrapCommentNode(ptr), nil
-}
-
-// CreateElement creates a new element node
-func (d *Document) CreateElement(name string) (types.Element, error) {
-	ptr, err := clib.XMLCreateElement(d, name)
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to create element")
-	}
-	return wrapElementNode(ptr), nil
-}
-
-// CreateElementNS creates a new element node in the given XML namespace
-func (d *Document) CreateElementNS(nsuri, name string) (types.Element, error) {
-	ptr, err := clib.XMLCreateElementNS(d, nsuri, name)
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to create element")
-	}
-	return wrapElementNode(ptr), nil
-}
-
-// CreateTextNode creates a new text node
-func (d *Document) CreateTextNode(txt string) (*Text, error) {
-	ptr, err := clib.XMLNewText(txt)
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to create text node")
-	}
-	return wrapTextNode(ptr), nil
 }
 
 // DocumentElement returns the root node of the document

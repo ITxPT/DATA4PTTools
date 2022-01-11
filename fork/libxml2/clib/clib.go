@@ -2,265 +2,48 @@ package clib
 
 /*
 #cgo pkg-config: libxml-2.0
-#include <string.h>
-#include <stdbool.h>
-#include <stdio.h>
-#include <libxml/HTMLparser.h>
-#include <libxml/HTMLtree.h>
-#include <libxml/globals.h>
-#include <libxml/parser.h>
 #include <libxml/parserInternals.h>
-#include <libxml/tree.h>
-#include <libxml/xmlerror.h>
-#include <libxml/xpath.h>
 #include <libxml/xpathInternals.h>
-#include <libxml/c14n.h>
 #include <libxml/xmlschemas.h>
-#include <libxml/schemasInternals.h>
 
-static inline void MY_nilErrorHandler(void *ctx, const char *msg, ...) {}
+#define MAX_VALIDATION_ERRORS_SIZE 32
 
-static inline void MY_xmlSilenceParseErrors() {
-	xmlSetGenericErrorFunc(NULL, MY_nilErrorHandler);
-}
+// Macro wrapper function. cgo cannot detect function-like macros, so this is how we avoid it
+static inline void MY_xmlFree(void *p) { xmlFree(p); }
+static inline xmlError* MY_xmlLastError() { return xmlGetLastError(); }
+static inline xmlError* MY_xmlCtxtLastError(void *ctx) { return xmlCtxtGetLastError(ctx); }
 
-static inline void MY_xmlDefaultParseErrors() {
-	// Checked in the libxml2 source code that using NULL in the second
-	// argument restores the default error handler
-	xmlSetGenericErrorFunc(NULL, NULL);
-}
+// For reference:
+// struct _xmlError {
+//     int	domain	: What part of the library raised this er
+//     int	code	: The error code, e.g. an xmlParserError
+//     char *	message	: human-readable informative error messag
+//     xmlErrorLevel	level	: how consequent is the error
+//     char *	file	: the filename
+//     int	line	: the line number if available
+//     char *	str1	: extra string information
+//     char *	str2	: extra string information
+//     char *	str3	: extra string information
+//     int	int1	: extra number information
+//     int	int2	: error column # or 0 if N/A (todo: renam
+//     void *	ctxt	: the parser context if available
+//     void *	node	: the node in the tree
+// }
+typedef struct err_message {
+  int line;
+  int level;
+  char *message;
+} err_message;
 
-// Macro wrapper function. cgo cannot detect function-like macros,
-// so this is how we avoid it
-static inline void MY_xmlFree(void *p) {
-	xmlFree(p);
-}
-
-// Macro wrapper function. cgo cannot detect function-like macros,
-// so this is how we avoid it
-static inline xmlError* MY_xmlLastError() {
-	return xmlGetLastError();
-}
-
-// Macro wrapper function. cgo cannot detect function-like macros,
-// so this is how we avoid it
-static inline xmlError* MY_xmlCtxtLastError(void *ctx) {
-	return xmlCtxtGetLastError(ctx);
-}
-
-// Change xmlIndentTreeOutput global, return old value, so caller can
-// change it back to old value later
-static inline int MY_setXmlIndentTreeOutput(int i) {
-	int old = xmlIndentTreeOutput;
-	xmlIndentTreeOutput = i;
-	return old;
-}
-
-// Parse a single char out of cur
-static inline int
-MY_parseChar( xmlChar *cur, int *len )
-{
-	unsigned char c;
-	unsigned int val;
-
-	// We are supposed to handle UTF8, check it's valid
-	// From rfc2044: encoding of the Unicode values on UTF-8:
-	//
-	// UCS-4 range (hex.)           UTF-8 octet sequence (binary)
-	// 0000 0000-0000 007F   0xxxxxxx
-	// 0000 0080-0000 07FF   110xxxxx 10xxxxxx
-	// 0000 0800-0000 FFFF   1110xxxx 10xxxxxx 10xxxxxx
-	//
-	// Check for the 0x110000 limit too
-
-	if ( cur == NULL || *cur == 0 ) {
-		*len = 0;
-		return(0);
-	}
-
-	c = *cur;
-	if ( (c & 0x80) == 0 ) {
-		*len = 1;
-		return((int)c);
-	}
-
-	if ((c & 0xe0) == 0xe0) {
-		if ((c & 0xf0) == 0xf0) {
-			// 4-byte code
-			*len = 4;
-			val = (cur[0] & 0x7) << 18;
-			val |= (cur[1] & 0x3f) << 12;
-			val |= (cur[2] & 0x3f) << 6;
-			val |= cur[3] & 0x3f;
-		} else {
-			// 3-byte code
-			*len = 3;
-			val = (cur[0] & 0xf) << 12;
-			val |= (cur[1] & 0x3f) << 6;
-			val |= cur[2] & 0x3f;
-		}
-	} else {
-		// 2-byte code
-		*len = 2;
-		val = (cur[0] & 0x1f) << 6;
-		val |= cur[1] & 0x3f;
-	}
-
-	if ( !IS_CHAR(val) ) {
-		*len = -1;
-		return 0;
-	}
-	return val;
-}
-
-// Checks if the given name is a valid name in XML
-static inline int
-MY_test_node_name( xmlChar * name )
-{
-	xmlChar * cur = name;
-	int tc  = 0;
-	int len = 0;
-
-	if ( cur == NULL || *cur == 0 ) {
-		return 0;
-	}
-
-	tc = MY_parseChar( cur, &len );
-
-	if ( !( IS_LETTER( tc ) || (tc == '_') || (tc == ':')) ) {
-		return 0;
-	}
-
-	tc  =  0;
-	cur += len;
-
-	while (*cur != 0 ) {
-		tc = MY_parseChar( cur, &len );
-
-		if (!(IS_LETTER(tc) || IS_DIGIT(tc) || (tc == '_') ||
-				(tc == '-') || (tc == ':') || (tc == '.') ||
-				IS_COMBINING(tc) || IS_EXTENDER(tc)) )
-		{
-			return 0;
-		}
-		tc = 0;
-		cur += len;
-	}
-
-	return(1);
-}
-
-// optimization
-static xmlNode*
-MY_xmlCreateElement(xmlDoc *doc, xmlChar *name) {
-	if (MY_test_node_name(name) == 0) {
-		return NULL;
-	}
-
-	xmlNode *ptr = xmlNewNode(NULL, name);
-	if (ptr == NULL) {
-		return NULL;
-	}
-
-	ptr->doc = doc;
-	return ptr;
-}
-
-static
-xmlNode *
-MY_xmlCreateElementNS(xmlDoc *doc, xmlChar *nsuri, xmlChar *name) {
-	xmlChar *local = name;
-	xmlChar *prefix = NULL;
-	xmlNode *node = NULL;
-	int i;
-
-	if (MY_test_node_name(name) == 0) {
-		return NULL;
-	}
-
-	for (i = 0; i < xmlStrlen(name); i++) {
-		local++;
-		// XXX boundary check!
-		if (*local == ':') {
-			local++;
-			break;
-		}
-	}
-
-	if (local != name) {
-		prefix = (xmlChar *) malloc(sizeof(xmlChar) * (local - name));
-		memcpy(prefix, name, local - name - 1);
-		prefix[(local - name - 1)] = '\0';
-	}
-
-	xmlNode *root = xmlDocGetRootElement(doc);
-	xmlNs *ns;
-	if (root == NULL) {
-		// No document element
-		ns = xmlNewNs(NULL, nsuri, prefix);
-	} else if (prefix != NULL) {
-		// Prefix exists, check if this is declared
-		ns = xmlSearchNs(doc, root, prefix);
-		if (ns == NULL) { // Not declared, create a new one
-			ns = xmlNewNs(NULL, nsuri, prefix);
-		} else { // Declared. Does the uri match?
-			if (xmlStrcmp(ns->href, nsuri) != 0) {
-				// Cleanup prefix
-				goto CLEANUP;
-			}
-			// Namespace is already registered, we don't need to provide a
-			// namespace element to xmlNewDocNode
-			ns = NULL;
-			local = name;
-		}
-	} else {
-		// If the name does not contain a prefix, check for the
-		// existence of this namespace via the URI
-		ns = xmlSearchNsByHref(doc, root, nsuri);
-		if (ns == NULL) {
-			ns = xmlNewNs(NULL, nsuri, NULL);
-		}
-	}
-
-	node = xmlNewDocNode(doc, ns, local, NULL);
-	if (ns != NULL) {
-		node->nsDef = ns;
-	}
-
-CLEANUP:
-	if (prefix != NULL) {
-		free(prefix);
-	}
-
-	return node;
-}
-
-#define GO_LIBXML2_ERR_ACCUMULATOR_SIZE 32
-typedef struct go_libxml2_err_accumulator {
-	char *errors[GO_LIBXML2_ERR_ACCUMULATOR_SIZE];
+typedef struct validation_result {
+  err_message *errors[MAX_VALIDATION_ERRORS_SIZE];
 	int index;
   int count;
-} go_libxml2_err_accumulator;
+} validation_result;
 
-static
-go_libxml2_err_accumulator*
-createErrAccumulator() {
-	int i;
-	go_libxml2_err_accumulator *ctx;
-	ctx = (go_libxml2_err_accumulator *) malloc(sizeof(go_libxml2_err_accumulator));
-	for (i = 0; i < GO_LIBXML2_ERR_ACCUMULATOR_SIZE; i++) {
-		ctx->errors[i] = NULL;
-	}
-	ctx->index = 0;
-  ctx->count = 0;
-	return ctx;
-}
-
-static
-void
-freeErrAccumulator(go_libxml2_err_accumulator* ctx) {
+static void freeValidationResult(validation_result* ctx) {
 	int i = 0;
-	for (i = 0; i < GO_LIBXML2_ERR_ACCUMULATOR_SIZE; i++) {
+	for (i = 0; i < MAX_VALIDATION_ERRORS_SIZE; i++) {
 		if (ctx->errors[i] != NULL) {
 			free(ctx->errors[i]);
 		}
@@ -268,44 +51,35 @@ freeErrAccumulator(go_libxml2_err_accumulator* ctx) {
 	free(ctx);
 }
 
-static
-void
-accumulateErr(void *ctx, const char *msg, ...) {
-  char buf[1024];
-  va_list args;
-	go_libxml2_err_accumulator *accum;
-	int len;
+static void structuredErrFunc(void *ctx, xmlError *error) {
+  validation_result *accum = (validation_result *) ctx;
 
-	accum = (go_libxml2_err_accumulator *) ctx;
   accum->count++;
-	if (accum->index >= GO_LIBXML2_ERR_ACCUMULATOR_SIZE) {
-		return;
-	}
-
-  va_start(args, msg);
-  len = vsnprintf(buf, sizeof(buf), msg, args);
-  va_end(args);
-
-	if (len == 0) {
-		return;
-	}
-
-	char *out = (char *) calloc(sizeof(char), len);
-	if (buf[len-1] == '\n') {
-		// don't want newlines in my error values
-		buf[len-1] = '\0';
-		len--;
-	}
-	memcpy(out, buf, len);
+  if (accum->index >= MAX_VALIDATION_ERRORS_SIZE) {
+    return;
+  }
 
   int i = accum->index++;
-	accum->errors[i] = out;
+  err_message *msg = malloc(sizeof(err_message));
+  msg->line = error->line;
+  msg->level = error->level;
+  msg->message = error->message;
+  accum->errors[i] = msg;
 }
 
-static
-void
-setErrAccumulator(xmlSchemaValidCtxtPtr ctxt, go_libxml2_err_accumulator *accum) {
-	xmlSchemaSetValidErrors(ctxt, accumulateErr, NULL, accum);
+static validation_result* setValidityFunc(xmlSchemaValidCtxtPtr ctxt) {
+	int i;
+	validation_result *ctx;
+	ctx = (validation_result *) malloc(sizeof(validation_result));
+	for (i = 0; i < MAX_VALIDATION_ERRORS_SIZE; i++) {
+		ctx->errors[i] = NULL;
+	}
+	ctx->index = 0;
+  ctx->count = 0;
+
+  xmlSchemaSetValidStructuredErrors(ctxt, structuredErrFunc, ctx);
+
+  return ctx;
 }
 */
 import "C"
@@ -313,26 +87,12 @@ import (
 	"fmt"
 	"reflect"
 	"strings"
-	"unicode"
-	"unicode/utf8"
 	"unsafe"
 
 	"github.com/lestrrat-go/libxml2/internal/debug"
 	"github.com/lestrrat-go/libxml2/internal/option"
 	"github.com/pkg/errors"
 )
-
-const _XPathObjectTypeName = "XPathUndefinedXPathNodeSetXPathBooleanXPathNumberXPathStringXPathPointXPathRangeXPathLocationSetXPathUSersXPathXsltTree"
-
-var _XPathObjectTypeIndex = [...]uint8{0, 14, 26, 38, 49, 60, 70, 80, 96, 106, 119}
-
-// String returns the stringified version of XPathObjectType
-func (i XPathObjectType) String() string {
-	if i < 0 || i+1 >= XPathObjectType(len(_XPathObjectTypeIndex)) {
-		return fmt.Sprintf("XPathObjectType(%d)", i)
-	}
-	return _XPathObjectTypeName[_XPathObjectTypeIndex[i]:_XPathObjectTypeIndex[i+1]]
-}
 
 func validDocumentPtr(doc PtrSource) (*C.xmlDoc, error) {
 	if doc == nil {
@@ -351,7 +111,7 @@ func validParserCtxtPtr(s PtrSource) (*C.xmlParserCtxt, error) {
 	}
 
 	if ptr := s.Pointer(); ptr != 0 {
-		return (*C.xmlParserCtxt)(unsafe.Pointer(ptr)), nil
+		return (*C.xmlParserCtxt)(unsafe.Pointer(s.Pointer())), nil
 	}
 	return nil, ErrInvalidParser
 }
@@ -412,32 +172,6 @@ func validXPathObjectPtr(x PtrSource) (*C.xmlXPathObject, error) {
 		return (*C.xmlXPathObject)(unsafe.Pointer(xptr)), nil
 	}
 	return nil, ErrInvalidXPathObject
-}
-
-var _XMLNodeTypeIndex = [...]uint8{0, 11, 24, 32, 48, 61, 71, 77, 88, 100, 116, 132, 144, 160, 167, 178, 191, 201, 214, 227, 238, 254}
-
-const _XMLNodeTypeName = `ElementNodeAttributeNodeTextNodeCDataSectionNodeEntityRefNodeEntityNodePiNodeCommentNodeDocumentNodeDocumentTypeNodeDocumentFragNodeNotationNodeHTMLDocumentNodeDTDNodeElementDeclAttributeDeclEntityDeclNamespaceDeclXIncludeStartXIncludeEndDocbDocumentNode`
-
-// String returns the string representation of this XMLNodeType
-func (i XMLNodeType) String() string {
-	x := i - 1
-	if x < 0 || x+1 >= XMLNodeType(len(_XMLNodeTypeIndex)) {
-		return fmt.Sprintf("XMLNodeType(%d)", x+1)
-	}
-	return _XMLNodeTypeName[_XMLNodeTypeIndex[x]:_XMLNodeTypeIndex[x+1]]
-}
-
-// ReportErrors *globally* changes the behavior of reporting errors.
-// By default libxml2 spews out lots of data to stderr. When you call
-// this function with a `false` value, all those messages are surpressed.
-// When you call this function a `true` value, the default behavior is
-// restored
-func ReportErrors(b bool) {
-	if b {
-		C.MY_xmlDefaultParseErrors()
-	} else {
-		C.MY_xmlSilenceParseErrors()
-	}
 }
 
 func xmlCtxtLastError(ctx PtrSource) error {
@@ -513,83 +247,11 @@ func XMLFreeParserCtxt(ctx PtrSource) error {
 	return nil
 }
 
-func HTMLReadDoc(content, url, encoding string, opts int) (uintptr, error) {
-	// TODO: use htmlCtxReadDoc later, so we can get the error
-	ccontent := C.CString(content)
-	curl := C.CString(url)
-	cencoding := C.CString(encoding)
-	defer C.free(unsafe.Pointer(ccontent))
-	defer C.free(unsafe.Pointer(curl))
-	defer C.free(unsafe.Pointer(cencoding))
-
-	doc := C.htmlReadDoc(
-		(*C.xmlChar)(unsafe.Pointer(ccontent)),
-		curl,
-		cencoding,
-		C.int(opts),
-	)
-
-	if doc == nil {
-		return 0, errors.New("failed to parse document")
-	}
-
-	return uintptr(unsafe.Pointer(doc)), nil
-}
-
-func XMLCreateDocument(version, encoding string) uintptr {
-	cver := stringToXMLChar(version)
-	defer C.free(unsafe.Pointer(cver))
-
-	doc := C.xmlNewDoc(cver)
-	if encoding != "" {
-		cenc := stringToXMLChar(encoding)
-		defer C.free(unsafe.Pointer(cenc))
-
-		doc.encoding = C.xmlStrdup(cenc)
-	}
-	return uintptr(unsafe.Pointer(doc))
-}
-
 func XMLEncodeEntitiesReentrant(docptr *C.xmlDoc, s string) (*C.xmlChar, error) {
 	cent := stringToXMLChar(s)
 	defer C.free(unsafe.Pointer(cent))
 
 	return C.xmlEncodeEntitiesReentrant(docptr, cent), nil
-}
-
-func isSafeName(name string) error {
-	if utf8.ValidString(name) { // UTF-8, we can do everything in go
-		if len(name) > MaxValueBufferSize {
-			return ErrValueTooLong
-		}
-		p := name
-		r, n := utf8.DecodeRuneInString(p)
-		p = p[n:]
-		if !unicode.IsLetter(r) && r != '_' && r != ':' {
-			return ErrInvalidNodeName
-		}
-
-		for len(p) > 0 {
-			r, n = utf8.DecodeRuneInString(p)
-			p = p[n:]
-			if !unicode.IsLetter(r) && !unicode.IsNumber(r) && r != '_' && r != ':' {
-				return ErrInvalidNodeName
-			}
-		}
-
-		return nil
-	}
-
-	// Need to call out to C
-	var buf [MaxValueBufferSize]C.xmlChar
-	for i := 0; i < len(name); i++ {
-		buf[i] = C.xmlChar(name[i])
-	}
-	bufptr := (uintptr)(unsafe.Pointer(&buf[0]))
-	if C.MY_test_node_name((*C.xmlChar)(unsafe.Pointer(bufptr))) == 0 {
-		return ErrInvalidNodeName
-	}
-	return nil
 }
 
 func validNamespacePtr(s PtrSource) (*C.xmlNs, error) {
@@ -601,62 +263,6 @@ func validNamespacePtr(s PtrSource) (*C.xmlNs, error) {
 		return (*C.xmlNs)(unsafe.Pointer(ptr)), nil
 	}
 	return nil, ErrInvalidNamespace
-}
-
-func XMLNewNode(ns PtrSource, name string) (uintptr, error) {
-	nsptr, err := validNamespacePtr(ns)
-	if err != nil {
-		return 0, err
-	}
-
-	if err := isSafeName(name); err != nil {
-		return 0, err
-	}
-
-	var cname [MaxElementNameLength]C.xmlChar
-	if len(name) > MaxElementNameLength {
-		return 0, ErrElementNameTooLong
-	}
-	for i := 0; i < len(name); i++ {
-		cname[i] = C.xmlChar(name[i])
-	}
-	cnameptr := (uintptr)(unsafe.Pointer(&cname[0]))
-
-	n := C.xmlNewNode(
-		(*C.xmlNs)(unsafe.Pointer(nsptr)),
-		(*C.xmlChar)(unsafe.Pointer(cnameptr)),
-	)
-	return uintptr(unsafe.Pointer(n)), nil
-}
-
-func XMLNewDocProp(doc PtrSource, k, v string) (uintptr, error) {
-	docptr, err := validDocumentPtr(doc)
-	if err != nil {
-		return 0, err
-	}
-
-	if err := isSafeName(k); err != nil {
-		return 0, err
-	}
-
-	if len(k) > MaxAttributeNameLength {
-		return 0, ErrAttributeNameTooLong
-	}
-
-	var kx [MaxAttributeNameLength]C.xmlChar
-	for i := 0; i < len(k); i++ {
-		kx[i] = C.xmlChar(k[i])
-	}
-	// Taking the pointer as uintptr somehow fools the go compiler
-	// to not think this escapes to heap
-	kxptr := uintptr(unsafe.Pointer(&kx[0]))
-
-	ent, err := XMLEncodeEntitiesReentrant(docptr, v)
-	if err != nil {
-		return 0, err
-	}
-	attr := C.xmlNewDocProp(docptr, (*C.xmlChar)(unsafe.Pointer(kxptr)), ent)
-	return uintptr(unsafe.Pointer(attr)), nil
 }
 
 func XMLSearchNsByHref(doc PtrSource, n PtrSource, uri string) (uintptr, error) {
@@ -710,107 +316,6 @@ func XMLSearchNs(doc PtrSource, n PtrSource, prefix string) (uintptr, error) {
 		return 0, ErrNamespaceNotFound{Target: prefix}
 	}
 	return uintptr(unsafe.Pointer(ns)), nil
-}
-
-func XMLNewDocNode(doc PtrSource, ns PtrSource, local, content string) (uintptr, error) {
-	docptr, err := validDocumentPtr(doc)
-	if err != nil {
-		return 0, err
-	}
-
-	nsptr, err := validNamespacePtr(ns)
-	if err != nil {
-		return 0, err
-	}
-
-	var c *C.xmlChar
-	if len(content) > 0 {
-		c = stringToXMLChar(content)
-		defer C.free(unsafe.Pointer(c))
-	}
-
-	clocal := stringToXMLChar(local)
-	defer C.free(unsafe.Pointer(c))
-
-	ptr := C.xmlNewDocNode(docptr, nsptr, clocal, c)
-	if ptr == nil {
-		return 0, errors.New("failed to create node")
-	}
-	return uintptr(unsafe.Pointer(ptr)), nil
-}
-
-func XMLNewNs(n PtrSource, nsuri, prefix string) (uintptr, error) {
-	nptr, err := validNodePtr(n)
-	if err != nil {
-		return 0, err
-	}
-
-	var cprefix *C.xmlChar
-
-	cnsuri := stringToXMLChar(nsuri)
-	if prefix != "" {
-		cprefix = stringToXMLChar(prefix)
-		defer C.free(unsafe.Pointer(cprefix))
-	}
-	defer C.free(unsafe.Pointer(cnsuri))
-
-	nsptr := C.xmlNewNs(nptr, cnsuri, cprefix)
-	if nsptr == nil {
-		return 0, errors.New("failed to create namespace")
-	}
-	return uintptr(unsafe.Pointer(nsptr)), nil
-}
-
-func XMLSetNs(n PtrSource, ns PtrSource) error {
-	nptr, err := validNodePtr(n)
-	if err != nil {
-		return err
-	}
-
-	nsptr, err := validNamespacePtr(ns)
-	if err != nil {
-		return err
-	}
-
-	C.xmlSetNs(nptr, nsptr)
-	return nil
-}
-
-func XMLNewCDataBlock(doc PtrSource, txt string) (uintptr, error) {
-	dptr, err := validDocumentPtr(doc)
-	if err != nil {
-		return 0, err
-	}
-	ctxt := stringToXMLChar(txt)
-	defer C.free(unsafe.Pointer(ctxt))
-
-	ptr := C.xmlNewCDataBlock(dptr, ctxt, C.int(len(txt)))
-	if ptr == nil {
-		return 0, errors.New("failed to create CDATA block")
-	}
-	return uintptr(unsafe.Pointer(ptr)), nil
-}
-
-func XMLNewComment(txt string) (uintptr, error) {
-	ctxt := stringToXMLChar(txt)
-	defer C.free(unsafe.Pointer(ctxt))
-
-	ptr := C.xmlNewComment(ctxt)
-	if ptr == nil {
-		return 0, errors.New("failed to create comment node")
-	}
-	return uintptr(unsafe.Pointer(ptr)), nil
-}
-
-func XMLNewText(txt string) (uintptr, error) {
-	ctxt := stringToXMLChar(txt)
-	defer C.free(unsafe.Pointer(ctxt))
-
-	ptr := C.xmlNewText(ctxt)
-	if ptr == nil {
-		return 0, errors.New("failed to create text node")
-	}
-	return uintptr(unsafe.Pointer(ptr)), nil
 }
 
 func XMLNodeName(n PtrSource) (string, error) {
@@ -1059,9 +564,7 @@ func XMLToString(n PtrSource, format int, docencoding bool) string {
 	if format <= 0 {
 		C.xmlNodeDump(buffer, nptr.doc, nptr, 0, 0)
 	} else {
-		oIndentTreeOutput := C.MY_setXmlIndentTreeOutput(1)
 		C.xmlNodeDump(buffer, nptr.doc, nptr, 0, C.int(format))
-		C.MY_setXmlIndentTreeOutput(oIndentTreeOutput)
 	}
 	return xmlCharToString(C.xmlBufferContent(buffer))
 }
@@ -1306,137 +809,6 @@ func XMLNamespaceFree(n PtrSource) {
 		return
 	}
 	C.MY_xmlFree(unsafe.Pointer(nsptr))
-}
-
-func XMLCreateAttributeNS(doc PtrSource, uri, k, v string) (uintptr, error) {
-	dptr, err := validDocumentPtr(doc)
-	if err != nil {
-		return 0, err
-	}
-
-	rootptr := C.xmlDocGetRootElement(dptr)
-	if rootptr == nil {
-		return 0, errors.New("no document element found")
-	}
-
-	if err := isSafeName(k); err != nil {
-		return 0, err
-	}
-
-	prefix, local := SplitPrefixLocal(k)
-
-	if len(uri) > MaxNamespaceURILength {
-		return 0, ErrNamespaceURITooLong
-	}
-
-	var xcuri [MaxNamespaceURILength]C.xmlChar
-	for i := 0; i < len(uri); i++ {
-		xcuri[i] = C.xmlChar(uri[i])
-	}
-	xcuriptr := (uintptr)(unsafe.Pointer(&xcuri[0]))
-
-	ns := C.xmlSearchNsByHref(
-		(*C.xmlDoc)(unsafe.Pointer(dptr)),
-		(*C.xmlNode)(unsafe.Pointer(rootptr)),
-		(*C.xmlChar)(unsafe.Pointer(xcuriptr)),
-	)
-	if ns == nil {
-		if len(prefix) > MaxAttributeNameLength {
-			return 0, ErrAttributeNameTooLong
-		}
-		var xcprefix [MaxAttributeNameLength]C.xmlChar
-		for i := 0; i < len(prefix); i++ {
-			xcprefix[i] = C.xmlChar(prefix[i])
-		}
-		xcprefixptr := (uintptr)(unsafe.Pointer(&xcprefix))
-
-		ns = C.xmlNewNs(
-			rootptr,
-			(*C.xmlChar)(unsafe.Pointer(xcuriptr)),
-			(*C.xmlChar)(unsafe.Pointer(xcprefixptr)),
-		)
-		if ns == nil {
-			return 0, errors.New("failed to create namespace")
-		}
-	}
-
-	xcv := stringToXMLChar(v)
-	defer C.free(unsafe.Pointer(xcv))
-
-	ent := C.xmlEncodeEntitiesReentrant(dptr, xcv)
-	if ent == nil {
-		return 0, errors.New("failed to encode value")
-	}
-
-	xclocal := stringToXMLChar(local)
-	defer C.free(unsafe.Pointer(xclocal))
-
-	attr := C.xmlNewDocProp(dptr, xclocal, ent)
-
-	C.xmlSetNs((*C.xmlNode)(unsafe.Pointer(attr)), ns)
-
-	return uintptr(unsafe.Pointer(attr)), nil
-}
-
-func XMLCreateElement(d PtrSource, name string) (uintptr, error) {
-	dptr, err := validDocumentPtr(d)
-	if err != nil {
-		return 0, err
-	}
-
-	var xcname [MaxElementNameLength]C.xmlChar
-	if len(name) > MaxElementNameLength {
-		return 0, ErrElementNameTooLong
-	}
-	for i := 0; i < len(name); i++ {
-		xcname[i] = C.xmlChar(name[i])
-	}
-	xcnameptr := (uintptr)(unsafe.Pointer(&xcname[0]))
-
-	nptr := C.MY_xmlCreateElement(dptr, (*C.xmlChar)(unsafe.Pointer(xcnameptr)))
-	if nptr == nil {
-		return 0, errors.New("element creation failed")
-	}
-
-	return uintptr(unsafe.Pointer(nptr)), nil
-}
-
-func XMLCreateElementNS(doc PtrSource, nsuri, name string) (uintptr, error) {
-	if nsuri == "" {
-		return XMLCreateElement(doc, name)
-	}
-
-	dptr, err := validDocumentPtr(doc)
-	if err != nil {
-		return 0, err
-	}
-
-	if len(nsuri) > MaxNamespaceURILength {
-		return 0, ErrNamespaceURITooLong
-	}
-
-	var xcnsuri [MaxNamespaceURILength]C.xmlChar
-	for i := 0; i < len(nsuri); i++ {
-		xcnsuri[i] = C.xmlChar(nsuri[i])
-	}
-	xcnsuriptr := (uintptr)(unsafe.Pointer(&xcnsuri[0]))
-
-	var xcname [MaxElementNameLength]C.xmlChar
-	for i := 0; i < len(name); i++ {
-		xcname[i] = C.xmlChar(name[i])
-	}
-	xcnameptr := (uintptr)(unsafe.Pointer(&xcname[0]))
-
-	nptr := C.MY_xmlCreateElementNS(
-		dptr,
-		(*C.xmlChar)(unsafe.Pointer(xcnsuriptr)),
-		(*C.xmlChar)(unsafe.Pointer(xcnameptr)),
-	)
-	if nptr == nil {
-		return 0, errors.New("failed to create element")
-	}
-
-	return uintptr(unsafe.Pointer(nptr)), nil
 }
 
 func XMLDocumentEncoding(doc PtrSource) string {
@@ -1766,37 +1138,6 @@ func XMLUnsetNsProp(n PtrSource, ns PtrSource, name string) error {
 		return errors.New("failed to unset prop")
 	}
 	return nil
-}
-
-func XMLC14NDocDumpMemory(d PtrSource, mode int, withComments bool) (string, error) {
-	dptr, err := validDocumentPtr(d)
-	if err != nil {
-		return "", err
-	}
-
-	var result *C.xmlChar
-
-	var withCommentsInt C.int
-	if withComments {
-		withCommentsInt = 1
-	}
-
-	modeInt := C.int(mode)
-
-	written := C.xmlC14NDocDumpMemory(
-		dptr,
-		nil,
-		modeInt,
-		nil,
-		withCommentsInt,
-		&result,
-	)
-	if written < 0 {
-		e := C.MY_xmlLastError()
-		return "", errors.New("c14n dump failed: " + C.GoString(e.message))
-	}
-	defer C.MY_xmlFree(unsafe.Pointer(result))
-	return xmlCharToString(result), nil
 }
 
 func XMLAppendText(n PtrSource, s string) error {
@@ -2149,6 +1490,7 @@ type SchemaValidationResult struct {
 	ErrorCount int
 }
 
+// TODO improve the returned result
 func XMLSchemaValidateDocument(schema PtrSource, document PtrSource, options ...int) (res SchemaValidationResult) {
 	sptr, err := validSchemaPtr(schema)
 	if err != nil {
@@ -2172,10 +1514,8 @@ func XMLSchemaValidateDocument(schema PtrSource, document PtrSource, options ...
 	}
 	defer C.xmlSchemaFreeValidCtxt(ctx)
 
-	accum := C.createErrAccumulator()
-	defer C.freeErrAccumulator(accum)
-
-	C.setErrAccumulator(ctx, accum)
+	accum := C.setValidityFunc(ctx)
+	defer C.freeValidationResult(accum)
 
 	for _, option := range options {
 		C.xmlSchemaSetValidOptions(ctx, C.int(option))
@@ -2187,7 +1527,10 @@ func XMLSchemaValidateDocument(schema PtrSource, document PtrSource, options ...
 
 	errs := make([]error, accum.index)
 	for i := 0; i < int(accum.index); i++ {
-		errs[i] = errors.New(C.GoString(accum.errors[i]))
+		err := accum.errors[i]
+		errMessage := C.GoString(err.message)
+
+		errs[i] = errors.New(strings.TrimRight(errMessage, "\n"))
 	}
 
 	res.Errors = errs
