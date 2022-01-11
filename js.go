@@ -62,6 +62,7 @@ func (c *jsContext) object(id int) jsObject {
 			"error": c.logger.Errorf,
 		},
 		"nodeContext": c.nodeContext,
+		"node":        c.node,
 		"schema":      c.schema,
 		"worker": jsObject{
 			"execute": c.Execute,
