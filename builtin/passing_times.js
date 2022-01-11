@@ -3,6 +3,11 @@ const description = "Makes sure passing times have increasing have increasing ti
 const framesPath = xpath.join(".", "PublicationDelivery", "dataObjects", "CompositeFrame", "frames");
 const timetablePath = xpath.join(framesPath, "TimetableFrame", "vehicleJourneys", "ServiceJourney", "passingTimes");
 const stopPointPath = xpath.join(framesPath, "ServiceFrame", "journeyPatterns", "*[contains(name(), 'JourneyPattern')]", "pointsInSequence");
+const stopPointRefPath = xpath.join("StopPointInJourneyPatternRef/@ref");
+const arrivalTimePath = xpath.join("ArrivalTime");
+const arrivalOffsetPath = xpath.join("ArrivalDayOffset");
+const departureTimePath = xpath.join("DepartureTime");
+const departureOffsetPath = xpath.join("DepartureDayOffset");
 
 function main(ctx) {
   const passingTimes = ctx.xpath.find(timetablePath);
@@ -16,7 +21,7 @@ function main(ctx) {
   const errors = ctx.worker.execute();
 
   if (errors.length === 0) {
-    ctx.log.info("validation without any errors");
+    ctx.log.info("validation completed without any errors");
   } else {
     ctx.log.info("validation completed with '%d' errors", errors.length);
   }
@@ -26,8 +31,8 @@ function main(ctx) {
 
 function worker(ctx) {
   const errors = [];
-  const serviceJourney = ctx.xpath.first("./parent::netex:ServiceJourney", ctx.node);
-  const passingTimes = ctx.xpath.find(xpath.join(".", "TimetabledPassingTime"), ctx.node);
+  const serviceJourney = ctx.xpath.first("parent::netex:ServiceJourney", ctx.node);
+  const passingTimes = ctx.xpath.find(xpath.join("TimetabledPassingTime"), ctx.node);
   const id = ctx.xpath.findValue("@id", serviceJourney);
   let prevArrivalDayOffset;
   let prevDepartureTime;
@@ -35,11 +40,11 @@ function worker(ctx) {
 
   for (let i = 0; i < passingTimes.length; i++) {
     const passingTime = passingTimes[i];
-    const stopPointID = ctx.xpath.findValue(xpath.join(".", "StopPointInJourneyPatternRef/@ref"), passingTime);
-    const arrivalTime = ctx.xpath.findValue(xpath.join(".", "ArrivalTime"), passingTime);
-    const arrivalDayOffset = ctx.xpath.findValue("./netex:ArrivalDayOffset", passingTime);
-    const departureTime = ctx.xpath.findValue("./netex:DepartureTime", passingTime);
-    const departureDayOffset = ctx.xpath.findValue("./netex:DepartureDayOffset", passingTime);
+    const stopPointID = ctx.xpath.findValue(stopPointRefPath, passingTime);
+    const arrivalTime = ctx.xpath.findValue(arrivalTimePath, passingTime);
+    const arrivalDayOffset = ctx.xpath.findValue(arrivalOffsetPath, passingTime);
+    const departureTime = ctx.xpath.findValue(departureTimePath, passingTime);
+    const departureDayOffset = ctx.xpath.findValue(departureOffsetPath, passingTime);
     const tid = ctx.xpath.findValue("@id", passingTime);
     if (i !== 0) {
       if (prevDepartureTime >= arrivalTime && arrivalDayOffset === prevArrivalDayOffset) {

@@ -5,6 +5,9 @@ const journeyPatternsPath = xpath.join(framesPath, "ServiceFrame", "journeyPatte
 const stopPointRefPath = xpath.join("pointsInSequence", "StopPointInJourneyPattern", "ScheduledStopPointRef", "@ref");
 const scheduledStopPointsPath = xpath.join(framesPath, "ServiceFrame", "scheduledStopPoints");
 const timetablePath = xpath.join(framesPath, "TimetableFrame", "vehicleJourneys", "ServiceJourney", "passingTimes", "TimetabledPassingTime"); 
+const stopPointIDPath = xpath.join("pointsInSequence", "StopPointInJourneyPattern", "@id")
+const departureTimePath = xpath.join("DepartureTime");
+const arrivalTimePath = xpath.join("ArrivalTime");
 
 // entry point in script
 function main(ctx) {
@@ -55,7 +58,7 @@ function validateStopPointReferences(ctx) {
 
 function validatePassingTimes(ctx) {
   const errors = [];
-  const stopPoints = ctx.xpath.find("./netex:pointsInSequence/netex:StopPointInJourneyPattern/@id", ctx.node);
+  const stopPoints = ctx.xpath.find(stopPointIDPath, ctx.node);
 
   for (let i = 0; i < stopPoints.length; i++) {
     const stopPoint = stopPoints[i]
@@ -75,13 +78,13 @@ function validatePassingTimes(ctx) {
       const tid = ctx.xpath.findValue("@id", timetabledPassingTime);
 
       if (i !== stopPoints.length - 1) {
-        const departureTime = ctx.xpath.findValue(xpath.join(".", "DepartureTime"), timetabledPassingTime);
+        const departureTime = ctx.xpath.findValue(departureTimePath, timetabledPassingTime);
         if (departureTime === "") {
           errors.push(`Expected departure time in TimetabledpassingTime(@id='${tid}') ${errorMessageBase}`);
         }
       }
       if (i !== 0) {
-        const arrivalTime = ctx.xpath.findValue(xpath.join(".", "ArrivalTime"), timetabledPassingTime);
+        const arrivalTime = ctx.xpath.findValue(arrivalTimePath, timetabledPassingTime);
         if (arrivalTime === "") {
           errors.push(`Expected arrival time in TimetabledpassingTime(@id='${tid}') ${errorMessageBase}`);
         }
