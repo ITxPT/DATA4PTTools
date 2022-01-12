@@ -26,35 +26,6 @@ func (v *Validator) Schema() *xsd.Schema {
 	return v.schema
 }
 
-func NewValidator(options ...ValidatorOption) (*Validator, error) {
-	var err error
-	v := &Validator{
-		useBuiltIn:  true,
-		scriptPaths: []string{},
-		scripts:     map[string]*Script{},
-		logger:      logger.New(),
-	}
-
-	for _, option := range options {
-		if err := option(v); err != nil {
-			return nil, err
-		}
-	}
-
-	scriptPaths := []string{}
-	if v.useBuiltIn {
-		scriptPaths = append(scriptPaths, builtInPath)
-	}
-
-	scriptPaths = append(scriptPaths, v.scriptPaths...)
-
-	if v.scripts, err = CompilePath(scriptPaths...); err != nil {
-		return nil, err
-	}
-
-	return v, nil
-}
-
 func (v *Validator) Validate(ctx *ValidationContext) {
 	defer func() {
 		ctx.Stop()
@@ -66,12 +37,14 @@ func (v *Validator) Validate(ctx *ValidationContext) {
 	tasks := make(chan task, numTasks)
 	res := make(chan interface{}, numTasks)
 
+	ctx.startProgress(numTasks + numTasks*len(v.scripts))
 	startWorkers(tasks, res)
 
-	for _, document := range ctx.documents {
+	for name, document := range ctx.documents {
 		tasks <- taskValidateDocument{
 			validator: v,
 			ctx:       ctx,
+			name:      name,
 			document:  document,
 		}
 	}
@@ -82,15 +55,16 @@ func (v *Validator) Validate(ctx *ValidationContext) {
 		if vr, ok := (<-res).(*ValidationResult); ok {
 			ctx.results = append(ctx.results, vr)
 		}
+		ctx.addProgress(1)
 	}
 
 	sort.SliceStable(ctx.results, func(i, j int) bool { return ctx.results[i].Name < ctx.results[j].Name })
 }
 
-func (v *Validator) ValidateDocument(doc types.Document, ctx *ValidationContext) *ValidationResult {
+func (v *Validator) ValidateDocument(name string, doc types.Document, ctx *ValidationContext) *ValidationResult {
 	result := &ValidationResult{
 		Measure:         &Measure{},
-		Name:            ctx.Name(),
+		Name:            name,
 		Valid:           true,
 		ValidationRules: []*RuleValidation{},
 	}
@@ -118,7 +92,7 @@ func (v *Validator) ValidateDocument(doc types.Document, ctx *ValidationContext)
 		l := v.logger.Copy()
 		l.AddTag(logger.NewTag("name", "main", logger.WithTagWidth(10)))
 		l.AddTag(logger.NewTag("script", script.name, logger.WithTagMaxWidth(v.scripts.Keys())))
-		l.AddTag(logger.NewTag("document", ctx.Name()))
+		l.AddTag(logger.NewTag("document", name))
 
 		tasks <- taskScript{
 			script:    script,
@@ -135,9 +109,40 @@ func (v *Validator) ValidateDocument(doc types.Document, ctx *ValidationContext)
 		if vres, ok := (<-res).(*RuleValidation); ok {
 			result.ValidationRules = append(result.ValidationRules, vres)
 		}
+
+		ctx.addProgress(1)
 	}
 
 	return result
+}
+
+func NewValidator(options ...ValidatorOption) (*Validator, error) {
+	var err error
+	v := &Validator{
+		useBuiltIn:  true,
+		scriptPaths: []string{},
+		scripts:     map[string]*Script{},
+		logger:      logger.New(),
+	}
+
+	for _, option := range options {
+		if err := option(v); err != nil {
+			return nil, err
+		}
+	}
+
+	scriptPaths := []string{}
+	if v.useBuiltIn {
+		scriptPaths = append(scriptPaths, builtInPath)
+	}
+
+	scriptPaths = append(scriptPaths, v.scriptPaths...)
+
+	if v.scripts, err = CompilePath(scriptPaths...); err != nil {
+		return nil, err
+	}
+
+	return v, nil
 }
 
 func WithSchemaFile(filePath string) ValidatorOption {

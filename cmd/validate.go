@@ -2,13 +2,12 @@ package main
 
 import (
 	"archive/zip"
-	"encoding/json"
 	"fmt"
 	"os"
 	"path"
 	"strings"
-	"time"
 
+	"github.com/MichaelMure/go-term-markdown"
 	"github.com/concreteit/greenlight"
 	"github.com/concreteit/greenlight/logger"
 	"github.com/spf13/cobra"
@@ -28,7 +27,6 @@ var (
 		"/greenlight",
 		".",
 	}
-	l *logger.Logger
 )
 
 func stringsJoin(v string, o []string, joinHandler func(elem ...string) string) []string {
@@ -43,8 +41,9 @@ func stringsJoin(v string, o []string, joinHandler func(elem ...string) string) 
 
 func init() {
 	validateCmd.Flags().StringP("disable-builtin-scripts", "", "false", "Whether to disable built in validation rules")
-	validateCmd.Flags().StringP("input", "i", "", "XML file, dir or archive to validate")
-	validateCmd.Flags().StringP("log-level", "l", "debug", "Set logger level")
+	validateCmd.Flags().BoolP("fancy", "f", true, "Whether to show a fance progressbar instead of logs")
+	validateCmd.Flags().StringSliceP("input", "i", []string{}, "XML file, dir or archive to validate")
+	validateCmd.Flags().StringP("log-level", "l", "", "Set logger level")
 	validateCmd.Flags().StringP("schema", "s", "xsd/NeTEx_publication.xsd", "Use XML Schema file for validation")
 	validateCmd.Flags().StringP("script-path", "", "", "Directory or file path to look for scripts")
 
@@ -72,29 +71,17 @@ func init() {
 
 	// bind from cli input
 	viper.BindPFlag("input", validateCmd.Flags().Lookup("input"))
-	viper.BindPFlag("log.level", validateCmd.Flags().Lookup("log-level"))
+	viper.BindPFlag("fancy", validateCmd.Flags().Lookup("fancy"))
+	viper.BindPFlag("logLevel", validateCmd.Flags().Lookup("log-level"))
 	viper.BindPFlag("schema", validateCmd.Flags().Lookup("schema"))
 	viper.BindPFlag("scripting.disableBuiltin", validateCmd.Flags().Lookup("disable-builtin-scripts"))
 	viper.BindPFlag("scripting.paths", validateCmd.Flags().Lookup("script-path"))
 
-	stdOut := logger.DefaultOutput()
-
-	l = logger.New()
-	l.SetLogLevel(logger.LogLevel(viper.GetString("log.level")))
-	l.AddOutput(stdOut)
-
 	rootCmd.AddCommand(validateCmd)
 }
 
-type ValidationResult struct {
-	*greenlight.Measure
-
-	SchemaParseTime float64                            `json:"schema_parse_time"`
-	Validations     []*greenlight.FileValidationResult `json:"validations"`
-	GeneralError    string                             `json:"general_error,omitempty"`
-}
-
-func validatePath(v *greenlight.Validator, input string) ([]*greenlight.FileValidationResult, error) {
+func createValidationContext(input string) (*greenlight.ValidationContext, error) {
+	ctx := greenlight.NewValidationContext(input)
 	fi, err := os.Stat(input)
 	if err != nil {
 		return nil, err
@@ -106,26 +93,35 @@ func validatePath(v *greenlight.Validator, input string) ([]*greenlight.FileVali
 			return nil, err
 		}
 
-		res := []*greenlight.FileValidationResult{}
-		filePaths := []string{}
 		for _, entry := range fileEntries {
-			filePath := input + "/" + entry.Name()
-
 			if path.Ext(entry.Name()) == ".xml" {
-				filePaths = append(filePaths, filePath)
-			} else {
-				vr, _ := validatePath(v, input+"/"+entry.Name()) // TODO we currently dont care about errors on os level
-				res = append(res, vr...)
+				file, err := os.Open(input + "/" + entry.Name())
+				if err != nil {
+					return nil, err
+				}
+
+				name := strings.TrimRight(entry.Name(), ".xml")
+				if err := ctx.AddReader(name, file); err != nil {
+					return nil, err
+				}
+
+				file.Close()
 			}
 		}
-
-		res = append(res, v.ValidateFiles(filePaths)...)
-
-		return res, nil
 	} else {
 		switch path.Ext(input) {
 		case ".xml":
-			return v.ValidateFiles([]string{input}), nil
+			file, err := os.Open(input)
+			if err != nil {
+				return nil, err
+			}
+
+			name := strings.TrimRight(path.Base(input), ".xml")
+			if err := ctx.AddReader(name, file); err != nil {
+				return nil, err
+			}
+
+			file.Close()
 		case ".zip":
 			r, err := zip.OpenReader(input)
 			if err != nil {
@@ -133,38 +129,36 @@ func validatePath(v *greenlight.Validator, input string) ([]*greenlight.FileVali
 			}
 			defer r.Close()
 
-			res := []*greenlight.FileValidationResult{}
-
-			for _, f := range r.File {
-				if strings.Contains(f.Name, "__MACOSX") || path.Ext(f.Name) != ".xml" {
+			for _, file := range r.File {
+				if strings.Contains(file.Name, "__MACOSX") || path.Ext(file.Name) != ".xml" {
 					continue
 				}
 
-				fr, err := f.Open()
+				fr, err := file.Open()
 				if err != nil {
 					return nil, err
 				}
 
-				fileRes := v.ValidateReader(fr, input+"/"+f.Name)
-				fileRes.FileSize = int64(f.UncompressedSize64)
-				res = append(res, fileRes)
-			}
+				name := strings.TrimRight(file.Name, ".xml")
+				if err := ctx.AddReader(name, fr); err != nil {
+					return nil, err
+				}
 
-			return res, nil
-		default:
-			return nil, fmt.Errorf("unsupported file format")
+				fr.Close()
+			}
 		}
 	}
+
+	return ctx, nil
 }
 
 func validate(cmd *cobra.Command, args []string) {
-	start := time.Now()
-	result := ValidationResult{
-		Measure:     &greenlight.Measure{},
-		Validations: []*greenlight.FileValidationResult{},
+	stdOut := logger.DefaultOutput()
+	l := logger.New()
+	if viper.GetString("logLevel") != "" {
+		l.SetLogLevel(logger.LogLevel(viper.GetString("logLevel")))
+		l.AddOutput(stdOut)
 	}
-
-	result.Start()
 
 	validator, err := greenlight.NewValidator(
 		greenlight.WithSchemaFile(viper.GetString("schema")),
@@ -173,30 +167,52 @@ func validate(cmd *cobra.Command, args []string) {
 		greenlight.WithScriptingPaths(viper.GetStringSlice("scripting.paths")),
 	)
 	if err != nil {
-		result.GeneralError = err.Error()
-		logResult(result)
+		fmt.Println(err)
 		return
 	}
 
-	result.SchemaParseTime = time.Since(start).Seconds()
 	input := viper.GetStringSlice("input")
 	if len(input) == 0 {
-		result.GeneralError = "no input paths defined"
-		logResult(result)
+		fmt.Println("no input paths defined")
 		return
 	}
 
+	contexts := []*greenlight.ValidationContext{}
 	for _, path := range input {
-		res, _ := validatePath(validator, greenlight.EnvPath(path))
-		result.Validations = append(result.Validations, res...)
+		ctx, err := createValidationContext(greenlight.EnvPath(path))
+		if err != nil {
+			if _, ok := err.(*os.PathError); ok {
+				continue
+			}
+
+			fmt.Println(err)
+			continue
+		}
+
+		if viper.GetString("logLevel") == "" && viper.GetBool("fancy") {
+			ctx.EnableProgressBar()
+		}
+
+		contexts = append(contexts, ctx)
 	}
 
-	result.Stop()
-	logResult(result)
-}
+	results := []string{}
+	for _, ctx := range contexts {
+		validator.Validate(ctx)
 
-func logResult(result ValidationResult) {
-	buf, _ := json.MarshalIndent(result, "", "  ")
+		rstr := []string{}
+		for _, r := range ctx.Results() {
+			rstr = append(rstr, r.Markdown(true))
+		}
 
-	fmt.Println(string(buf))
+		rows := []string{
+			fmt.Sprintf("- **path** %s", ctx.Name()),
+			fmt.Sprintf("- **execution time** %fs", ctx.ExecutionTime().Seconds()),
+		}
+		hstr := string(markdown.Render(strings.Join(rows, "\n"), 80, 0))
+		fstr := string(markdown.Render(strings.Join(rstr, "\n\n")+"\n\n---", 80, 4))
+		results = append(results, hstr+fstr)
+	}
+
+	fmt.Println("\n\n" + strings.Join(results, ""))
 }
