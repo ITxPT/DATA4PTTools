@@ -1,13 +1,9 @@
 package greenlight
 
 import (
-	"io"
-	"os"
-	"path"
-	"strings"
+	"sort"
 
 	"github.com/concreteit/greenlight/logger"
-	"github.com/lestrrat-go/libxml2"
 	"github.com/lestrrat-go/libxml2/types"
 	"github.com/lestrrat-go/libxml2/xsd"
 )
@@ -59,110 +55,89 @@ func NewValidator(options ...ValidatorOption) (*Validator, error) {
 	return v, nil
 }
 
-func (v *Validator) Validate(doc types.Document, name string, documents map[string]types.Document) *FileValidationResult {
-	result := &FileValidationResult{
-		Measure:         &Measure{},
-		FileName:        name,
-		Valid:           true,
-		ValidationRules: []*ValidationResult{},
-	}
-
+func (v *Validator) Validate(ctx *ValidationContext) {
 	defer func() {
-		result.Stop()
+		ctx.Stop()
 	}()
 
-	result.Start()
+	ctx.Start()
 
-	for _, script := range v.scripts {
-		l := v.logger.Copy()
-		l.AddTag(logger.NewTag("name", "main", logger.WithTagWidth(10)))
-		l.AddTag(logger.NewTag("script", script.name, logger.WithTagMaxWidth(v.scripts.Keys())))
-		l.AddTag(logger.NewTag("document", name))
-
-		result.ValidationRules = append(result.ValidationRules, script.Execute(v.schema, l, doc, documents))
-	}
-
-	return result
-}
-
-func (v *Validator) ValidateReader(reader io.Reader, name string) *FileValidationResult {
-	doc, err := libxml2.ParseReader(reader)
-	if err != nil {
-		return generalValidationError(name, err)
-	}
-
-	return v.Validate(doc, name, nil)
-}
-
-func (v *Validator) ValidateFile(filePath string) *FileValidationResult {
-	file, err := os.Open(filePath)
-	if err != nil {
-		return generalValidationError(filePath, err)
-	}
-
-	defer file.Close()
-
-	doc, err := libxml2.ParseReader(file)
-	if err != nil {
-		return generalValidationError(filePath, err)
-	}
-
-	result := v.Validate(doc, filePath, nil)
-
-	if fi, err := file.Stat(); err == nil {
-		result.FileSize = fi.Size()
-	}
-
-	return result
-}
-
-func (v *Validator) ValidateFiles(filePaths []string) []*FileValidationResult {
-	results := []*FileValidationResult{}
-	documents := map[string]types.Document{}
-
-	for _, filePath := range filePaths {
-		name := strings.Replace(path.Base(filePath), path.Ext(filePath), "", 1)
-		file, err := os.Open(filePath)
-		if err != nil {
-			results = append(results, generalValidationError(filePath, err))
-			continue
-		}
-
-		doc, err := libxml2.ParseReader(file)
-		if err != nil {
-			results = append(results, generalValidationError(filePath, err))
-			continue
-		}
-
-		file.Close()
-
-		documents[name] = doc
-	}
-
-	numTasks := len(documents)
+	numTasks := len(ctx.documents)
 	tasks := make(chan task, numTasks)
 	res := make(chan interface{}, numTasks)
 
 	startWorkers(tasks, res)
 
-	for name, doc := range documents {
+	for _, document := range ctx.documents {
 		tasks <- taskValidateDocument{
 			validator: v,
-			name:      name,
-			document:  doc,
-			documents: documents,
+			ctx:       ctx,
+			document:  document,
 		}
 	}
 
 	close(tasks)
 
 	for i := 0; i < numTasks; i++ {
-		if vres, ok := (<-res).(*FileValidationResult); ok {
-			results = append(results, vres)
+		if vr, ok := (<-res).(*ValidationResult); ok {
+			ctx.results = append(ctx.results, vr)
 		}
 	}
 
-	return results
+	sort.SliceStable(ctx.results, func(i, j int) bool { return ctx.results[i].Name < ctx.results[j].Name })
+}
+
+func (v *Validator) ValidateDocument(doc types.Document, ctx *ValidationContext) *ValidationResult {
+	result := &ValidationResult{
+		Measure:         &Measure{},
+		Name:            ctx.Name(),
+		Valid:           true,
+		ValidationRules: []*RuleValidation{},
+	}
+
+	defer func() {
+		for _, rule := range result.ValidationRules {
+			if !rule.Valid {
+				result.Valid = false
+				break
+			}
+		}
+
+		result.Stop()
+	}()
+
+	result.Start()
+
+	numTasks := len(v.scripts)
+	tasks := make(chan task, numTasks)
+	res := make(chan interface{}, numTasks)
+
+	startWorkers(tasks, res)
+
+	for _, script := range v.scripts {
+		l := v.logger.Copy()
+		l.AddTag(logger.NewTag("name", "main", logger.WithTagWidth(10)))
+		l.AddTag(logger.NewTag("script", script.name, logger.WithTagMaxWidth(v.scripts.Keys())))
+		l.AddTag(logger.NewTag("document", ctx.Name()))
+
+		tasks <- taskScript{
+			script:    script,
+			schema:    v.schema,
+			logger:    l,
+			document:  doc,
+			documents: ctx.documents,
+		}
+	}
+
+	close(tasks)
+
+	for i := 0; i < numTasks; i++ {
+		if vres, ok := (<-res).(*RuleValidation); ok {
+			result.ValidationRules = append(result.ValidationRules, vres)
+		}
+	}
+
+	return result
 }
 
 func WithSchemaFile(filePath string) ValidatorOption {

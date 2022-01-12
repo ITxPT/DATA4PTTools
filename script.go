@@ -47,8 +47,8 @@ func (s *Script) Runtime() (*goja.Runtime, error) {
 	return vm, nil
 }
 
-func (s *Script) Execute(schema *xsd.Schema, l *logger.Logger, doc types.Document, docs map[string]types.Document) *ValidationResult {
-	res := &ValidationResult{
+func (s *Script) Execute(schema *xsd.Schema, l *logger.Logger, doc types.Document, docs map[string]types.Document) *RuleValidation {
+	res := &RuleValidation{
 		Measure:     &Measure{},
 		Name:        s.name,
 		Description: s.description,
