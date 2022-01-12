@@ -1,5 +1,4 @@
-log:
-  level: debug
+logLevel: debug
 schema: xsd/NeTEx_publication-NoConstraint.xsd
 input:
   - $HOME/.greenlight/documents
