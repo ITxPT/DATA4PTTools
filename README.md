@@ -15,9 +15,9 @@
 </p>
 
 <p align="center">
-  <a href="#🚀-installation">Installation</a>
+  <a href="#-installation">Installation</a>
   ·
-  <a href="#⚙️ -configuration">Configuration</a>
+  <a href="#%EF%B8%8F-configuration">Configuration</a>
 </p>
 
 <h1></h1>
