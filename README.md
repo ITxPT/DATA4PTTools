@@ -54,12 +54,12 @@
 
 ##### With demo files provided in the image
 ```sh
-docker run -it concreteit/data4pt -i /usr/local/greenlight/testdata
+docker run -it lekojson/greenlight -i testdata
 ```
 
 ##### Providing your own documents
 ```sh
-docker run -it -v /path/to/documents:/greenlight/documents concreteit/data4pt
+docker run -it -v /path/to/documents:/greenlight/documents lekojson/greenlight
 ```
 
 #### 🛠️ Building from source
