@@ -42,16 +42,20 @@ func stringsJoin(v string, o []string, joinHandler func(elem ...string) string) 
 func init() {
 	validateCmd.Flags().StringP("disable-builtin-scripts", "", "false", "Whether to disable built in validation rules")
 	validateCmd.Flags().BoolP("fancy", "f", true, "Whether to show a fance progressbar instead of logs")
-	validateCmd.Flags().StringSliceP("input", "i", []string{}, "XML file, dir or archive to validate")
+	validateCmd.Flags().StringSliceP("inputs", "i", []string{}, "XML file, dir or archive to validate")
 	validateCmd.Flags().StringP("log-level", "l", "", "Set logger level")
 	validateCmd.Flags().StringP("schema", "s", "xsd/NeTEx_publication.xsd", "Use XML Schema file for validation")
-	validateCmd.Flags().StringP("script-path", "", "", "Directory or file path to look for scripts")
+	validateCmd.Flags().StringP("scripts", "", "", "Directory or file path to look for scripts")
+	validateCmd.Flags().StringP("report-format", "", "mdext", "Validation report format (mdext or mds")
 
 	// default script paths
-	viper.SetDefault("scripting.paths", stringsJoin("scripts", configPaths, path.Join))
+	viper.SetDefault("scripts", stringsJoin("scripts", configPaths, path.Join))
 
 	// default `input` paths
-	viper.SetDefault("input", stringsJoin("documents", configPaths, path.Join))
+	viper.SetDefault("inputs", stringsJoin("documents", configPaths, path.Join))
+
+	// default report format
+	viper.SetDefault("outputs.report.format", "mdext")
 
 	// set paths to look for configuration file (first come, first serve)
 	for _, p := range configPaths {
@@ -70,12 +74,13 @@ func init() {
 	viper.AutomaticEnv()
 
 	// bind from cli input
-	viper.BindPFlag("input", validateCmd.Flags().Lookup("input"))
+	viper.BindPFlag("inputs", validateCmd.Flags().Lookup("inputs"))
 	viper.BindPFlag("fancy", validateCmd.Flags().Lookup("fancy"))
 	viper.BindPFlag("logLevel", validateCmd.Flags().Lookup("log-level"))
 	viper.BindPFlag("schema", validateCmd.Flags().Lookup("schema"))
-	viper.BindPFlag("scripting.disableBuiltin", validateCmd.Flags().Lookup("disable-builtin-scripts"))
-	viper.BindPFlag("scripting.paths", validateCmd.Flags().Lookup("script-path"))
+	viper.BindPFlag("disableBuiltinScripts", validateCmd.Flags().Lookup("disable-builtin-scripts"))
+	viper.BindPFlag("scripts", validateCmd.Flags().Lookup("scripts"))
+	viper.BindPFlag("output.report.format", validateCmd.Flags().Lookup("report-format"))
 
 	rootCmd.AddCommand(validateCmd)
 }
@@ -163,22 +168,22 @@ func validate(cmd *cobra.Command, args []string) {
 	validator, err := greenlight.NewValidator(
 		greenlight.WithSchemaFile(viper.GetString("schema")),
 		greenlight.WithLogger(l),
-		greenlight.WithBuiltinScripts(!viper.GetBool("scripting.disableBuiltin")),
-		greenlight.WithScriptingPaths(viper.GetStringSlice("scripting.paths")),
+		greenlight.WithBuiltinScripts(!viper.GetBool("disableBuiltinScripts")),
+		greenlight.WithScriptingPaths(viper.GetStringSlice("scripts")),
 	)
 	if err != nil {
 		fmt.Println(err)
 		return
 	}
 
-	input := viper.GetStringSlice("input")
-	if len(input) == 0 {
+	inputs := viper.GetStringSlice("inputs")
+	if len(inputs) == 0 {
 		fmt.Println("no input paths defined")
 		return
 	}
 
 	contexts := []*greenlight.ValidationContext{}
-	for _, path := range input {
+	for _, path := range inputs {
 		ctx, err := createValidationContext(greenlight.EnvPath(path))
 		if err != nil {
 			if _, ok := err.(*os.PathError); ok {
@@ -199,10 +204,14 @@ func validate(cmd *cobra.Command, args []string) {
 	results := []string{}
 	for _, ctx := range contexts {
 		validator.Validate(ctx)
+		mdext := true
+		if viper.GetString("outpot.report.format") == "mds" {
+			mdext = false
+		}
 
 		rstr := []string{}
 		for _, r := range ctx.Results() {
-			rstr = append(rstr, r.Markdown(true))
+			rstr = append(rstr, r.Markdown(mdext))
 		}
 
 		rows := []string{
