@@ -52,33 +52,56 @@
 
 #### 🐳 Using Docker
 
-##### With demo files provided in the image
-```sh
-docker run -it lekojson/greenlight -i testdata
-```
+1. Getting the latest image
+  ```sh
+  docker pull lekojson/greenlight
+  ```
 
-##### Providing your own documents
-```sh
-docker run -it -v /path/to/documents:/greenlight/documents lekojson/greenlight
-```
+2. Running a validation
+
+   - #### With demo files provided in the image
+  
+   ```sh
+   docker run -it lekojson/greenlight -i testdata
+   ```
+
+   - #### Providing your own files
+  
+   ```sh
+   docker run -it -v /path/to/documents:/greenlight/documents lekojson/greenlight
+   ```
 
 #### 🛠️ Building from source
 
 **Note**: Greenlight is using Go and is powered by libxml2, so make sure those are installed and configured
 
-##### Validate with demo files provided in the source
-_changes in path definition will differ running on windows_
+1. Clone repository
 ```sh
-# from project root
-go run cmd/*.go validate -i testdata
+git clone https://github.com/concreteit/greenlight
 ```
 
-##### Validate using your own documents
-_changes in path definition will differ running on windows_
+2. Navigate to project
 ```sh
-# from project root
-go run cmd/*.go validate -i /path/to/documents
+cd greenlight
 ```
+
+3. Getting dependencies
+```sh
+go get
+```
+
+4. Building and running validation
+   - #### Validate with demo files provided in the source
+   _changes in path definition will differ running on windows_
+   ```sh
+   go run cmd/*.go validate -i testdata
+   ```
+
+   - #### Validate using your own files 
+   _changes in path definition will differ running on windows_
+   ```sh
+   go run cmd/*.go validate -i /path/to/documents
+   ```
 
 ### ⚙️ Configuration
 
