@@ -2,10 +2,14 @@ package main
 
 import (
 	"archive/zip"
+	"encoding/json"
+	"encoding/xml"
 	"fmt"
+	"log"
 	"os"
 	"path"
 	"strings"
+	"time"
 
 	"github.com/MichaelMure/go-term-markdown"
 	"github.com/concreteit/greenlight"
@@ -29,6 +33,10 @@ var (
 	}
 )
 
+type encoder interface {
+	Encode(v interface{}) error
+}
+
 func stringsJoin(v string, o []string, joinHandler func(elem ...string) string) []string {
 	res := []string{}
 
@@ -40,22 +48,21 @@ func stringsJoin(v string, o []string, joinHandler func(elem ...string) string) 
 }
 
 func init() {
-	validateCmd.Flags().StringP("disable-builtin-scripts", "", "false", "Whether to disable built in validation rules")
+	validateCmd.Flags().StringP("builtin-scripts", "", "true", "Whether to use built in validation rules")
 	validateCmd.Flags().BoolP("fancy", "f", true, "Whether to show a fance progressbar instead of logs")
 	validateCmd.Flags().StringSliceP("inputs", "i", []string{}, "XML file, dir or archive to validate")
 	validateCmd.Flags().StringP("log-level", "l", "", "Set logger level")
-	validateCmd.Flags().StringP("schema", "s", "xsd/NeTEx_publication.xsd", "Use XML Schema file for validation")
+	validateCmd.Flags().StringP("schema", "s", "xsd/NeTEx_publication-NoConstraint.xsd", "Use XML Schema file for validation")
 	validateCmd.Flags().StringP("scripts", "", "", "Directory or file path to look for scripts")
 	validateCmd.Flags().StringP("report-format", "", "mdext", "Validation report format (mdext or mds")
+	validateCmd.Flags().StringP("output-format", "", "json", "Detailed validation report format")
+	validateCmd.Flags().StringP("output-path", "", ".", "Detail validation report file location")
 
 	// default script paths
 	viper.SetDefault("scripts", stringsJoin("scripts", configPaths, path.Join))
 
 	// default `input` paths
 	viper.SetDefault("inputs", stringsJoin("documents", configPaths, path.Join))
-
-	// default report format
-	viper.SetDefault("outputs.report.format", "mdext")
 
 	// set paths to look for configuration file (first come, first serve)
 	for _, p := range configPaths {
@@ -78,9 +85,11 @@ func init() {
 	viper.BindPFlag("fancy", validateCmd.Flags().Lookup("fancy"))
 	viper.BindPFlag("logLevel", validateCmd.Flags().Lookup("log-level"))
 	viper.BindPFlag("schema", validateCmd.Flags().Lookup("schema"))
-	viper.BindPFlag("disableBuiltinScripts", validateCmd.Flags().Lookup("disable-builtin-scripts"))
+	viper.BindPFlag("builtin", validateCmd.Flags().Lookup("builtin-scripts"))
 	viper.BindPFlag("scripts", validateCmd.Flags().Lookup("scripts"))
-	viper.BindPFlag("output.report.format", validateCmd.Flags().Lookup("report-format"))
+	viper.BindPFlag("outputs.report.format", validateCmd.Flags().Lookup("report-format"))
+	viper.BindPFlag("outputs.file.format", validateCmd.Flags().Lookup("output-format"))
+	viper.BindPFlag("outputs.file.path", validateCmd.Flags().Lookup("output-path"))
 
 	rootCmd.AddCommand(validateCmd)
 }
@@ -157,6 +166,11 @@ func createValidationContext(input string) (*greenlight.ValidationContext, error
 	return ctx, nil
 }
 
+type Details struct {
+	Path    string                         `json:"path" xml:"path,attr"`
+	Results []*greenlight.ValidationResult `json:"results" xml:"Result"`
+}
+
 func validate(cmd *cobra.Command, args []string) {
 	stdOut := logger.DefaultOutput()
 	l := logger.New()
@@ -168,7 +182,7 @@ func validate(cmd *cobra.Command, args []string) {
 	validator, err := greenlight.NewValidator(
 		greenlight.WithSchemaFile(viper.GetString("schema")),
 		greenlight.WithLogger(l),
-		greenlight.WithBuiltinScripts(!viper.GetBool("disableBuiltinScripts")),
+		greenlight.WithBuiltinScripts(viper.GetBool("builtin")),
 		greenlight.WithScriptingPaths(viper.GetStringSlice("scripts")),
 	)
 	if err != nil {
@@ -201,7 +215,8 @@ func validate(cmd *cobra.Command, args []string) {
 		contexts = append(contexts, ctx)
 	}
 
-	results := []string{}
+	details := []Details{}
+	report := []string{}
 	for _, ctx := range contexts {
 		validator.Validate(ctx)
 		mdext := true
@@ -220,8 +235,42 @@ func validate(cmd *cobra.Command, args []string) {
 		}
 		hstr := string(markdown.Render(strings.Join(rows, "\n"), 80, 0))
 		fstr := string(markdown.Render(strings.Join(rstr, "\n\n")+"\n\n---", 80, 4))
-		results = append(results, hstr+fstr)
+		report = append(report, hstr+fstr)
+		details = append(details, Details{
+			Path:    ctx.Name(),
+			Results: ctx.Results(),
+		})
 	}
 
-	fmt.Println("\n\n" + strings.Join(results, ""))
+	fmt.Println("\n\n" + strings.Join(report, ""))
+
+	if viper.GetString("outputs.file.format") != "" && viper.GetString("outputs.file.path") != "" {
+		filePath := fmt.Sprintf("%s/report-%s.%s",
+			viper.GetString("outputs.file.path"),
+			time.Now().Format("20060102150405"),
+			viper.GetString("outputs.file.format"),
+		)
+		f, err := os.Create(filePath)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		var enc encoder
+		switch viper.GetString("outputs.file.format") {
+		case "json":
+			e := json.NewEncoder(f)
+			e.SetIndent("", "  ")
+			enc = e
+		case "xml":
+			e := xml.NewEncoder(f)
+			e.Indent("  ", "    ")
+			enc = e
+		default:
+			log.Fatalf("unsupport output file format '%s'\n", viper.GetString("outputs.file.format"))
+		}
+
+		if err := enc.Encode(details); err != nil {
+			log.Fatal(err)
+		}
+	}
 }

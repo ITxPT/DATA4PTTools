@@ -11,9 +11,9 @@ outputs:
   - report: # logged in standard output
       format: mdext # mdext (markdown extended) or mds (markdown simple)
   - file:
-      format: json # formats available are: json or csv
-      path: /greenlight # where to save the file (filename format is ${path}/report-${current_date_time}.${format}
-disableBuiltinScripts: false
+      format: json # formats available are: json or xml
+      path: . # where to save the file (filename format is ${path}/report-${current_date_time}.${format}
+builtin: true
 scripts:
   - ~/.greenlight/scripts
   - /etc/greenlight/scripts

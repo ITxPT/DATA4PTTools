@@ -23,10 +23,10 @@ func (m *Measure) ExecutionTime() time.Duration { return m.executionTime }
 type ValidationResult struct {
 	*Measure
 
-	Name            string            `json:"file_name"`
-	Valid           bool              `json:"valid"`
-	GeneralError    string            `json:"general_error,omitempty"`
-	ValidationRules []*RuleValidation `json:"validation_rules,omitempty"`
+	Name            string            `json:"file_name" xml:"name,attr"`
+	Valid           bool              `json:"valid" xml:"valid,attr"`
+	GeneralError    string            `json:"general_error,omitempty" xml:"GeneralError,omitempty"`
+	ValidationRules []*RuleValidation `json:"validations,omitempty" xml:"Validation,omitempty"`
 }
 
 func (r *ValidationResult) Markdown(extended bool) string {
@@ -70,11 +70,11 @@ func (r *ValidationResult) Markdown(extended bool) string {
 type RuleValidation struct {
 	*Measure
 
-	Name        string   `json:"name"`
-	Description string   `json:"description,omitempty"`
-	Valid       bool     `json:"valid"`
-	ErrorCount  int      `json:"error_count,omitempty"`
-	Errors      []string `json:"errors,omitempty"`
+	Name        string   `json:"name" xml:"name,attr"`
+	Description string   `json:"description,omitempty" xml:"description,attr,omitempty"`
+	Valid       bool     `json:"valid" xml:"valid,attr"`
+	ErrorCount  int      `json:"error_count,omitempty" xml:"errorCount,attr,omitempty"`
+	Errors      []string `json:"errors,omitempty" xml:"Errors,omitempty"`
 }
 
 func (r *RuleValidation) Markdown() string {
