@@ -105,6 +105,94 @@ go get
 
 ### ⚙️ Configuration
 
+Configurations can be made in a three different ways (in order of priority), through _command line arguments_, _environment variables_ and _configuration file_
+
+#### Command line
+
+- ##### By adding arguments to tool, example running a logger instead of _fancy_ output
+
+```sh
+docker run -it lekojson/greenlight -i testdata -l debug
+```
+
+- ##### All arguments can be found by running
+
+```sh
+docker run -it lekojson/greenlight --help
+```
+
+#### Environment variables
+
+Environment comes with the prefix `GREENLIGHT_` and match the paths (separated by `_`) in configuration file (see below). Three different datatypes are supported, `string`, `boolean` and `string slice` which also match the configuration file.
+
+- ##### Setting multiple inputs through environment variable
+
+```sh
+docker run -it -e GREENLIGHT_INPUTS=testdata,/path/to/documents lekojson/greenlight
+```
+
+- ##### Changing output format in the overview report
+
+```sh
+docker run -it -e GREENLIGHT_OUTPUTS_REPORT_FORMAT=mds lekojson/greenlight -i testdata
+```
+
+#### Configuration file
+
+- ##### To get started configuring greenlight, create the following file `~/.greenlight/config.yaml`
+
+```sh
+mkdir -p ~/.greenlight && touch ~/.greenlight/config.yaml
+```
+
+- ##### Using standard logging instead of _fancy_ output
+
+```yaml
+logLevel: debug
+```
+
+- ##### Add configuration file to validation
+
+```sh
+docker run -it -v ~/.greenlight/config.yaml:/greenlight/config.yaml lekojson/greenlight -i testdata
+```
+
+#### Glossary
+
+Supported configuration file formats are, `yaml`, `json`, `toml`, `hcl`, `envfile` and `java properties`. The tool looks for the configuration file `config.${format}` in one of the following folders (in order of priority):
+
+  - ~/.greenlight
+  - /etc/greenlight
+  - /
+  - /greenlight
+  - .
+
+_Example configuration file_
+```yaml
+schema: xsd/NeTEx_publication.xsd # schema to use for validation, comes shipped with the source/container image
+logLevel: debug # default is undefined, setting this parameter disables the fancy setting, regardless of its value
+fancy: true # displays a progress instead of log
+inputs: # where to look for documents
+  - ~/.greenlight/documents
+  - /etc/greenlight/documents
+  - /documents
+  - /greenlight/documents
+  - ./documents
+outputs:
+  - report: # logged in standard output
+      format: mdext # mdext (markdown extended) or mds (markdown simple)
+  - file:
+      format: json # formats available are: json or xml
+      path: . # where to save the file (filename format is ${path}/report-${current_date_time}.${format}
+builtin: true # whether to use builtin scripts
+scripts: # where to look for custom scripts
+  - ~/.greenlight/scripts
+  - /etc/greenlight/scripts
+  - /scripts
+  - /greenlight/scripts
+  - ./scripts
+```
+
 <h1></h1>
 
 <p align="center">
