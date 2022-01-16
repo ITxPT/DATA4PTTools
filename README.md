@@ -23,7 +23,7 @@
 <h1></h1>
 
 <img
-  src="./media/greenlight.gif"
+  src="https://github.com/concreteit/greenlight-media/raw/develop/greenlight.gif"
   alt="Simple validation"
   width="50%"
   align="right"
@@ -36,7 +36,7 @@
 - **Fancy** shows relevant information at a glance.
 - **Easy:** quick to install – start using it in minutes.
 
-<br><br><br><br><br>
+<br>
 
 ## 🚀 Installation
 
@@ -196,9 +196,9 @@ scripts: # where to look for custom scripts
 <h1></h1>
 
 <p align="center">
-  <img width="400" src="./media/data4pt.jpeg" alt="data4pt logo">
+  <img width="400" src="https://github.com/concreteit/greenlight-media/raw/develop/data4pt.jpeg" alt="data4pt logo">
 </p>
 
 <p align="center">
-  <img width="400" src="./media/itxpt.jpeg" alt="itxpt logo">
+  <img width="400" src="https://github.com/concreteit/greenlight-media/raw/develop/itxpt.jpeg" alt="itxpt logo">
 </p>
