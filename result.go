@@ -23,7 +23,7 @@ func (m *Measure) ExecutionTime() time.Duration { return m.executionTime }
 type ValidationResult struct {
 	*Measure
 
-	Name            string            `json:"file_name" xml:"name,attr"`
+	Name            string            `json:"name" xml:"name,attr"`
 	Valid           bool              `json:"valid" xml:"valid,attr"`
 	GeneralError    string            `json:"general_error,omitempty" xml:"GeneralError,omitempty"`
 	ValidationRules []*RuleValidation `json:"validations,omitempty" xml:"Validation,omitempty"`

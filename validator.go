@@ -1,6 +1,7 @@
 package greenlight
 
 import (
+	"os"
 	"sort"
 
 	"github.com/concreteit/greenlight/logger"
@@ -16,15 +17,15 @@ type ValidatorOption func(*Validator) error
 
 type Validator struct {
 	schema      *xsd.Schema
+	schemaSize  int64
 	useBuiltIn  bool
 	logger      *logger.Logger
 	scriptPaths []string
 	scripts     ScriptMap
 }
 
-func (v *Validator) Schema() *xsd.Schema {
-	return v.schema
-}
+func (v *Validator) Schema() *xsd.Schema { return v.schema }
+func (v *Validator) SchemaSize() int64   { return v.schemaSize }
 
 func (v *Validator) Validate(ctx *ValidationContext) {
 	defer func() {
@@ -147,6 +148,11 @@ func NewValidator(options ...ValidatorOption) (*Validator, error) {
 
 func WithSchemaFile(filePath string) ValidatorOption {
 	return func(v *Validator) error {
+		if fi, err := os.Stat(filePath); err != nil {
+			return err
+		} else {
+			v.schemaSize = fi.Size()
+		}
 		if schema, err := xsd.ParseFromFile(filePath); err != nil {
 			return err
 		} else {
