@@ -325,7 +325,6 @@ func newPoint(measurement string) *write.Point {
 		AddTag("arch", runtime.GOARCH)
 
 	if name, err := os.Hostname(); err == nil {
-		fmt.Println(name, err)
 		p.AddTag("host", fmt.Sprintf("%x", sha256.Sum256([]byte(name))))
 	}
 	if n, err := cpu.Counts(true); err == nil {
