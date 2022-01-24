@@ -16,11 +16,5 @@ function main(ctx) {
     }
   });
 
-  if (!errors.length) {
-    ctx.log.info("validation completed without any errors");
-  } else {
-    ctx.log.info("validation completed with '%d' errors", n);
-  }
-
   return errors;
 }

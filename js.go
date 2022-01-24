@@ -38,13 +38,20 @@ type jsTaskHandler func(ctx jsObject, stdlib jsObject, args ...interface{}) goja
 type jsContext struct {
 	rw          sync.Mutex
 	script      *Script
+	context     *ValidationContext
 	logger      *logger.Logger
 	tasks       []jsTask
-	schema      *xsd.Schema    // TODO should wrap this in order to securely be passed down to script runtime
+	schema      *xsd.Schema // TODO should wrap this in order to securely be passed down to script runtime
+	name        string
 	document    types.Document // TODO should wrap this in order to securely be passed down to script runtime
-	documents   map[string]types.Document
 	nodeContext *xpath.Context // TODO should wrap this in order to securely be passed down to script runtime
 	node        types.Node
+}
+
+func (c *jsContext) log(level logger.LogLevel, v string, args ...interface{}) {
+	msg := fmt.Sprintf(v, args...)
+	c.context.addProgress(c.name, c.script.name, msg, 0)
+	c.logger.Logf(level, v, args...)
 }
 
 func (c *jsContext) object(id int) jsObject {
@@ -56,10 +63,10 @@ func (c *jsContext) object(id int) jsObject {
 		"document":       c.document,
 		"importDocument": c.importDocument,
 		"log": jsObject{
-			"debug": c.logger.Debugf,
-			"info":  c.logger.Infof,
-			"warn":  c.logger.Warnf,
-			"error": c.logger.Errorf,
+			"debug": func(v string, args ...interface{}) { c.log(logger.LogLevelDebug, v, args...) },
+			"info":  func(v string, args ...interface{}) { c.log(logger.LogLevelInfo, v, args...) },
+			"warn":  func(v string, args ...interface{}) { c.log(logger.LogLevelWarn, v, args...) },
+			"error": func(v string, args ...interface{}) { c.log(logger.LogLevelError, v, args...) },
 		},
 		"nodeContext": c.nodeContext,
 		"node":        c.node,
@@ -86,7 +93,7 @@ func (c *jsContext) importDocument(name string) *xpath.Context {
 	c.rw.Lock()
 	defer c.rw.Unlock()
 
-	doc := c.documents[name]
+	doc := c.context.documents[name]
 	if doc == nil {
 		return nil
 	}
@@ -105,12 +112,14 @@ func (c *jsContext) Queue(handler string, node types.Node, args ...interface{}) 
 		return err
 	}
 
+	c.context.progress[c.name].count += 1
 	c.tasks = append(c.tasks, jsTask{
 		context: &jsContext{
+			context:     c.context,
 			script:      c.script,
 			logger:      c.logger.Copy(),
+			name:        c.name,
 			document:    c.document,
-			documents:   c.documents,
 			node:        node,
 			nodeContext: ctx,
 		},
@@ -139,6 +148,7 @@ func (c *jsContext) Execute() []string {
 			for _, err := range errSlice {
 				errors = append(errors, err.Error())
 			}
+			c.context.progress[c.name].completed += 1
 		}
 	}
 

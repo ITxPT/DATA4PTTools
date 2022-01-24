@@ -13,7 +13,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/MichaelMure/go-term-markdown"
 	"github.com/concreteit/greenlight"
 	"github.com/concreteit/greenlight/logger"
 	"github.com/influxdata/influxdb-client-go/v2"
@@ -62,12 +61,11 @@ func stringsJoin(v string, o []string, joinHandler func(elem ...string) string) 
 
 func init() {
 	validateCmd.Flags().StringP("builtin-scripts", "", "true", "Whether to use built in validation rules")
-	validateCmd.Flags().BoolP("fancy", "f", true, "Whether to show a fance progressbar instead of logs")
-	validateCmd.Flags().StringSliceP("inputs", "i", []string{}, "XML file, dir or archive to validate")
-	validateCmd.Flags().StringP("log-level", "l", "", "Set logger level")
-	validateCmd.Flags().StringP("output-format", "", "json", "Detailed validation report format")
-	validateCmd.Flags().StringP("output-path", "", ".", "Detail validation report file location")
-	validateCmd.Flags().StringP("report-format", "", "mdext", "Validation report format (mdext or mds")
+	validateCmd.Flags().StringSliceP("input", "i", []string{}, "XML file, dir or archive to validate")
+	validateCmd.Flags().StringP("log-level", "l", "debug", "Set logger level")
+	validateCmd.Flags().StringP("log-path", "", ".", "Log file location")
+	validateCmd.Flags().StringP("report-format", "", "json", "Detailed validation report format")
+	validateCmd.Flags().StringP("report-path", "", ".", "Detail validation report file location")
 	validateCmd.Flags().StringP("schema", "s", "xsd/NeTEx_publication.xsd", "Use XML Schema file for validation")
 	validateCmd.Flags().StringP("scripts", "", "", "Directory or file path to look for scripts")
 	validateCmd.Flags().BoolP("telemetry", "", true, "Whether to collect and send information about execution time")
@@ -76,7 +74,7 @@ func init() {
 	viper.SetDefault("scripts", stringsJoin("scripts", configPaths, path.Join))
 
 	// default `input` paths
-	viper.SetDefault("inputs", stringsJoin("documents", configPaths, path.Join))
+	viper.SetDefault("input", stringsJoin("documents", configPaths, path.Join))
 
 	// set paths to look for configuration file (first come, first serve)
 	for _, p := range configPaths {
@@ -95,15 +93,14 @@ func init() {
 	viper.AutomaticEnv()
 
 	// bind from cli input
-	viper.BindPFlag("inputs", validateCmd.Flags().Lookup("inputs"))
-	viper.BindPFlag("fancy", validateCmd.Flags().Lookup("fancy"))
+	viper.BindPFlag("input", validateCmd.Flags().Lookup("input"))
 	viper.BindPFlag("logLevel", validateCmd.Flags().Lookup("log-level"))
 	viper.BindPFlag("schema", validateCmd.Flags().Lookup("schema"))
 	viper.BindPFlag("builtin", validateCmd.Flags().Lookup("builtin-scripts"))
 	viper.BindPFlag("scripts", validateCmd.Flags().Lookup("scripts"))
-	viper.BindPFlag("outputs.report.format", validateCmd.Flags().Lookup("report-format"))
-	viper.BindPFlag("outputs.file.format", validateCmd.Flags().Lookup("output-format"))
-	viper.BindPFlag("outputs.file.path", validateCmd.Flags().Lookup("output-path"))
+	viper.BindPFlag("output.log.path", validateCmd.Flags().Lookup("log-path"))
+	viper.BindPFlag("output.report.format", validateCmd.Flags().Lookup("report-format"))
+	viper.BindPFlag("output.report.path", validateCmd.Flags().Lookup("report-path"))
 	viper.BindPFlag("telemetry", validateCmd.Flags().Lookup("telemetry"))
 
 	rootCmd.AddCommand(validateCmd)
@@ -191,11 +188,19 @@ func validate(cmd *cobra.Command, args []string) {
 	defer client.Close()
 
 	writeAPI := client.WriteAPI(influxOrg, influxBucket)
-	stdOut := logger.DefaultOutput()
+	logFilePath := fmt.Sprintf("%s/log-%s",
+		viper.GetString("output.log.path"),
+		time.Now().Format("20060102150405"),
+	)
+	fileOutput, err := logger.NewFileOutput(greenlight.EnvPath(logFilePath))
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	l := logger.New()
+	l.AddOutput(fileOutput)
 	if viper.GetString("logLevel") != "" {
 		l.SetLogLevel(logger.LogLevel(viper.GetString("logLevel")))
-		l.AddOutput(stdOut)
 	}
 
 	validator, err := greenlight.NewValidator(
@@ -209,15 +214,15 @@ func validate(cmd *cobra.Command, args []string) {
 		return
 	}
 
-	inputs := viper.GetStringSlice("inputs")
-	if len(inputs) == 0 {
+	input := viper.GetStringSlice("input")
+	if len(input) == 0 {
 		fmt.Println("no input paths defined")
 		return
 	}
 
-	contexts := []*greenlight.ValidationContext{}
-	for _, path := range inputs {
-		ctx, err := createValidationContext(greenlight.EnvPath(path))
+	var ctx *greenlight.ValidationContext
+	for _, path := range input {
+		c, err := createValidationContext(greenlight.EnvPath(path))
 		if err != nil {
 			if _, ok := err.(*os.PathError); ok {
 				continue
@@ -227,79 +232,57 @@ func validate(cmd *cobra.Command, args []string) {
 			continue
 		}
 
-		if viper.GetString("logLevel") == "" && viper.GetBool("fancy") {
-			ctx.EnableProgressBar()
-		}
-
-		contexts = append(contexts, ctx)
+		ctx = c
+		break
 	}
 
 	details := []Details{}
-	report := []string{}
-	for _, ctx := range contexts {
-		validator.Validate(ctx)
-		mdext := true
-		if viper.GetString("outpot.report.format") == "mds" {
-			mdext = false
-		}
+	validator.Validate(ctx)
 
-		rstr := []string{}
-		for _, r := range ctx.Results() {
-			rstr = append(rstr, r.Markdown(mdext))
+	for _, r := range ctx.Results() {
+		if viper.GetBool("telemetry") {
+			p := newPoint("document")
+			p.AddField("schema_name", viper.GetString("schema"))
+			p.AddField("schema_bytes", validator.SchemaSize())
+			p.AddField("execution_time_ms", r.ExecutionTime().Milliseconds())
+			p.AddField("name", r.Name)
+			p.AddField("valid", r.Valid)
+			writeAPI.WritePoint(p)
 
-			if viper.GetBool("telemetry") {
-				p := newPoint("document")
+			for _, rule := range r.ValidationRules {
+				p := newPoint("rule")
 				p.AddField("schema_name", viper.GetString("schema"))
 				p.AddField("schema_bytes", validator.SchemaSize())
-				p.AddField("execution_time_ms", r.ExecutionTime().Milliseconds())
-				p.AddField("name", r.Name)
-				p.AddField("valid", r.Valid)
+				p.AddField("execution_time_ms", rule.ExecutionTime().Milliseconds())
+				p.AddField("document_name", r.Name)
+				p.AddTag("name", rule.Name)
+				p.AddField("valid", rule.Valid)
+				p.AddField("error_count", rule.ErrorCount)
 				writeAPI.WritePoint(p)
-
-				for _, rule := range r.ValidationRules {
-					p := newPoint("rule")
-					p.AddField("schema_name", viper.GetString("schema"))
-					p.AddField("schema_bytes", validator.SchemaSize())
-					p.AddField("execution_time_ms", rule.ExecutionTime().Milliseconds())
-					p.AddField("document_name", r.Name)
-					p.AddTag("name", rule.Name)
-					p.AddField("valid", rule.Valid)
-					p.AddField("error_count", rule.ErrorCount)
-					writeAPI.WritePoint(p)
-				}
 			}
 		}
-
-		rows := []string{
-			fmt.Sprintf("- **path** %s", ctx.Name()),
-			fmt.Sprintf("- **execution time** %fs", ctx.ExecutionTime().Seconds()),
-		}
-		hstr := string(markdown.Render(strings.Join(rows, "\n"), 80, 0))
-		fstr := string(markdown.Render(strings.Join(rstr, "\n\n")+"\n\n---", 80, 4))
-		report = append(report, hstr+fstr)
-		details = append(details, Details{
-			Path:    ctx.Name(),
-			Results: ctx.Results(),
-		})
 	}
+
+	details = append(details, Details{
+		Path:    ctx.Name(),
+		Results: ctx.Results(),
+	})
 
 	writeAPI.Flush()
 
-	fmt.Println("\n\n" + strings.Join(report, ""))
-
-	if viper.GetString("outputs.file.format") != "" && viper.GetString("outputs.file.path") != "" {
+	if viper.GetString("output.report.format") != "" && viper.GetString("output.report.path") != "" {
 		filePath := fmt.Sprintf("%s/report-%s.%s",
-			viper.GetString("outputs.file.path"),
+			viper.GetString("output.report.path"),
 			time.Now().Format("20060102150405"),
-			viper.GetString("outputs.file.format"),
+			viper.GetString("output.report.format"),
 		)
-		f, err := os.Create(filePath)
+		f, err := os.Create(greenlight.EnvPath(filePath))
 		if err != nil {
 			log.Fatal(err)
 		}
 
 		var enc encoder
-		switch viper.GetString("outputs.file.format") {
+		switch viper.GetString("output.report.format") {
 		case "json":
 			e := json.NewEncoder(f)
 			e.SetIndent("", "  ")
@@ -309,7 +292,7 @@ func validate(cmd *cobra.Command, args []string) {
 			e.Indent("  ", "    ")
 			enc = e
 		default:
-			log.Fatalf("unsupport output file format '%s'\n", viper.GetString("outputs.file.format"))
+			log.Fatalf("unsupport output file format '%s'\n", viper.GetString("output.report.format"))
 		}
 
 		if err := enc.Encode(details); err != nil {

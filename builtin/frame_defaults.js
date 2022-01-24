@@ -72,12 +72,6 @@ function main(ctx) {
     }
   }
 
-  if (errors.length === 0) {
-    ctx.log.info("validation without any errors");
-  } else {
-    ctx.log.info("validation completed with '%d' errors", errors.length);
-  }
-
   return errors;
 }
 

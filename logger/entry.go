@@ -11,6 +11,7 @@ type LogFormat string
 const (
 	LogFormatPlain LogFormat = "plain"
 	LogFormatJSON  LogFormat = "json"
+	LogFormatNone  LogFormat = "none"
 )
 
 type LogEntry struct {
@@ -53,6 +54,8 @@ func (l *LogEntry) Format(format LogFormat) string {
 		v, _ := json.Marshal(l)
 
 		return string(v)
+	case LogFormatNone:
+		return l.Message
 	default:
 		return ""
 	}

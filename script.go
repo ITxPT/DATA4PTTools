@@ -47,7 +47,7 @@ func (s *Script) Runtime() (*goja.Runtime, error) {
 	return vm, nil
 }
 
-func (s *Script) Execute(schema *xsd.Schema, l *logger.Logger, doc types.Document, docs map[string]types.Document) *RuleValidation {
+func (s *Script) Execute(ctx *ValidationContext, schema *xsd.Schema, l *logger.Logger, name string, doc types.Document) *RuleValidation {
 	res := &RuleValidation{
 		Measure:     &Measure{},
 		Name:        s.name,
@@ -61,7 +61,7 @@ func (s *Script) Execute(schema *xsd.Schema, l *logger.Logger, doc types.Documen
 
 	res.Start()
 
-	ctx, err := netexContext(doc)
+	c, err := netexContext(doc)
 	if err != nil {
 		res.AddError(err)
 		return res
@@ -81,13 +81,14 @@ func (s *Script) Execute(schema *xsd.Schema, l *logger.Logger, doc types.Documen
 	}
 
 	jsCtx := jsContext{
+		context:     ctx,
 		script:      s,
 		logger:      l,
 		tasks:       []jsTask{},
 		schema:      schema,
+		name:        name,
 		document:    doc,
-		documents:   docs,
-		nodeContext: ctx,
+		nodeContext: c,
 		node:        doc,
 	}
 

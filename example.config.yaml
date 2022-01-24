@@ -1,18 +1,17 @@
 schema: xsd/NeTEx_publication.xsd # schema to use for validation, comes shipped with the source/container image
 logLevel: debug # default is undefined, setting this parameter disables the fancy setting, regardless of its value
-fancy: true # displays a progress instead of log
-inputs: # where to look for documents
+input: # where to look for documents
   - ~/.greenlight/documents
   - /etc/greenlight/documents
   - /documents
   - /greenlight/documents
   - ./documents
-outputs:
-  - report: # logged in standard output
-      format: mdext # mdext (markdown extended) or mds (markdown simple)
-  - file:
-      format: json # formats available are: json or xml
-      path: . # where to save the file (filename format is ${path}/report-${current_date_time}.${format}
+output:
+  log:
+    path: ~/.greenlight
+  report:
+    format: json # formats available are: json or xml
+    path: ~/.greenlight # where to save the file (filename format is ${path}/report-${current_date_time}.${format}
 builtin: true # whether to use builtin scripts
 scripts: # where to look for custom scripts
   - ~/.greenlight/scripts

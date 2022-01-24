@@ -12,19 +12,13 @@ const departureOffsetPath = xpath.join("DepartureDayOffset");
 function main(ctx) {
   const passingTimes = ctx.xpath.find(timetablePath);
 
-  ctx.log.debug(`creating '${passingTimes.length} tasks`);
+  ctx.log.debug(`creating ${passingTimes.length} tasks`);
 
   // queue worker tasks
   passingTimes.forEach(node => ctx.worker.queue("worker", node));
 
   // execute worker tasks
   const errors = ctx.worker.execute();
-
-  if (errors.length === 0) {
-    ctx.log.info("validation completed without any errors");
-  } else {
-    ctx.log.info("validation completed with '%d' errors", errors.length);
-  }
 
   return errors;
 }

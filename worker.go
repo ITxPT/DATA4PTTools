@@ -42,13 +42,14 @@ func (t taskValidateDocument) Execute(id int) interface{} {
 }
 
 type taskScript struct {
-	script    *Script
-	schema    *xsd.Schema
-	logger    *logger.Logger
-	document  types.Document
-	documents map[string]types.Document
+	context  *ValidationContext
+	script   *Script
+	schema   *xsd.Schema
+	logger   *logger.Logger
+	name     string
+	document types.Document
 }
 
 func (t taskScript) Execute(id int) interface{} {
-	return t.script.Execute(t.schema, t.logger, t.document, t.documents)
+	return t.script.Execute(t.context, t.schema, t.logger, t.name, t.document)
 }

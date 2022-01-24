@@ -13,19 +13,13 @@ const arrivalTimePath = xpath.join("ArrivalTime");
 function main(ctx) {
   const journeyPatterns = ctx.xpath.find(journeyPatternsPath);
 
-  ctx.log.debug(`creating '${journeyPatterns.length}' tasks`);
+  ctx.log.debug(`creating ${journeyPatterns.length} tasks`);
 
   // queue worker tasks
   journeyPatterns.forEach(node => ctx.worker.queue("worker", node));
 
   // execute worker tasks
   const errors = ctx.worker.execute();
-
-  if (errors.length === 0) {
-    ctx.log.info("validation without any errors");
-  } else {
-    ctx.log.info("validation completed with '%d' errors", errors.length);
-  }
 
   return errors;
 }

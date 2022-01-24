@@ -1,6 +1,7 @@
 package greenlight
 
 import (
+	"fmt"
 	"os"
 	"sort"
 
@@ -38,10 +39,10 @@ func (v *Validator) Validate(ctx *ValidationContext) {
 	tasks := make(chan task, numTasks)
 	res := make(chan interface{}, numTasks)
 
-	ctx.startProgress(numTasks + numTasks*len(v.scripts))
 	startWorkers(tasks, res)
 
 	for name, document := range ctx.documents {
+		ctx.startProgress(name, v.scripts)
 		tasks <- taskValidateDocument{
 			validator: v,
 			ctx:       ctx,
@@ -55,8 +56,8 @@ func (v *Validator) Validate(ctx *ValidationContext) {
 	for i := 0; i < numTasks; i++ {
 		if vr, ok := (<-res).(*ValidationResult); ok {
 			ctx.results = append(ctx.results, vr)
+			ctx.addProgress(vr.Name, "", "", 1)
 		}
-		ctx.addProgress(1)
 	}
 
 	sort.SliceStable(ctx.results, func(i, j int) bool { return ctx.results[i].Name < ctx.results[j].Name })
@@ -89,29 +90,41 @@ func (v *Validator) ValidateDocument(name string, doc types.Document, ctx *Valid
 
 	startWorkers(tasks, res)
 
+	docMax := 0
+	for k, _ := range ctx.documents {
+		if len(k) > docMax {
+			docMax = len(k)
+		}
+	}
+
 	for _, script := range v.scripts {
 		l := v.logger.Copy()
 		l.AddTag(logger.NewTag("name", "main", logger.WithTagWidth(10)))
 		l.AddTag(logger.NewTag("script", script.name, logger.WithTagMaxWidth(v.scripts.Keys())))
-		l.AddTag(logger.NewTag("document", name))
+		l.AddTag(logger.NewTag("document", name, logger.WithTagWidth(docMax)))
 
 		tasks <- taskScript{
-			script:    script,
-			schema:    v.schema,
-			logger:    l,
-			document:  doc,
-			documents: ctx.documents,
+			context:  ctx,
+			script:   script,
+			schema:   v.schema,
+			logger:   l,
+			name:     name,
+			document: doc,
 		}
 	}
 
 	close(tasks)
 
 	for i := 0; i < numTasks; i++ {
-		if vres, ok := (<-res).(*RuleValidation); ok {
-			result.ValidationRules = append(result.ValidationRules, vres)
-		}
+		if vr, ok := (<-res).(*RuleValidation); ok {
+			message := fmt.Sprintf("\033[32mok\033[0m")
+			if !vr.Valid {
+				message = fmt.Sprintf("\033[31mfailed\033[0m with %d errors and 0 warnings", vr.ErrorCount)
+			}
 
-		ctx.addProgress(1)
+			result.ValidationRules = append(result.ValidationRules, vr)
+			ctx.addProgress(name, vr.Name, message, 1)
+		}
 	}
 
 	return result

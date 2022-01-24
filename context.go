@@ -3,31 +3,31 @@ package greenlight
 import (
 	"fmt"
 	"io"
-	"time"
+	"sort"
+	"strings"
 
+	"github.com/concreteit/greenlight/logger"
 	"github.com/lestrrat-go/libxml2"
 	"github.com/lestrrat-go/libxml2/types"
-	"github.com/schollz/progressbar/v3"
-)
-
-var (
-	runningText = "Running tasks... "
-	dance       = []string{"♪┏(･o･ )┛♪  ", "♪┗( ･o･)┓♪  "}
-	angry       = []string{"( ಠДಠ) ┳━┳  ", "(┛ಠДಠ)┛彡┻━┻"}
 )
 
 type validationResult struct {
 	Name string
 }
 
+type progress struct {
+	count     int
+	completed int
+	rows      map[string]string
+}
+
 type ValidationContext struct {
 	*Measure
 
-	name              string
-	documents         map[string]types.Document
-	results           []*ValidationResult
-	enableProgressBar bool
-	bar               *progressbar.ProgressBar
+	name      string
+	documents map[string]types.Document
+	results   []*ValidationResult
+	progress  map[string]*progress
 }
 
 func (c *ValidationContext) Name() string { return c.name }
@@ -49,60 +49,62 @@ func (c *ValidationContext) AddDocument(name string, document types.Document) {
 	c.documents[name] = document
 }
 
-func (c *ValidationContext) EnableProgressBar() {
-	c.enableProgressBar = true
+func (c *ValidationContext) startProgress(name string, scripts ScriptMap) {
+	n := len(scripts)
+	filler := map[string]string{}
+	for _, name := range scripts.Keys() {
+		filler[name] = "starting"
+	}
+
+	c.progress[name] = &progress{n + 1, 0, filler}
+	logger.DefaultTerminalOutput().AddBuffer(name, n+2)
 }
 
-func (c *ValidationContext) startProgress(n int) {
-	if !c.enableProgressBar {
+func (c *ValidationContext) addProgress(name, scriptName, message string, n int) {
+	p := c.progress[name]
+	if p == nil {
 		return
 	}
 
-	c.bar = progressbar.NewOptions(n,
-		progressbar.OptionSetWidth(80),
-		progressbar.OptionEnableColorCodes(true),
-		progressbar.OptionSetPredictTime(false),
-		progressbar.OptionShowCount(),
-		progressbar.OptionSetDescription(runningText+dance[0]),
-		progressbar.OptionSetItsString("tasks"),
-		progressbar.OptionThrottle(time.Millisecond*250),
-		progressbar.OptionSetTheme(progressbar.Theme{
-			Saucer:        "[green]=[reset]",
-			SaucerHead:    "[green]>[reset]",
-			SaucerPadding: " ",
-			BarStart:      "[",
-			BarEnd:        "]",
-		}),
-	)
-
-	fmt.Println("Validating documents and running scripts...")
-
-	go func() {
-		start := time.Now()
-		tick := 0
-
-		for !c.bar.IsFinished() {
-			dur := time.Now().Sub(start)
-			if tick == 1000 {
-				tick = 0
-			}
-			if dur < time.Second*60 {
-				c.bar.Describe(runningText + dance[tick%2])
-			} else {
-				c.bar.Describe(runningText + angry[tick%2])
-			}
-
-			tick = tick + 1
-			time.Sleep(time.Second)
-		}
-	}()
-}
-
-func (c *ValidationContext) addProgress(n int) {
-	if c.bar != nil {
-		c.bar.Add(n)
+	if scriptName != "" {
+		p.rows[scriptName] = message
 	}
 
+	p.completed += n
+	parts := 1
+	if p.completed > 0 {
+		pct := float64(p.completed) / float64(p.count)
+		parts = int(10.0 * pct)
+	}
+
+	header := fmt.Sprintf("┌ \033[1m%s\033[0m ─╼", name)
+	progress := fmt.Sprintf("└── [%d/%d] r̵̲unning tasks %s%s ─╼ ", p.completed, p.count, strings.Repeat("■", parts), strings.Repeat("□", 10-parts))
+	if p.completed == p.count {
+		progress = fmt.Sprintf("└───╼ ")
+	}
+
+	terminal := logger.DefaultTerminalOutput()
+	terminal.LogTo(name, logger.NewLogEntry(logger.LogLevelInfo, nil, header))
+
+	names := []string{}
+	w := 0
+	for n, _ := range p.rows {
+		if len(n) > w {
+			w = len(n)
+		}
+
+		names = append(names, n)
+	}
+
+	sort.SliceStable(names, func(i, j int) bool { return names[i] < names[j] })
+
+	for _, scriptName := range names {
+		message := p.rows[scriptName]
+		log := fmt.Sprintf("│ \033[36m%s\033[0m ... %s%s", scriptName, strings.Repeat(" ", w-len(scriptName)), message)
+		terminal.LogTo(name, logger.NewLogEntry(logger.LogLevelInfo, nil, log))
+	}
+
+	terminal.LogTo(name, logger.NewLogEntry(logger.LogLevelInfo, nil, progress))
 }
 
 func NewValidationContext(name string) *ValidationContext {
@@ -111,5 +113,6 @@ func NewValidationContext(name string) *ValidationContext {
 		name:      name,
 		documents: map[string]types.Document{},
 		results:   []*ValidationResult{},
+		progress:  map[string]*progress{},
 	}
 }

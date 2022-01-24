@@ -22,6 +22,12 @@ var (
 	}
 )
 
+type Output interface {
+	Log(entry LogEntry)
+	LogTo(dst string, entry LogEntry)
+	SetFormat(format LogFormat)
+}
+
 type Logger struct {
 	level   LogLevel
 	tags    TagSlice
@@ -37,7 +43,7 @@ func (l *Logger) Copy() *Logger {
 	return &Logger{
 		level:   l.level,
 		tags:    tags,
-		outputs: append([]Output{}, l.outputs...),
+		outputs: l.outputs,
 	}
 }
 
