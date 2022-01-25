@@ -5,6 +5,7 @@ import (
 	"io"
 	"sort"
 	"strings"
+	"sync"
 
 	"github.com/concreteit/greenlight/logger"
 	"github.com/lestrrat-go/libxml2"
@@ -22,6 +23,7 @@ type progress struct {
 }
 
 type ValidationContext struct {
+	sync.Mutex
 	*Measure
 
 	name      string
@@ -61,6 +63,9 @@ func (c *ValidationContext) startProgress(name string, scripts ScriptMap) {
 }
 
 func (c *ValidationContext) addProgress(name, scriptName, message string, n int) {
+	c.Lock()
+	defer c.Unlock()
+
 	p := c.progress[name]
 	if p == nil {
 		return
