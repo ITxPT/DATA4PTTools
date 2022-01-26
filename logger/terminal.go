@@ -64,6 +64,8 @@ type TerminalOutput struct {
 	defaultBuffer string
 	buffers       map[string]*buffer
 	started       bool
+	lastUpdate    time.Time
+	lastRender    time.Time
 }
 
 func (o *TerminalOutput) Render() {
@@ -100,6 +102,11 @@ func (o *TerminalOutput) Draw() {
 
 	go func() {
 		for {
+			if o.lastRender.After(o.lastUpdate) {
+				time.Sleep(time.Millisecond * 300)
+				continue
+			}
+
 			w, _, _ := term.GetSize(0)
 			size := 0
 			for _, buf := range o.buffers {
@@ -145,6 +152,7 @@ func (o *TerminalOutput) Draw() {
 			}
 
 			fmt.Printf(strings.Join(rows, "\n"))
+			o.lastRender = time.Now()
 			time.Sleep(time.Millisecond * 300)
 		}
 	}()
@@ -155,6 +163,7 @@ func (o *TerminalOutput) Log(entry LogEntry) {
 		buf.Add(entry.Format(o.format))
 	}
 
+	o.lastUpdate = time.Now()
 	o.Draw()
 }
 
@@ -163,6 +172,7 @@ func (o *TerminalOutput) LogTo(dst string, entry LogEntry) {
 		buf.Add(entry.Format(LogFormatNone))
 	}
 
+	o.lastUpdate = time.Now()
 	o.Draw()
 }
 
