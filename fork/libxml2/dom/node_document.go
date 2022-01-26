@@ -40,6 +40,10 @@ func (d *Document) HasChildNodes() bool {
 	return err != nil
 }
 
+func (d *Document) Line() (int, error) {
+	return clib.XMLNodeLine(d)
+}
+
 // FirstChild returns the document element
 func (d *Document) FirstChild() (types.Node, error) {
 	root, err := d.DocumentElement()
@@ -263,12 +267,4 @@ func (d *Document) LookupNamespaceURI(prefix string) (string, error) {
 	}
 
 	return root.LookupNamespaceURI(prefix)
-}
-
-func (d *Document) RemoveChild(n types.Node) error {
-	root, err := d.DocumentElement()
-	if err != nil {
-		return errors.Wrap(err, "failed to get document element")
-	}
-	return root.RemoveChild(n)
 }

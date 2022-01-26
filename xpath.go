@@ -1,9 +1,11 @@
 package greenlight
 
 import (
+	"fmt"
 	"regexp"
 	"strings"
 
+	"github.com/lestrrat-go/libxml2/clib"
 	"github.com/lestrrat-go/libxml2/types"
 	"github.com/lestrrat-go/libxml2/xpath"
 	"github.com/lestrrat-go/libxml2/xsd"
@@ -53,6 +55,19 @@ func xpathFindNodeValue(ctx *xpath.Context, pattern string, node types.Node) str
 	return ""
 }
 
+func xpathNodeLine(node types.Node) int {
+	if node == nil {
+		return 0
+	}
+
+	n, err := node.Line()
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	return n
+}
+
 func xpathNodeParent(node types.Node) types.Node {
 	if node == nil {
 		return nil
@@ -74,15 +89,21 @@ func xpathNodeValue(node types.Node) string {
 	return node.NodeValue()
 }
 
-func xsdValidateSchema(schema *xsd.Schema, document types.Document) (int, []string) {
-	errorStrings := []string{}
+func xsdValidateSchema(schema *xsd.Schema, document types.Document) (int, []map[string]interface{}) {
+	schemaErrors := []map[string]interface{}{}
 	errorCount, errors := schema.Validate(document)
 
 	for _, err := range errors {
-		errorStrings = append(errorStrings, err.Error())
+		if sve, ok := err.(clib.SchemaValidationError); ok {
+			schemaErrors = append(schemaErrors, map[string]interface{}{
+				"type":    "xsd",
+				"message": sve.Message,
+				"line":    sve.Line,
+			})
+		}
 	}
 
-	return errorCount, errorStrings
+	return errorCount, schemaErrors
 }
 
 func xpathJoin(values ...string) string {
