@@ -121,6 +121,8 @@ func validNodePtr(n PtrSource) (*C.xmlNode, error) {
 		return nil, ErrInvalidNode
 	}
 
+	// XML_GET_LINE
+
 	nptr := n.Pointer()
 	if nptr == 0 {
 		return nil, ErrInvalidNode
@@ -265,57 +267,13 @@ func validNamespacePtr(s PtrSource) (*C.xmlNs, error) {
 	return nil, ErrInvalidNamespace
 }
 
-func XMLSearchNsByHref(doc PtrSource, n PtrSource, uri string) (uintptr, error) {
-	docptr, err := validDocumentPtr(doc)
-	if err != nil {
-		return 0, err
-	}
-
-	nptr, err := validNodePtr(doc)
-	if err != nil {
-		return 0, err
-	}
-
-	if len(uri) > MaxNamespaceURILength {
-		return 0, ErrNamespaceURITooLong
-	}
-
-	var xcuri [MaxNamespaceURILength]C.xmlChar
-	for i := 0; i < len(uri); i++ {
-		xcuri[i] = C.xmlChar(uri[i])
-	}
-	xcuriptr := (uintptr)(unsafe.Pointer(&xcuri[0]))
-
-	ns := C.xmlSearchNsByHref(
-		(*C.xmlDoc)(unsafe.Pointer(docptr)),
-		(*C.xmlNode)(unsafe.Pointer(nptr)),
-		(*C.xmlChar)(unsafe.Pointer(xcuriptr)),
-	)
-	if ns == nil {
-		return 0, ErrNamespaceNotFound{Target: uri}
-	}
-	return uintptr(unsafe.Pointer(ns)), nil
-}
-
-func XMLSearchNs(doc PtrSource, n PtrSource, prefix string) (uintptr, error) {
+func XMLNodeLine(n PtrSource) (int, error) {
 	nptr, err := validNodePtr(n)
 	if err != nil {
 		return 0, err
 	}
 
-	docptr, err := validDocumentPtr(doc)
-	if err != nil {
-		return 0, err
-	}
-
-	cprefix := stringToXMLChar(prefix)
-	defer C.free(unsafe.Pointer(cprefix))
-
-	ns := C.xmlSearchNs(docptr, nptr, cprefix)
-	if ns == nil {
-		return 0, ErrNamespaceNotFound{Target: prefix}
-	}
-	return uintptr(unsafe.Pointer(ns)), nil
+	return int(nptr.line), nil
 }
 
 func XMLNodeName(n PtrSource) (string, error) {
@@ -380,23 +338,6 @@ func XMLNodeValue(n PtrSource) (string, error) {
 	}
 
 	return s, nil
-}
-
-func XMLAddChild(n PtrSource, child PtrSource) error {
-	nptr, err := validNodePtr(n)
-	if err != nil {
-		return err
-	}
-
-	cptr, err := validNodePtr(child)
-	if err != nil {
-		return err
-	}
-
-	if C.xmlAddChild(nptr, cptr) == nil {
-		return errors.New("failed to add child")
-	}
-	return nil
 }
 
 func XMLOwnerDocument(n PtrSource) (uintptr, error) {
@@ -1485,6 +1426,15 @@ func XMLSchemaParse(buf []byte, options ...option.Interface) (uintptr, error) {
 	return uintptr(unsafe.Pointer(s)), nil
 }
 
+type SchemaValidationError struct {
+	Message string
+	Line    int
+}
+
+func (e SchemaValidationError) Error() string {
+	return e.Message
+}
+
 type SchemaValidationResult struct {
 	Errors     []error
 	ErrorCount int
@@ -1530,7 +1480,10 @@ func XMLSchemaValidateDocument(schema PtrSource, document PtrSource, options ...
 		err := accum.errors[i]
 		errMessage := C.GoString(err.message)
 
-		errs[i] = errors.New(strings.TrimRight(errMessage, "\n"))
+		errs[i] = SchemaValidationError{
+			Message: strings.TrimRight(errMessage, "\n"),
+			Line:    int(err.line),
+		}
 	}
 
 	res.Errors = errs

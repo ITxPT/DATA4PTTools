@@ -43,32 +43,57 @@ const stzPath = xpath.join(".", "SummerTimeZone");
 function main(ctx) {
   const frameDefaults = ctx.xpath.first(frameDefaultsPath);
   if (!frameDefaults) {
-    return ["Document is missing element FrameDefaults"];
+    return [{
+      type: "not_found",
+      message: "Document is missing element FrameDefaults",
+    }];
   }
 
   const errors = [];
 
   // not to bothered by errors since its optional according to  xsd schema
-  let defaultLocale = ctx.xpath.first(defaultLocalePath, frameDefaults);
+  const defaultLocale = ctx.xpath.first(defaultLocalePath, frameDefaults);
+  const line = ctx.xpath.line(defaultLocale)
   if (defaultLocale) {
     if (!validTimeZoneOffset(ctx.xpath.findValue(tzOffsetPath, defaultLocale))) {
-      errors.push("Invalid TimeZoneOffset");
+      errors.push({
+        type: "consistency",
+        message: "Invalid TimeZoneOffset",
+        line,
+      });
     }
 
     if (!validTimeZone(ctx.xpath.findValue(tzPath, defaultLocale))) {
-      errors.push("Invalid TimeZone");
+      errors.push({
+        type: "consistency",
+        message: "Invalid TimeZone",
+        line,
+      });
     }
 
     if (!validTimeZoneOffset(ctx.xpath.findValue(stzOffsetPath, defaultLocale))) {
-      errors.push("Invalid SummerTimeZoneOffset");
+      errors.push({
+        type: "consistency",
+        message: "Invalid SummerTimeZoneOffset",
+        line,
+      });
     }
 
     if (!validTimeZone(ctx.xpath.findValue(stzPath, defaultLocale))) {
-      errors.push("Invalid SummerTimeZone");
+      errors.push({
+        type: "consistency",
+        message: "Invalid SummerTimeZone",
+        line,
+      });
     }
 
     if (!validLanguage(ctx.xpath.findValue(defaultLangPath, defaultLocale))) {
-      errors.push("Invalid DefaultLanguage");
+      ctx.log.debug(line)
+      errors.push({
+        type: "consistency",
+        message: "Invalid DefaultLanguage",
+        line: line,
+      });
     }
   }
 

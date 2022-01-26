@@ -64,6 +64,7 @@ func init() {
 	validateCmd.Flags().StringSliceP("input", "i", []string{}, "XML file, dir or archive to validate")
 	validateCmd.Flags().StringP("log-level", "l", "debug", "Set logger level")
 	validateCmd.Flags().StringP("log-path", "", ".", "Log file location")
+	validateCmd.Flags().BoolP("no-constraint", "", false, "Use lite schema validation (w/o constraint)")
 	validateCmd.Flags().StringP("report-format", "", "json", "Detailed validation report format")
 	validateCmd.Flags().StringP("report-path", "", ".", "Detail validation report file location")
 	validateCmd.Flags().StringP("schema", "s", "xsd/NeTEx_publication.xsd", "Use XML Schema file for validation")
@@ -203,21 +204,23 @@ func validate(cmd *cobra.Command, args []string) {
 		l.SetLogLevel(logger.LogLevel(viper.GetString("logLevel")))
 	}
 
+	schema := viper.GetString("schema")
+	if nc, err := cmd.Flags().GetBool("no-constraint"); nc && err == nil {
+		schema = "xsd/NeTEx_publication-NoConstraint.xsd"
+	}
 	validator, err := greenlight.NewValidator(
-		greenlight.WithSchemaFile(viper.GetString("schema")),
+		greenlight.WithSchemaFile(schema),
 		greenlight.WithLogger(l),
 		greenlight.WithBuiltinScripts(viper.GetBool("builtin")),
 		greenlight.WithScriptingPaths(viper.GetStringSlice("scripts")),
 	)
 	if err != nil {
-		fmt.Println(err)
-		return
+		log.Fatal(err)
 	}
 
 	input := viper.GetStringSlice("input")
 	if len(input) == 0 {
-		fmt.Println("no input paths defined")
-		return
+		log.Fatal("no input paths defined")
 	}
 
 	var ctx *greenlight.ValidationContext
@@ -242,7 +245,7 @@ func validate(cmd *cobra.Command, args []string) {
 	for _, r := range ctx.Results() {
 		if viper.GetBool("telemetry") {
 			p := newPoint("document")
-			p.AddField("schema_name", viper.GetString("schema"))
+			p.AddField("schema_name", schema)
 			p.AddField("schema_bytes", validator.SchemaSize())
 			p.AddField("execution_time_ms", r.ExecutionTime().Milliseconds())
 			p.AddField("name", r.Name)
@@ -251,7 +254,7 @@ func validate(cmd *cobra.Command, args []string) {
 
 			for _, rule := range r.ValidationRules {
 				p := newPoint("rule")
-				p.AddField("schema_name", viper.GetString("schema"))
+				p.AddField("schema_name", schema)
 				p.AddField("schema_bytes", validator.SchemaSize())
 				p.AddField("execution_time_ms", rule.ExecutionTime().Milliseconds())
 				p.AddField("document_name", r.Name)

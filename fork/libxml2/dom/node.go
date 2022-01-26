@@ -48,6 +48,7 @@ func (n *XMLNode) OwnerDocument() (types.Document, error) {
 	if ptr == 0 {
 		return nil, errors.Wrap(clib.ErrInvalidDocument, "failed to get valid owner document")
 	}
+
 	return WrapDocument(ptr), nil
 }
 
@@ -210,11 +211,6 @@ func (n *XMLNode) SetNodeValue(value string) {
 	clib.XMLSetNodeValue(n, value)
 }
 
-// AddChild appends the node
-func (n *XMLNode) AddChild(child types.Node) error {
-	return clib.XMLAddChild(n, child)
-}
-
 // TextContent returns the text content
 func (n *XMLNode) TextContent() string {
 	return clib.XMLTextContent(n)
@@ -224,6 +220,10 @@ func (n *XMLNode) TextContent() string {
 // be deprecated)
 func (n *XMLNode) ToString(format int, docencoding bool) string {
 	return clib.XMLToString(n, format, docencoding)
+}
+
+func (n *XMLNode) Line() (int, error) {
+	return clib.XMLNodeLine(n)
 }
 
 // LookupNamespacePrefix returns the prefix associated with the given URL

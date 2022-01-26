@@ -68,18 +68,6 @@ type TerminalOutput struct {
 	lastRender    time.Time
 }
 
-func (o *TerminalOutput) Render() {
-	if o.started {
-		return
-	}
-
-	go func() {
-		for {
-			time.Sleep(time.Millisecond * 250)
-		}
-	}()
-}
-
 func (o *TerminalOutput) AddBuffer(name string, size int) {
 	o.buffers[name] = &buffer{size: size}
 	o.buffers[name].Fill("")
@@ -102,7 +90,7 @@ func (o *TerminalOutput) Draw() {
 
 	go func() {
 		for {
-			if o.lastRender.After(o.lastUpdate) {
+			if o.lastUpdate.Before(o.lastRender) {
 				time.Sleep(time.Millisecond * 300)
 				continue
 			}

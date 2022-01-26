@@ -28,22 +28,28 @@ type ValidationResult struct {
 	ValidationRules []*RuleValidation `json:"validations,omitempty" xml:"Validation,omitempty"`
 }
 
+type TaskError struct {
+	Message string `json:"message"`
+	Line    int    `json:"line,omitempty"`
+	Type    string `json:"type,omitempty"`
+}
+
 type RuleValidation struct {
 	*Measure
 
-	Name        string   `json:"name" xml:"name,attr"`
-	Description string   `json:"description,omitempty" xml:"description,attr,omitempty"`
-	Valid       bool     `json:"valid" xml:"valid,attr"`
-	ErrorCount  int      `json:"error_count,omitempty" xml:"errorCount,attr,omitempty"`
-	Errors      []string `json:"errors,omitempty" xml:"Errors,omitempty"`
+	Name        string      `json:"name" xml:"name,attr"`
+	Description string      `json:"description,omitempty" xml:"description,attr,omitempty"`
+	Valid       bool        `json:"valid" xml:"valid,attr"`
+	ErrorCount  int         `json:"error_count,omitempty" xml:"errorCount,attr,omitempty"`
+	Errors      []TaskError `json:"errors,omitempty" xml:"Errors,omitempty"`
 }
 
-func (v *RuleValidation) AddError(err error) {
+func (v *RuleValidation) AddError(err TaskError) {
 	v.Valid = false
 	v.ErrorCount++
 
 	if v.ErrorCount <= 32 {
-		v.Errors = append(v.Errors, err.Error())
+		v.Errors = append(v.Errors, err)
 	}
 }
 

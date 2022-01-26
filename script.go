@@ -53,7 +53,7 @@ func (s *Script) Execute(ctx *ValidationContext, schema *xsd.Schema, l *logger.L
 		Name:        s.name,
 		Description: s.description,
 		Valid:       true,
-		Errors:      []string{},
+		Errors:      []TaskError{},
 	}
 	defer func() {
 		res.Stop()
@@ -63,20 +63,26 @@ func (s *Script) Execute(ctx *ValidationContext, schema *xsd.Schema, l *logger.L
 
 	c, err := netexContext(doc)
 	if err != nil {
-		res.AddError(err)
+		res.AddError(TaskError{
+			Message: err.Error(),
+		})
 		return res
 	}
 
-	var validateHandler func(ctx jsObject, xpath jsObject) []string
+	var validateHandler func(ctx jsObject, xpath jsObject) []interface{}
 
 	vm, err := s.Runtime()
 	if err != nil {
-		res.AddError(err)
+		res.AddError(TaskError{
+			Message: err.Error(),
+		})
 		return res
 	}
 
 	if err := vm.ExportTo(vm.Get("main"), &validateHandler); err != nil {
-		res.AddError(err)
+		res.AddError(TaskError{
+			Message: err.Error(),
+		})
 		return res
 	}
 
@@ -93,8 +99,29 @@ func (s *Script) Execute(ctx *ValidationContext, schema *xsd.Schema, l *logger.L
 	}
 
 	if errors := validateHandler(jsCtx.object(0), jsStandardLib); errors != nil {
-		for _, err := range errors {
-			res.AddError(fmt.Errorf(err))
+		for _, v := range errors {
+			if errors, ok := v.(map[string]interface{}); ok {
+				err := TaskError{}
+				if errors["message"] != nil {
+					if msg, ok := errors["message"].(string); ok {
+						err.Message = msg
+					}
+				}
+				if errors["type"] != nil {
+					if t, ok := errors["type"].(string); ok {
+						err.Type = t
+					}
+				}
+				if errors["line"] != nil {
+					if line, ok := errors["line"].(int); ok {
+						err.Line = line
+					} else if line, ok := errors["line"].(int64); ok {
+						err.Line = int(line)
+					}
+				}
+
+				res.AddError(err)
+			}
 		}
 	}
 

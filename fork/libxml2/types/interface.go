@@ -70,8 +70,7 @@ type Node interface {
 	PtrSource
 
 	ParseInContext(string, int) (Node, error)
-
-	AddChild(Node) error
+	Line() (int, error)
 	ChildNodes() (NodeList, error)
 	Copy() (Node, error)
 	OwnerDocument() (Document, error)
@@ -92,7 +91,6 @@ type Node interface {
 	NodeValue() string
 	ParentNode() (Node, error)
 	PreviousSibling() (Node, error)
-	RemoveChild(Node) error
 	SetDocument(d Document) error
 	SetNodeName(string)
 	SetNodeValue(string)
