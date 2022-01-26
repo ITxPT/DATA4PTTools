@@ -55,8 +55,13 @@ func (v *Validator) Validate(ctx *ValidationContext) {
 
 	for i := 0; i < numTasks; i++ {
 		if vr, ok := (<-res).(*ValidationResult); ok {
+			status := "valid"
+			if !vr.Valid {
+				status = "invalid"
+			}
+
 			ctx.results = append(ctx.results, vr)
-			ctx.addProgress(vr.Name, "", "", 1)
+			ctx.addProgress(vr.Name, "", "", 1, status)
 		}
 	}
 
@@ -118,12 +123,14 @@ func (v *Validator) ValidateDocument(name string, doc types.Document, ctx *Valid
 	for i := 0; i < numTasks; i++ {
 		if vr, ok := (<-res).(*RuleValidation); ok {
 			message := fmt.Sprintf("\033[32mok\033[0m")
+			status := "valid"
 			if !vr.Valid {
 				message = fmt.Sprintf("\033[31mfailed\033[0m with %d errors and 0 warnings", vr.ErrorCount)
+				status = "invalid"
 			}
 
 			result.ValidationRules = append(result.ValidationRules, vr)
-			ctx.addProgress(name, vr.Name, message, 1)
+			ctx.addProgress(name, vr.Name, message, 1, status)
 		}
 	}
 

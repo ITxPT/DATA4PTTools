@@ -19,7 +19,9 @@ type validationResult struct {
 type progress struct {
 	count     int
 	completed int
+	status    string
 	rows      map[string]string
+	jobStatus map[string]string
 }
 
 type ValidationContext struct {
@@ -54,15 +56,41 @@ func (c *ValidationContext) AddDocument(name string, document types.Document) {
 func (c *ValidationContext) startProgress(name string, scripts ScriptMap) {
 	n := len(scripts)
 	filler := map[string]string{}
+	jobStatus := map[string]string{}
 	for _, name := range scripts.Keys() {
 		filler[name] = "starting"
+		jobStatus[name] = "running"
 	}
 
-	c.progress[name] = &progress{n + 1, 0, filler}
+	c.progress[name] = &progress{
+		count:     n + 1,
+		completed: 0,
+		status:    "running",
+		rows:      filler,
+		jobStatus: jobStatus,
+	}
 	logger.DefaultTerminalOutput().AddBuffer(name, n+2)
 }
 
-func (c *ValidationContext) addProgress(name, scriptName, message string, n int) {
+func (c *ValidationContext) publishProgress() {
+	progress := []map[string]interface{}{}
+	for name, p := range c.progress {
+		progress = append(progress, map[string]interface{}{
+			"name":      name,
+			"count":     p.count,
+			"completed": p.completed,
+			"rows":      p.rows,
+			"status":    p.status,
+			"jobStatus": p.jobStatus,
+		})
+	}
+	publishMessage("progress", map[string]interface{}{
+		"name":     c.name,
+		"progress": progress,
+	})
+}
+
+func (c *ValidationContext) addProgress(name, scriptName, message string, n int, status string) {
 	c.Lock()
 	defer c.Unlock()
 
@@ -73,6 +101,9 @@ func (c *ValidationContext) addProgress(name, scriptName, message string, n int)
 
 	if scriptName != "" {
 		p.rows[scriptName] = message
+		p.jobStatus[scriptName] = status
+	} else {
+		p.status = status
 	}
 
 	p.completed += n
@@ -110,6 +141,10 @@ func (c *ValidationContext) addProgress(name, scriptName, message string, n int)
 	}
 
 	terminal.LogTo(name, logger.NewLogEntry(logger.LogLevelInfo, nil, progress))
+
+	if n > 0 {
+		c.publishProgress()
+	}
 }
 
 func NewValidationContext(name string) *ValidationContext {
