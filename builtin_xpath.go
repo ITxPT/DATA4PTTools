@@ -18,7 +18,7 @@ func (c *jsContext) findNodeValue(pattern string, node types.Node) string {
 	return xpathFindNodeValue(c.nodeContext, pattern, node)
 }
 
-func (c *jsContext) validateSchema() (int, []string) {
+func (c *jsContext) validateSchema() (int, []map[string]interface{}) {
 	return xsdValidateSchema(c.schema, c.document)
 }
 
