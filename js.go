@@ -85,6 +85,7 @@ func (c *jsContext) object(id int) jsObject {
 			"parent":    xpathNodeParent,
 			"value":     xpathNodeValue,
 			"join":      xpathJoin,
+			"line":      xpathNodeLine,
 		},
 	}
 }
@@ -130,7 +131,7 @@ func (c *jsContext) Queue(handler string, node types.Node, args ...interface{}) 
 	return nil
 }
 
-func (c *jsContext) Execute() []string {
+func (c *jsContext) Execute() []interface{} {
 	numTasks := len(c.tasks)
 	tasks := make(chan task, numTasks)
 	results := make(chan interface{}, numTasks)
@@ -142,12 +143,10 @@ func (c *jsContext) Execute() []string {
 	}
 	close(tasks)
 
-	errors := []string{}
+	errors := []interface{}{}
 	for i := 0; i < numTasks; i++ {
-		if errSlice, ok := (<-results).([]error); ok {
-			for _, err := range errSlice {
-				errors = append(errors, err.Error())
-			}
+		if errSlice, ok := (<-results).([]interface{}); ok {
+			errors = append(errors, errSlice...)
 			c.context.progress[c.name].completed += 1
 		}
 	}
@@ -161,31 +160,26 @@ type jsTask struct {
 	args    []interface{}
 }
 
-func (t jsTask) Execute(id int) interface{} { // TODO define response type
+func (t jsTask) Execute(id int) interface{} {
 	var handler jsTaskHandler
 
-	errorSlice := []error{}
 	vm, err := t.context.script.Runtime()
 	if err != nil {
-		return []string{err.Error()}
+		return map[string]interface{}{"message": err.Error()}
 	}
 
 	if err := vm.ExportTo(vm.Get(t.handler), &handler); err != nil {
-		return []string{err.Error()}
+		return map[string]interface{}{"message": err.Error()}
 	}
 
 	if res := handler(t.context.object(id), jsStandardLib, t.args...); res != nil {
-		intSlice, ok := res.Export().([]interface{})
+		v, ok := res.Export().([]interface{})
 		if !ok {
 			return nil
 		}
 
-		for _, v := range intSlice {
-			if err, ok := v.(string); ok {
-				errorSlice = append(errorSlice, fmt.Errorf(err))
-			}
-		}
+		return v
 	}
 
-	return errorSlice
+	return nil
 }

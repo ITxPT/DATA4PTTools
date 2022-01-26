@@ -6,5 +6,5 @@ function main(ctx) {
 
   const [n, errors] = ctx.xsd.validate();
 
-  return errors;
+  return errors
 }

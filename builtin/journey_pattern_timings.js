@@ -37,13 +37,17 @@ function validateStopPointReferences(ctx) {
   const refNodes = ctx.xpath.find(stopPointRefPath, ctx.node);
   const sharedDataDoc = ctx.importDocument("_shared_data");
 
-  return refNodes.map(n => xpath.value(n))
+  return refNodes.map(n => [n, xpath.value(n)])
     .reduce((errors, ref) => {
-      const stopPath = xpath.join(scheduledStopPointsPath, `ScheduledStopPoint[@id = '${ref}']`);
+      const stopPath = xpath.join(scheduledStopPointsPath, `ScheduledStopPoint[@id = '${ref[1]}']`);
       const n = xpath.first(sharedDataDoc || ctx.nodeContext, stopPath);
 
       if (!n) {
-        errors.push(`Missing ScheduledStopPoint(@id=${ref})`);
+        errors.push({
+          type: "consistency",
+          message: `Missing ScheduledStopPoint(@id=${ref[1]})`,
+          line: ctx.xpath.line(ref[0]),
+        });
       }
 
       return errors;
@@ -61,7 +65,10 @@ function validatePassingTimes(ctx) {
     const errorMessageBase = `for StopPointInJourneyPattern(@id='${id}')`;
     const passingTimes = ctx.xpath.find(passingTimesPath, ctx.document);
     if (passingTimes.length === 0) {
-      errors.push(`Expected passing times ${errorMessageBase}`);
+      errors.push({
+        type: "consistency",
+        message: `Expected passing times ${errorMessageBase}`,
+      });
       continue;
     }
 
@@ -74,13 +81,17 @@ function validatePassingTimes(ctx) {
       if (i !== stopPoints.length - 1) {
         const departureTime = ctx.xpath.findValue(departureTimePath, timetabledPassingTime);
         if (departureTime === "") {
-          errors.push(`Expected departure time in TimetabledpassingTime(@id='${tid}') ${errorMessageBase}`);
+          errors.push({
+            message: `Expected departure time in TimetabledpassingTime(@id='${tid}') ${errorMessageBase}`,
+          });
         }
       }
       if (i !== 0) {
         const arrivalTime = ctx.xpath.findValue(arrivalTimePath, timetabledPassingTime);
         if (arrivalTime === "") {
-          errors.push(`Expected arrival time in TimetabledpassingTime(@id='${tid}') ${errorMessageBase}`);
+          errors.push({
+            message: `Expected arrival time in TimetabledpassingTime(@id='${tid}') ${errorMessageBase}`,
+          });
         }
       }
     }

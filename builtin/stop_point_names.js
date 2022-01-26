@@ -12,7 +12,11 @@ function main(ctx) {
     const id = ctx.xpath.findValue("@id", stopPoint);
     const name = ctx.xpath.findValue(namePath, stopPoint);
     if (!name) {
-      errors.push(`Missing name in ScheduledStopPoint(@id=${id})`);
+      errors.push({
+        type: "consistency",
+        message: `Missing name in ScheduledStopPoint(@id=${id})`,
+        line: ctx.xpath.line(stopPoint),
+      });
     }
   });
 
