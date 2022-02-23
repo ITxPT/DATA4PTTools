@@ -36,22 +36,17 @@ func (v *Validator) Validate(ctx *ValidationContext) {
 	ctx.Start()
 
 	numTasks := len(ctx.documents)
-	tasks := make(chan task, numTasks)
 	res := make(chan interface{}, numTasks)
-
-	startWorkers(tasks, res)
 
 	for name, document := range ctx.documents {
 		ctx.startProgress(name, v.scripts)
-		tasks <- taskValidateDocument{
-			validator: v,
-			ctx:       ctx,
-			name:      name,
-			document:  document,
-		}
-	}
 
-	close(tasks)
+		validatorPool.Add(func(name string, doc types.Document) func(int) {
+			return func(id int) {
+				res <- v.ValidateDocument(name, doc, ctx)
+			}
+		}(name, document))
+	}
 
 	for i := 0; i < numTasks; i++ {
 		if vr, ok := (<-res).(*ValidationResult); ok {
@@ -90,10 +85,7 @@ func (v *Validator) ValidateDocument(name string, doc types.Document, ctx *Valid
 	result.Start()
 
 	numTasks := len(v.scripts)
-	tasks := make(chan task, numTasks)
 	res := make(chan interface{}, numTasks)
-
-	startWorkers(tasks, res)
 
 	docMax := 0
 	for k, _ := range ctx.documents {
@@ -108,17 +100,12 @@ func (v *Validator) ValidateDocument(name string, doc types.Document, ctx *Valid
 		l.AddTag(logger.NewTag("script", script.name, logger.WithTagMaxWidth(v.scripts.Keys())))
 		l.AddTag(logger.NewTag("document", name, logger.WithTagWidth(docMax)))
 
-		tasks <- taskScript{
-			context:  ctx,
-			script:   script,
-			schema:   v.schema,
-			logger:   l,
-			name:     name,
-			document: doc,
-		}
+		mainPool.Add(func(script *Script) func(int) {
+			return func(id int) {
+				res <- script.Execute(ctx, v.schema, l, name, doc)
+			}
+		}(script))
 	}
-
-	close(tasks)
 
 	for i := 0; i < numTasks; i++ {
 		if vr, ok := (<-res).(*RuleValidation); ok {
