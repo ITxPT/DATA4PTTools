@@ -77,12 +77,12 @@
 
 1. Clone repository
 ```sh
-git clone https://github.com/concreteit/greenlight
+git clone https://github.com/ITxPT/DATA4PTTools
 ```
 
 2. Navigate to project
 ```sh
-cd greenlight
+cd DATA4PTTools
 ```
 
 3. Getting dependencies
