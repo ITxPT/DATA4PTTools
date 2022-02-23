@@ -10,8 +10,11 @@ require (
 	github.com/dop251/goja v0.0.0-20211207134806-acd374ca9c94
 	github.com/eclipse/paho.mqtt.golang v1.3.5
 	github.com/fhmq/hmq v0.0.0-20220119031624-bf2b91c535a8
+	github.com/h2non/filetype v1.1.3
 	github.com/influxdata/influxdb-client-go/v2 v2.6.0
+	github.com/labstack/echo/v4 v4.6.3
 	github.com/lestrrat-go/libxml2 v0.0.0-00010101000000-000000000000
+	github.com/matoous/go-nanoid v1.5.0
 	github.com/shirou/gopsutil v3.21.11+incompatible
 	github.com/spf13/cobra v1.2.1
 	github.com/spf13/viper v1.10.1
@@ -35,10 +38,10 @@ require (
 	github.com/go-playground/universal-translator v0.17.0 // indirect
 	github.com/go-playground/validator/v10 v10.4.1 // indirect
 	github.com/go-sourcemap/sourcemap v2.1.3+incompatible // indirect
+	github.com/golang-jwt/jwt v3.2.2+incompatible // indirect
 	github.com/golang/protobuf v1.5.2 // indirect
 	github.com/golang/snappy v0.0.4 // indirect
 	github.com/google/uuid v1.1.2 // indirect
-	github.com/gorilla/websocket v1.4.2 // indirect
 	github.com/hashicorp/go-uuid v1.0.2 // indirect
 	github.com/hashicorp/hcl v1.0.0 // indirect
 	github.com/inconshreveable/mousetrap v1.0.0 // indirect
@@ -50,8 +53,10 @@ require (
 	github.com/jcmturner/rpc/v2 v2.0.3 // indirect
 	github.com/json-iterator/go v1.1.12 // indirect
 	github.com/klauspost/compress v1.13.6 // indirect
+	github.com/labstack/gommon v0.3.1 // indirect
 	github.com/leodido/go-urn v1.2.0 // indirect
 	github.com/magiconair/properties v1.8.5 // indirect
+	github.com/mattn/go-colorable v0.1.12 // indirect
 	github.com/mattn/go-isatty v0.0.14 // indirect
 	github.com/mitchellh/mapstructure v1.4.3 // indirect
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
@@ -73,6 +78,8 @@ require (
 	github.com/tklauser/go-sysconf v0.3.9 // indirect
 	github.com/tklauser/numcpus v0.3.0 // indirect
 	github.com/ugorji/go/codec v1.1.7 // indirect
+	github.com/valyala/bytebufferpool v1.0.0 // indirect
+	github.com/valyala/fasttemplate v1.2.1 // indirect
 	github.com/yusufpapurcu/wmi v1.2.2 // indirect
 	go.uber.org/atomic v1.7.0 // indirect
 	go.uber.org/multierr v1.6.0 // indirect
@@ -81,6 +88,7 @@ require (
 	golang.org/x/net v0.0.0-20220105145211-5b0dc2dfae98 // indirect
 	golang.org/x/sys v0.0.0-20211216021012-1d35b9e2eb4e // indirect
 	golang.org/x/text v0.3.7 // indirect
+	golang.org/x/time v0.0.0-20210220033141-f8bda1e9f3ba // indirect
 	google.golang.org/protobuf v1.27.1 // indirect
 	gopkg.in/ini.v1 v1.66.2 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect

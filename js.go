@@ -96,7 +96,10 @@ func (c *jsContext) importDocument(name string) *xpath.Context {
 
 	doc := c.context.documents[name]
 	if doc == nil {
-		return nil
+		doc = c.context.documents[name+".xml"]
+		if doc == nil {
+			return nil
+		}
 	}
 
 	ctx, err := netexContext(doc)
