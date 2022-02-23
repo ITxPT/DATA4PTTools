@@ -133,15 +133,13 @@ func (c *jsContext) Queue(handler string, node types.Node, args ...interface{}) 
 
 func (c *jsContext) Execute() []interface{} {
 	numTasks := len(c.tasks)
-	tasks := make(chan task, numTasks)
 	results := make(chan interface{}, numTasks)
 
-	startWorkers(tasks, results)
-
 	for _, jst := range c.tasks {
-		tasks <- jst
+		workerPool.Add(func(id int) {
+			results <- jst.Execute(id)
+		})
 	}
-	close(tasks)
 
 	errors := []interface{}{}
 	for i := 0; i < numTasks; i++ {

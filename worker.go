@@ -2,54 +2,45 @@ package greenlight
 
 import (
 	"runtime"
-
-	"github.com/concreteit/greenlight/logger"
-	"github.com/lestrrat-go/libxml2/types"
-	"github.com/lestrrat-go/libxml2/xsd"
 )
 
-type task interface {
-	Execute(id int) interface{}
+var (
+	validatorPool *WorkerPool
+	mainPool      *WorkerPool
+	workerPool    *WorkerPool
+)
+
+type WorkerPool struct {
+	maxWorkers int
+	tasks      chan func(int)
 }
 
-func worker(id int, tasks <-chan task, results chan<- interface{}) {
-	for task := range tasks {
-		results <- task.Execute(id)
+func (p *WorkerPool) Run() {
+	for i := 0; i < p.maxWorkers; i++ {
+		go func(id int) {
+			for task := range p.tasks {
+				task(id)
+			}
+		}(i + 1)
 	}
 }
 
-func startWorkers(tasks <-chan task, results chan<- interface{}) {
-	numWorkers := runtime.NumCPU()
-	numTasks := cap(tasks)
-	if numWorkers > numTasks {
-		numWorkers = numTasks
+func (p *WorkerPool) Add(task func(int)) {
+	p.tasks <- task
+}
+
+func NewPool(max int) *WorkerPool {
+	return &WorkerPool{
+		maxWorkers: max,
+		tasks:      make(chan func(int)),
 	}
-
-	for i := 1; i <= numWorkers; i++ {
-		go worker(i, tasks, results)
-	}
 }
 
-type taskValidateDocument struct {
-	validator *Validator
-	ctx       *ValidationContext
-	name      string
-	document  types.Document
-}
-
-func (t taskValidateDocument) Execute(id int) interface{} {
-	return t.validator.ValidateDocument(t.name, t.document, t.ctx)
-}
-
-type taskScript struct {
-	context  *ValidationContext
-	script   *Script
-	schema   *xsd.Schema
-	logger   *logger.Logger
-	name     string
-	document types.Document
-}
-
-func (t taskScript) Execute(id int) interface{} {
-	return t.script.Execute(t.context, t.schema, t.logger, t.name, t.document)
+func init() {
+	validatorPool = NewPool(runtime.NumCPU())
+	validatorPool.Run()
+	mainPool = NewPool(runtime.NumCPU())
+	mainPool.Run()
+	workerPool = NewPool(runtime.NumCPU())
+	workerPool.Run()
 }
