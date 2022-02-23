@@ -5,8 +5,9 @@ package clib
 #include <libxml/parserInternals.h>
 #include <libxml/xpathInternals.h>
 #include <libxml/xmlschemas.h>
+#include <string.h>
 
-#define MAX_VALIDATION_ERRORS_SIZE 32
+#define MAX_VALIDATION_ERRORS_SIZE 10000
 
 // Macro wrapper function. cgo cannot detect function-like macros, so this is how we avoid it
 static inline void MY_xmlFree(void *p) { xmlFree(p); }
@@ -33,6 +34,11 @@ typedef struct err_message {
   int line;
   int level;
   char *message;
+  int extra;
+  int col;
+  char * extra1;
+  char * extra2;
+  char * extra3;
 } err_message;
 
 typedef struct validation_result {
@@ -59,11 +65,38 @@ static void structuredErrFunc(void *ctx, xmlError *error) {
     return;
   }
 
+  char * errorMessage;
+  char * extra1;
+  char * extra2;
+  char * extra3;
+
+  if (error->message != NULL) {
+    errorMessage = malloc(strlen(error->message));
+    strcpy(errorMessage, error->message);
+  }
+  if (error->str1 != NULL) {
+    extra1 = malloc(strlen(error->str1));
+    strcpy(extra1, error->str1);
+  }
+  if (error->str2 != NULL) {
+    extra2 = malloc(strlen(error->str2));
+    strcpy(extra2, error->str2);
+  }
+  if (error->str3 != NULL) {
+    extra3 = malloc(strlen(error->str3));
+    strcpy(extra3, error->str3);
+  }
+
   int i = accum->index++;
   err_message *msg = malloc(sizeof(err_message));
   msg->line = error->line;
   msg->level = error->level;
-  msg->message = error->message;
+  msg->message = errorMessage;
+  msg->extra = error->int1;
+  msg->col = error->int2;
+  msg->extra1 = extra1;
+  msg->extra2 = extra2;
+  msg->extra3 = extra3;
   accum->errors[i] = msg;
 }
 
@@ -1478,10 +1511,8 @@ func XMLSchemaValidateDocument(schema PtrSource, document PtrSource, options ...
 	errs := make([]error, accum.index)
 	for i := 0; i < int(accum.index); i++ {
 		err := accum.errors[i]
-		errMessage := C.GoString(err.message)
-
 		errs[i] = SchemaValidationError{
-			Message: strings.TrimRight(errMessage, "\n"),
+			Message: strings.TrimSpace(C.GoString(err.message)),
 			Line:    int(err.line),
 		}
 	}
