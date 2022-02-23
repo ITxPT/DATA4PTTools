@@ -60,7 +60,6 @@ static void freeValidationResult(validation_result* ctx) {
 static void structuredErrFunc(void *ctx, xmlError *error) {
   validation_result *accum = (validation_result *) ctx;
 
-  accum->count++;
   if (accum->index >= MAX_VALIDATION_ERRORS_SIZE) {
     return;
   }
@@ -97,6 +96,7 @@ static void structuredErrFunc(void *ctx, xmlError *error) {
   msg->extra1 = extra1;
   msg->extra2 = extra2;
   msg->extra3 = extra3;
+  accum->count++;
   accum->errors[i] = msg;
 }
 
