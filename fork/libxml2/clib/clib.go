@@ -5,8 +5,9 @@ package clib
 #include <libxml/parserInternals.h>
 #include <libxml/xpathInternals.h>
 #include <libxml/xmlschemas.h>
+#include <string.h>
 
-#define MAX_VALIDATION_ERRORS_SIZE 32
+#define MAX_VALIDATION_ERRORS_SIZE 1000
 
 // Macro wrapper function. cgo cannot detect function-like macros, so this is how we avoid it
 static inline void MY_xmlFree(void *p) { xmlFree(p); }
@@ -15,19 +16,19 @@ static inline xmlError* MY_xmlCtxtLastError(void *ctx) { return xmlCtxtGetLastEr
 
 // For reference:
 // struct _xmlError {
-//     int	domain	: What part of the library raised this er
-//     int	code	: The error code, e.g. an xmlParserError
-//     char *	message	: human-readable informative error messag
-//     xmlErrorLevel	level	: how consequent is the error
-//     char *	file	: the filename
-//     int	line	: the line number if available
-//     char *	str1	: extra string information
-//     char *	str2	: extra string information
-//     char *	str3	: extra string information
-//     int	int1	: extra number information
-//     int	int2	: error column # or 0 if N/A (todo: renam
-//     void *	ctxt	: the parser context if available
-//     void *	node	: the node in the tree
+//  int domain          : What part of the library raised this er
+//  int code            : The error code, e.g. an xmlParserError
+//  char * message      : human-readable informative error messag
+//  xmlErrorLevel level : how consequent is the error
+//  char * file         : the filename
+//  int line            : the line number if available
+//  char * str1         : extra string information
+//  char * str2         : extra string information
+//  char * str3         : extra string information
+//  int int1            : extra number information
+//  int int2            : error column # or 0 if N/A (todo: renam
+//  void * ctxt         : the parser context if available
+//  void * node         : the node in the tree
 // }
 typedef struct err_message {
   int line;
@@ -54,16 +55,22 @@ static void freeValidationResult(validation_result* ctx) {
 static void structuredErrFunc(void *ctx, xmlError *error) {
   validation_result *accum = (validation_result *) ctx;
 
-  accum->count++;
   if (accum->index >= MAX_VALIDATION_ERRORS_SIZE) {
     return;
+  }
+
+  char * errorMessage;
+  if (error->message != NULL) {
+    errorMessage = malloc(strlen(error->message));
+    strcpy(errorMessage, error->message);
   }
 
   int i = accum->index++;
   err_message *msg = malloc(sizeof(err_message));
   msg->line = error->line;
   msg->level = error->level;
-  msg->message = error->message;
+  msg->message = errorMessage;
+  accum->count++;
   accum->errors[i] = msg;
 }
 

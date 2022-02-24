@@ -47,10 +47,7 @@ type RuleValidation struct {
 func (v *RuleValidation) AddError(err TaskError) {
 	v.Valid = false
 	v.ErrorCount++
-
-	if v.ErrorCount <= 32 {
-		v.Errors = append(v.Errors, err)
-	}
+	v.Errors = append(v.Errors, err)
 }
 
 func generalValidationError(name string, err error) *ValidationResult {
