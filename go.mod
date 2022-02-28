@@ -6,6 +6,7 @@ replace github.com/lestrrat-go/libxml2 v0.0.0-00010101000000-000000000000 => ./f
 
 require (
 	github.com/dop251/goja v0.0.0-20211207134806-acd374ca9c94
+	github.com/h2non/filetype v1.1.3
 	github.com/influxdata/influxdb-client-go/v2 v2.6.0
 	github.com/lestrrat-go/libxml2 v0.0.0-00010101000000-000000000000
 	github.com/shirou/gopsutil v3.21.11+incompatible
@@ -35,7 +36,7 @@ require (
 	github.com/tklauser/go-sysconf v0.3.9 // indirect
 	github.com/tklauser/numcpus v0.3.0 // indirect
 	github.com/yusufpapurcu/wmi v1.2.2 // indirect
-	golang.org/x/net v0.0.0-20211112202133-69e39bad7dc2 // indirect
+	golang.org/x/net v0.0.0-20220105145211-5b0dc2dfae98 // indirect
 	golang.org/x/sys v0.0.0-20211216021012-1d35b9e2eb4e // indirect
 	golang.org/x/text v0.3.7 // indirect
 	gopkg.in/ini.v1 v1.66.2 // indirect

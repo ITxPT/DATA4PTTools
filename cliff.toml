@@ -1,0 +1,46 @@
+[changelog]
+body = """
+{%- if version %}
+  ## {{ version }} [{{ timestamp | date(format="%Y-%m-%d") }}]
+{%- else %}
+  ## unreleased
+{%- endif %}
+{% set grouped_commits = commits | group_by(attribute="group") -%}
+{%- set_global groups_arr = [] -%}
+{%- for group, _commits in grouped_commits -%}
+  {%- set_global groups_arr = groups_arr | concat(with=group) -%}
+{%- endfor -%}
+{% for group in groups_arr | sort | reverse %}
+  {% set g_commits = grouped_commits[group] -%}
+  ### {{ group | upper_first }}
+  {% for commit in g_commits -%}
+    {% set breaking_message = "" -%}
+    {% if commit.breaking -%}
+      {% set breaking_message = " [BREAKING CHANGE]" -%}
+    {% endif -%}
+    {% set message = commit.message | upper_first | trim -%}
+    {% set commit_hash = commit.id | truncate(length=7, end="") -%}
+    {% set issue_num = commit.message | split(pat=" ") | last | trim_start_matches(pat="#") -%}
+    {% if issue_num is matching("^\\d+$") -%}
+      {% set message = message | split(pat=" ") | slice(end=-1) | join(sep=" ") | trim -%}
+      - [[#{{ issue_num }}](../../issues/{{ issue_num }})] {{ message }} ([{{ commit_hash }}](../../commits/{{ commit.id }})){{breaking_message}}
+    {% else -%}
+      - {{ message }} ([{{ commit_hash }}](../../commit/{{ commit.id }})){{breaking_message}}
+    {% endif -%}
+  {%- endfor %}
+{% endfor %}
+"""
+trim = true
+
+[git]
+conventional_commits = true
+commit_parsers = [
+    { message = "^feat*", group = "Features"},
+    { message = "^fix*", group = "Bug Fixes"},
+    { message = "^doc*", group = "Documentation"},
+    { message = "^perf*", group = "Performance"},
+    { message = "^refactor*", group = "Refactor"},
+    { message = "^test*", group = "Testing"},
+]
+filter_commits = false
+tag_pattern = "v[0-9]*"

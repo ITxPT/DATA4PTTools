@@ -1,7 +1,7 @@
 package main
 
 import (
-	"archive/zip"
+	"context"
 	"crypto/sha256"
 	"encoding/json"
 	"encoding/xml"
@@ -107,72 +107,53 @@ func init() {
 	rootCmd.AddCommand(validateCmd)
 }
 
-func createValidationContext(input string) (*greenlight.ValidationContext, error) {
-	ctx := greenlight.NewValidationContext(input)
+func openWithContext(ctx *greenlight.FileContext, input string) error {
 	fi, err := os.Stat(input)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	if fi.IsDir() {
-		fileEntries, err := os.ReadDir(input)
+		entries, err := os.ReadDir(input)
+		if err != nil {
+			return err
+		}
+
+		for _, entry := range entries {
+			if err := openWithContext(ctx, fmt.Sprintf("%s/%s", input, entry.Name())); err != nil {
+				return err
+			}
+		}
+	} else {
+		file, err := os.Open(input)
+		if err != nil {
+			return err
+		}
+		if err := ctx.Open(input, file); err != nil {
+			return err
+		}
+		defer file.Close()
+	}
+
+	return nil
+}
+
+func createValidationContext(input string) (*greenlight.ValidationContext, error) {
+	ctx := greenlight.NewValidationContext(input)
+	fileContext := greenlight.NewFileContext(context.Background())
+	defer fileContext.Close()
+	if err := openWithContext(fileContext, input); err != nil {
+		return nil, err
+	}
+
+	for _, file := range fileContext.Find("xml") {
+		f, err := file.Open()
 		if err != nil {
 			return nil, err
 		}
 
-		for _, entry := range fileEntries {
-			if path.Ext(entry.Name()) == ".xml" {
-				file, err := os.Open(input + "/" + entry.Name())
-				if err != nil {
-					return nil, err
-				}
-
-				name := strings.TrimRight(entry.Name(), ".xml")
-				if err := ctx.AddReader(name, file); err != nil {
-					return nil, err
-				}
-
-				file.Close()
-			}
-		}
-	} else {
-		switch path.Ext(input) {
-		case ".xml":
-			file, err := os.Open(input)
-			if err != nil {
-				return nil, err
-			}
-
-			name := strings.TrimRight(path.Base(input), ".xml")
-			if err := ctx.AddReader(name, file); err != nil {
-				return nil, err
-			}
-
-			file.Close()
-		case ".zip":
-			r, err := zip.OpenReader(input)
-			if err != nil {
-				return nil, err
-			}
-			defer r.Close()
-
-			for _, file := range r.File {
-				if strings.Contains(file.Name, "__MACOSX") || path.Ext(file.Name) != ".xml" {
-					continue
-				}
-
-				fr, err := file.Open()
-				if err != nil {
-					return nil, err
-				}
-
-				name := strings.TrimRight(file.Name, ".xml")
-				if err := ctx.AddReader(name, fr); err != nil {
-					return nil, err
-				}
-
-				fr.Close()
-			}
+		if err := ctx.AddReader(file.Name, f); err != nil {
+			return nil, err
 		}
 	}
 
@@ -227,12 +208,8 @@ func validate(cmd *cobra.Command, args []string) {
 	for _, path := range input {
 		c, err := createValidationContext(greenlight.EnvPath(path))
 		if err != nil {
-			if _, ok := err.(*os.PathError); ok {
-				continue
-			}
-
 			fmt.Println(err)
-			continue
+			return
 		}
 
 		ctx = c

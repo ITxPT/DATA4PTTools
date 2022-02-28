@@ -69,6 +69,8 @@ type TerminalOutput struct {
 }
 
 func (o *TerminalOutput) AddBuffer(name string, size int) {
+	o.Lock()
+	defer o.Unlock()
 	o.buffers[name] = &buffer{size: size}
 	o.buffers[name].Fill("")
 }
@@ -95,6 +97,7 @@ func (o *TerminalOutput) Draw() {
 				continue
 			}
 
+			o.Lock()
 			w, _, _ := term.GetSize(0)
 			size := 0
 			for _, buf := range o.buffers {
@@ -139,6 +142,7 @@ func (o *TerminalOutput) Draw() {
 				}
 			}
 
+			o.Unlock()
 			fmt.Printf(strings.Join(rows, "\n"))
 			o.lastRender = time.Now()
 			time.Sleep(time.Millisecond * 300)
@@ -147,6 +151,9 @@ func (o *TerminalOutput) Draw() {
 }
 
 func (o *TerminalOutput) Log(entry LogEntry) {
+	o.Lock()
+	defer o.Unlock()
+
 	if buf := o.buffers[o.defaultBuffer]; buf != nil {
 		buf.Add(entry.Format(o.format))
 	}
@@ -156,6 +163,9 @@ func (o *TerminalOutput) Log(entry LogEntry) {
 }
 
 func (o *TerminalOutput) LogTo(dst string, entry LogEntry) {
+	o.Lock()
+	defer o.Unlock()
+
 	if buf := o.buffers[dst]; buf != nil {
 		buf.Add(entry.Format(LogFormatNone))
 	}

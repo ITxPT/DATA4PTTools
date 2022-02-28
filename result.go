@@ -5,6 +5,8 @@ import (
 	"time"
 )
 
+const maxErrorCount = 1000
+
 type Measure struct {
 	start         time.Time
 	stop          time.Time
@@ -46,9 +48,9 @@ type RuleValidation struct {
 
 func (v *RuleValidation) AddError(err TaskError) {
 	v.Valid = false
-	v.ErrorCount++
 
-	if v.ErrorCount <= 32 {
+	if v.ErrorCount < maxErrorCount {
+		v.ErrorCount++
 		v.Errors = append(v.Errors, err)
 	}
 }
