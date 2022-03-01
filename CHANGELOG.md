@@ -12,4 +12,5 @@
 - [[#6](../../issues/6)][[#14](../../issues/14)] Handle dereferenced messages and increase error limit ([0f136d6](../../commit/0f136d6eb9daf057df7f30e74176b6178907b4d3))
 - Add max errors by validation rule/file ([0e59cd8](../../commit/0e59cd8ae9f8ef7c1bd7f304b4b6c8c8b499cff9))
 - [[#7](../../issues/7)] Fix readme link and dirname ([c1cfca5](../../commits/c1cfca50e7bb602ec1a7cc2190053dbbf5a3aa28))
+- Disable rules until they have been resolved ([e8dd51f](../../commit/e8dd51f05bff70deaac6f4beafa8cf95ddf93b4c))
 
