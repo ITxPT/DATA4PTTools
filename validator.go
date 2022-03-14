@@ -48,6 +48,8 @@ func (v *Validator) Validate(ctx *ValidationContext) {
 		}(name, document))
 	}
 
+	go publishProgress(ctx)
+
 	for i := 0; i < numTasks; i++ {
 		if vr, ok := (<-res).(*ValidationResult); ok {
 			status := "valid"
@@ -59,6 +61,8 @@ func (v *Validator) Validate(ctx *ValidationContext) {
 			ctx.addProgress(vr.Name, "", "", 1, status)
 		}
 	}
+
+	ctx.done = true
 
 	sort.SliceStable(ctx.results, func(i, j int) bool { return ctx.results[i].Name < ctx.results[j].Name })
 }
@@ -100,7 +104,7 @@ func (v *Validator) ValidateDocument(name string, doc types.Document, ctx *Valid
 		l.AddTag(logger.NewTag("script", script.name, logger.WithTagMaxWidth(v.scripts.Keys())))
 		l.AddTag(logger.NewTag("document", name, logger.WithTagWidth(docMax)))
 
-		mainPool.Add(func(script *Script) func(int) {
+		scriptPool.Add(func(script *Script) func(int) {
 			return func(id int) {
 				res <- script.Execute(ctx, v.schema, l, name, doc)
 			}

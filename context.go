@@ -6,6 +6,7 @@ import (
 	"sort"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/concreteit/greenlight/logger"
 	"github.com/lestrrat-go/libxml2"
@@ -24,6 +25,13 @@ type progress struct {
 	jobStatus map[string]string
 }
 
+func publishProgress(ctx *ValidationContext) {
+	for !ctx.done {
+		ctx.publishProgress()
+		time.Sleep(time.Millisecond * 200)
+	}
+}
+
 type ValidationContext struct {
 	sync.Mutex
 	*Measure
@@ -32,13 +40,14 @@ type ValidationContext struct {
 	documents map[string]types.Document
 	results   []*ValidationResult
 	progress  map[string]*progress
+	done      bool
 }
 
 func (c *ValidationContext) Name() string { return c.name }
 
 func (c *ValidationContext) Results() []*ValidationResult { return c.results }
 
-func (c *ValidationContext) AddReader(name string, file io.Reader) error {
+func (c *ValidationContext) AddReader(name string, file io.ReadSeeker) error {
 	document, err := libxml2.ParseReader(file)
 	if err != nil {
 		return err
@@ -84,10 +93,7 @@ func (c *ValidationContext) publishProgress() {
 			"jobStatus": p.jobStatus,
 		})
 	}
-	publishMessage("progress", map[string]interface{}{
-		"name":     c.name,
-		"progress": progress,
-	})
+	publishMessage("progress/"+c.name, progress)
 }
 
 func (c *ValidationContext) addProgress(name, scriptName, message string, n int, status string) {
@@ -141,10 +147,6 @@ func (c *ValidationContext) addProgress(name, scriptName, message string, n int,
 	}
 
 	terminal.LogTo(name, logger.NewLogEntry(logger.LogLevelInfo, nil, progress))
-
-	if n > 0 {
-		c.publishProgress()
-	}
 }
 
 func NewValidationContext(name string) *ValidationContext {

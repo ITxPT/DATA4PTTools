@@ -6,7 +6,7 @@ import (
 
 var (
 	validatorPool *WorkerPool
-	mainPool      *WorkerPool
+	scriptPool    *WorkerPool
 	workerPool    *WorkerPool
 )
 
@@ -39,8 +39,8 @@ func NewPool(max int) *WorkerPool {
 func init() {
 	validatorPool = NewPool(runtime.NumCPU())
 	validatorPool.Run()
-	mainPool = NewPool(runtime.NumCPU())
-	mainPool.Run()
+	scriptPool = NewPool(runtime.NumCPU())
+	scriptPool.Run()
 	workerPool = NewPool(runtime.NumCPU())
 	workerPool.Run()
 }
