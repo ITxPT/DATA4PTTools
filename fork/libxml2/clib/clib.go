@@ -7,7 +7,7 @@ package clib
 #include <libxml/xmlschemas.h>
 #include <string.h>
 
-#define MAX_VALIDATION_ERRORS_SIZE 10000
+#define MAX_VALIDATION_ERRORS_SIZE 1000
 
 // Macro wrapper function. cgo cannot detect function-like macros, so this is how we avoid it
 static inline void MY_xmlFree(void *p) { xmlFree(p); }
@@ -16,19 +16,19 @@ static inline xmlError* MY_xmlCtxtLastError(void *ctx) { return xmlCtxtGetLastEr
 
 // For reference:
 // struct _xmlError {
-//     int	domain	: What part of the library raised this er
-//     int	code	: The error code, e.g. an xmlParserError
-//     char *	message	: human-readable informative error messag
-//     xmlErrorLevel	level	: how consequent is the error
-//     char *	file	: the filename
-//     int	line	: the line number if available
-//     char *	str1	: extra string information
-//     char *	str2	: extra string information
-//     char *	str3	: extra string information
-//     int	int1	: extra number information
-//     int	int2	: error column # or 0 if N/A (todo: renam
-//     void *	ctxt	: the parser context if available
-//     void *	node	: the node in the tree
+//  int domain          : What part of the library raised this er
+//  int code            : The error code, e.g. an xmlParserError
+//  char * message      : human-readable informative error messag
+//  xmlErrorLevel level : how consequent is the error
+//  char * file         : the filename
+//  int line            : the line number if available
+//  char * str1         : extra string information
+//  char * str2         : extra string information
+//  char * str3         : extra string information
+//  int int1            : extra number information
+//  int int2            : error column # or 0 if N/A (todo: renam
+//  void * ctxt         : the parser context if available
+//  void * node         : the node in the tree
 // }
 typedef struct err_message {
   int line;
@@ -65,25 +65,9 @@ static void structuredErrFunc(void *ctx, xmlError *error) {
   }
 
   char * errorMessage;
-  char * extra1;
-  char * extra2;
-  char * extra3;
-
   if (error->message != NULL) {
     errorMessage = malloc(strlen(error->message));
     strcpy(errorMessage, error->message);
-  }
-  if (error->str1 != NULL) {
-    extra1 = malloc(strlen(error->str1));
-    strcpy(extra1, error->str1);
-  }
-  if (error->str2 != NULL) {
-    extra2 = malloc(strlen(error->str2));
-    strcpy(extra2, error->str2);
-  }
-  if (error->str3 != NULL) {
-    extra3 = malloc(strlen(error->str3));
-    strcpy(extra3, error->str3);
   }
 
   int i = accum->index++;
@@ -91,11 +75,6 @@ static void structuredErrFunc(void *ctx, xmlError *error) {
   msg->line = error->line;
   msg->level = error->level;
   msg->message = errorMessage;
-  msg->extra = error->int1;
-  msg->col = error->int2;
-  msg->extra1 = extra1;
-  msg->extra2 = extra2;
-  msg->extra3 = extra3;
   accum->count++;
   accum->errors[i] = msg;
 }

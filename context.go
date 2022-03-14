@@ -63,6 +63,8 @@ func (c *ValidationContext) AddDocument(name string, document types.Document) {
 }
 
 func (c *ValidationContext) startProgress(name string, scripts ScriptMap) {
+	c.Lock()
+	defer c.Unlock()
 	n := len(scripts)
 	filler := map[string]string{}
 	jobStatus := map[string]string{}
@@ -94,6 +96,22 @@ func (c *ValidationContext) publishProgress() {
 		})
 	}
 	publishMessage("progress/"+c.name, progress)
+}
+
+func (c *ValidationContext) incrProgressCount(name string) {
+	c.Lock()
+	defer c.Unlock()
+	if p := c.progress[name]; p != nil {
+		p.count += 1
+	}
+}
+
+func (c *ValidationContext) incrProgressCompleted(name string) {
+	c.Lock()
+	defer c.Unlock()
+	if p := c.progress[name]; p != nil {
+		p.completed += 1
+	}
 }
 
 func (c *ValidationContext) addProgress(name, scriptName, message string, n int, status string) {

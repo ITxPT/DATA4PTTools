@@ -147,7 +147,12 @@ func createValidationContext(input string) (*greenlight.ValidationContext, error
 	}
 
 	for _, file := range fileContext.Find("xml") {
-		if err := ctx.AddReader(file.Name, file.File); err != nil {
+		f, err := file.Open()
+		if err != nil {
+			return nil, err
+		}
+
+		if err := ctx.AddReader(file.Name, f); err != nil {
 			return nil, err
 		}
 	}

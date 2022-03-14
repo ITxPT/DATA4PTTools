@@ -22,7 +22,12 @@ type FileInfo struct {
 	Name     string
 	Checksum string
 	File     *os.File
+	FilePath string
 	FileType types.Type
+}
+
+func (fi FileInfo) Open() (*os.File, error) {
+	return os.Open(fi.FilePath)
 }
 
 func (fi FileInfo) MarshalJSON() ([]byte, error) {
@@ -100,14 +105,13 @@ func (c *FileContext) Add(name string, r io.Reader) (*FileInfo, error) {
 		return nil, err
 	}
 
-	if _, err := tempFile.Seek(0, 0); err != nil {
-		return nil, err
-	}
+	tempFile.Close()
 
 	fi := &FileInfo{
 		Name:     name,
 		Checksum: fmt.Sprintf("%x", hasher.Sum(nil)),
 		File:     tempFile,
+		FilePath: tempFile.Name(),
 		FileType: fileType,
 	}
 

@@ -104,7 +104,7 @@ func (v *Validator) ValidateDocument(name string, doc types.Document, ctx *Valid
 		l.AddTag(logger.NewTag("script", script.name, logger.WithTagMaxWidth(v.scripts.Keys())))
 		l.AddTag(logger.NewTag("document", name, logger.WithTagWidth(docMax)))
 
-		scriptPool.Add(func(script *Script) func(int) {
+		mainPool.Add(func(script *Script) func(int) {
 			return func(id int) {
 				res <- script.Execute(ctx, v.schema, l, name, doc)
 			}

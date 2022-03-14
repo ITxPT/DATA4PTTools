@@ -116,7 +116,7 @@ func (c *jsContext) Queue(handler string, node types.Node, args ...interface{}) 
 		return err
 	}
 
-	c.context.progress[c.name].count += 1
+	c.context.incrProgressCount(c.name)
 	c.tasks = append(c.tasks, jsTask{
 		context: &jsContext{
 			context:     c.context,
@@ -148,7 +148,7 @@ func (c *jsContext) Execute() []interface{} {
 	for i := 0; i < numTasks; i++ {
 		if errSlice, ok := (<-results).([]interface{}); ok {
 			errors = append(errors, errSlice...)
-			c.context.progress[c.name].completed += 1
+			c.context.incrProgressCompleted(c.name)
 		}
 	}
 
