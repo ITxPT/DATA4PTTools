@@ -1,14 +1,11 @@
 package greenlight
 
 import (
-	"fmt"
 	"io"
 	"sort"
-	"strings"
 	"sync"
 	"time"
 
-	"github.com/concreteit/greenlight/logger"
 	"github.com/lestrrat-go/libxml2"
 	"github.com/lestrrat-go/libxml2/types"
 )
@@ -80,7 +77,6 @@ func (c *ValidationContext) startProgress(name string, scripts ScriptMap) {
 		rows:      filler,
 		jobStatus: jobStatus,
 	}
-	logger.DefaultTerminalOutput().AddBuffer(name, n+2)
 }
 
 func (c *ValidationContext) publishProgress() {
@@ -131,21 +127,6 @@ func (c *ValidationContext) addProgress(name, scriptName, message string, n int,
 	}
 
 	p.completed += n
-	parts := 1
-	if p.completed > 0 {
-		pct := float64(p.completed) / float64(p.count)
-		parts = int(10.0 * pct)
-	}
-
-	header := fmt.Sprintf("┌ \033[1m%s\033[0m ─╼", name)
-	progress := fmt.Sprintf("└── [%d/%d] r̵̲unning tasks %s%s ─╼ ", p.completed, p.count, strings.Repeat("■", parts), strings.Repeat("□", 10-parts))
-	if p.completed == p.count {
-		progress = fmt.Sprintf("└───╼ ")
-	}
-
-	terminal := logger.DefaultTerminalOutput()
-	terminal.LogTo(name, logger.NewLogEntry(logger.LogLevelInfo, nil, header))
-
 	names := []string{}
 	w := 0
 	for n, _ := range p.rows {
@@ -157,14 +138,6 @@ func (c *ValidationContext) addProgress(name, scriptName, message string, n int,
 	}
 
 	sort.SliceStable(names, func(i, j int) bool { return names[i] < names[j] })
-
-	for _, scriptName := range names {
-		message := p.rows[scriptName]
-		log := fmt.Sprintf("│ \033[36m%s\033[0m ... %s%s", scriptName, strings.Repeat(" ", w-len(scriptName)), message)
-		terminal.LogTo(name, logger.NewLogEntry(logger.LogLevelInfo, nil, log))
-	}
-
-	terminal.LogTo(name, logger.NewLogEntry(logger.LogLevelInfo, nil, progress))
 }
 
 func NewValidationContext(name string) *ValidationContext {
