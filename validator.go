@@ -41,7 +41,7 @@ func (v *Validator) Validate(ctx *ValidationContext) {
 	for name, document := range ctx.documents {
 		ctx.startProgress(name, v.scripts)
 
-		validatorPool.Add(func(name string, doc types.Document) func(int) {
+		validatorPool.Add(func(name string, doc types.Document) TaskHandler {
 			return func(id int) {
 				res <- v.ValidateDocument(name, doc, ctx)
 			}
@@ -104,7 +104,7 @@ func (v *Validator) ValidateDocument(name string, doc types.Document, ctx *Valid
 		l.AddTag(logger.NewTag("script", script.name, logger.WithTagMaxWidth(v.scripts.Keys())))
 		l.AddTag(logger.NewTag("document", name, logger.WithTagWidth(docMax)))
 
-		mainPool.Add(func(script *Script) func(int) {
+		mainPool.Add(func(script *Script) TaskHandler {
 			return func(id int) {
 				res <- script.Execute(ctx, v.schema, l, name, doc)
 			}
