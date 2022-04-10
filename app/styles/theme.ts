@@ -166,11 +166,21 @@ theme.components.MuiButton = {
 theme.components.MuiPaper = {
   styleOverrides: {
     root: {
-      boxShadow: 'none',
       borderRadius: 0,
+      boxShadow: 'none',
     },
   },
 };
+
+theme.components.MuiMenu = {
+  styleOverrides: {
+    root: {
+      '& > .MuiPaper-root': {
+        boxShadow: '0 2px 2px rgba(0,0,0,.2)',
+      }
+    },
+  },
+}
 
 theme.components.MuiInput = {
   styleOverrides: {

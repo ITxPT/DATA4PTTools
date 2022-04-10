@@ -1,13 +1,13 @@
 import axios from 'axios';
 import crypto from 'crypto-js';
 
-async function calculateChecksum(file) {
+async function calculateChecksum(file: any): Promise<any> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
 
     reader.readAsArrayBuffer(file);
     reader.onload = () => {
-      const data = crypto.lib.WordArray.create(reader.result);
+      const data = crypto.lib.WordArray.create(reader.result as any);
       const hash = crypto.SHA256(data).toString();
 
       resolve({ checksum: hash, params: { a: 1 }, header: { b: 2 }});
@@ -15,12 +15,14 @@ async function calculateChecksum(file) {
   });
 }
 
-type Session = {
+export type Session = {
   id: string;
+  ref: string;
   created: number;
   stopped: number;
   files: string[];
   status: string;
+  results: any[];
 }
 
 class ApiClient {
@@ -35,7 +37,7 @@ class ApiClient {
     return this.url + this.basePath + '/' + path;
   }
 
-  async ping(): Promise<void> {
+  async ping() {
     return axios({
       method: 'get',
       url: this.withUrl('ping'),
@@ -66,7 +68,7 @@ class ApiClient {
     .then(res => res.data);
   }
 
-  async addFile(id: string, file: File, onProgress?: (p) => void) {
+  async addFile(id: string, file: File, onProgress?: (p: any) => void) {
     const { checksum } = await calculateChecksum(file);
     const data = new FormData();
 
@@ -87,12 +89,21 @@ class ApiClient {
     });
   }
 
-  async validate(id: string) {
+  async validate(id: string, schema: string) {
     return axios({
       method: 'get',
       url: this.withUrl(`sessions/${id}/validate`),
+      params: { schema },
     })
     .then(res => res.data);
+  }
+
+  reportLink(id: string, format: string) {
+    return `${this.url}/report/${id}?f=${format}`;
+  }
+
+  reportFileLink(id: string, name: string, format: string) {
+    return `${this.url}/report/${id}/${name}?f=${format}`;
   }
 }
 

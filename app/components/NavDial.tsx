@@ -10,7 +10,7 @@ type NavDialProps = {
 }
 
 const NavDial = ({ items }: NavDialProps) => {
-  const [open, setOpen] = React.useState<bool>(false);
+  const [open, setOpen] = React.useState<boolean>(false);
   const router = useRouter();
 
   const handleOpen = () => {

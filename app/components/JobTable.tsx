@@ -17,7 +17,7 @@ import {
 import Link from 'next/link';
 import React from 'react';
 
-const durStr = (created: Date, stop: Date): string => {
+const durStr = (created: Date, stop: Date | null): string => {
   const v = ~~(((stop || new Date()).getTime() - created.getTime()) / 1000);
   const hours   = ~~(v / 3600);
   const minutes = ~~((v - (hours * 3600)) / 60);
@@ -43,7 +43,7 @@ type StatusChipProps = {
 
 const StatusChip = ({ status }: StatusChipProps) => {
   let icon = <CircularProgress size={14} sx={{ marginLeft: '4px !important', marginRight: '-3px !important' }} />;
-  let color = 'secondary';
+  let color: any = 'secondary';
 
   switch (status) {
     case 'failure':
@@ -73,19 +73,21 @@ const StatusChip = ({ status }: StatusChipProps) => {
 
 export type Job = {
   status: string;
+  stopped: number;
+  ref: string;
   id: string;
   created: number;
   results?: any[];
 }
 
 type ValidStatusChipProps = {
-  valid: boolean;
+  valid?: boolean;
   status: string;
 }
 
 const ValidStatusChip = ({ status, valid }: ValidStatusChipProps) => {
   let icon = <CircularProgress size={14} sx={{ marginLeft: '4px !important', marginRight: '-3px !important' }} />;
-  let color = 'secondary';
+  let color: any = 'secondary';
   let label = 'running';
 
   if (status !== 'running') {

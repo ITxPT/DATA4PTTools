@@ -25,20 +25,19 @@ const MenuItem = styled(Box)({
 
 const MenuCard = styled(Card)({
   position: 'fixed',
-  left: '8px',
-  top: '8px',
-  bottom: '8px',
+  left: 0,
+  top: 0,
+  bottom: 0,
   background: '#fff',
   display: 'flex',
   justifyContent: 'center',
   alignItems: 'center',
   minWidth: '60px',
-  borderRadius: '8px',
   zIndex: 2,
 });
 
 export type NavBarItem = {
-  icon: React.Node,
+  icon: any,
   path: string,
   name: string,
 }
@@ -53,12 +52,12 @@ const NavBar = ({ items }: NavBarProps) => {
   return (
     <Stack
       component={MenuCard}
-      container
       spacing={1}
       sx={{
         [theme.breakpoints.down('md')]: {
           display: 'none'
         },
+        boxShadow: 0,
       }}
     >
       { items.map(item => {
@@ -66,7 +65,7 @@ const NavBar = ({ items }: NavBarProps) => {
 
         return (
           <MenuItem key={item.path} className={active ? "active" : ""}>
-            <Link href={item.path}>
+            <Link href={item.path} passHref>
               <Button className={active ? "active" : ""} sx={{
                 borderRadius: '4px',
                 minWidth: '0',

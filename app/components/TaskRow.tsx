@@ -1,3 +1,4 @@
+import ArrowDropDownIcon from '@mui/icons-material/ArrowDropDown';
 import CheckCircleOutlineRoundedIcon from '@mui/icons-material/CheckCircleOutlineRounded';
 import DoNotDisturbRoundedIcon from '@mui/icons-material/DoNotDisturbRounded';
 import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
@@ -12,10 +13,14 @@ import {
   AccordionSummary,
   Alert,
   Box,
+  Button,
+  ButtonGroup,
   Chip,
   CircularProgress,
   Collapse,
   IconButton,
+  Menu,
+  MenuItem,
   Paper,
   Stack,
   Table,
@@ -26,7 +31,10 @@ import {
   TableRow,
   Typography,
 } from '@mui/material';
+import Link from 'next/link';
 import React from 'react';
+import { Session } from '../api/client';
+import useApiClient from '../hooks/useApiClient';
 import theme from '../styles/theme';
 
 type ValidationError = {
@@ -43,6 +51,7 @@ type Validation = {
 
 type Task = {
   name: string;
+  originalName: string;
   valid: boolean;
   status: string;
   validations: Validation[];
@@ -55,7 +64,7 @@ type StatusChipProps = {
 
 const StatusChip = ({ status, valid }: StatusChipProps) => {
   let icon = <CircularProgress size={14} sx={{ marginLeft: '4px !important', marginRight: '-3px !important' }} />;
-  let color = 'secondary';
+  let color: any = 'secondary';
   let label = 'running';
 
   if (status !== 'running') {
@@ -97,7 +106,7 @@ function scuffedErrorName(v: string) {
   return 'Error';
 }
 
-const ErrorList = ({ errors }) => {
+const ErrorList = ({ errors }: any) => {
   const [index, setIndex] = React.useState(0);
   const maxIndex = errors.length - 1;
 
@@ -125,7 +134,7 @@ const ErrorList = ({ errors }) => {
         <Alert severity="error">
           <Stack spacing={1}>
             <Stack direction="row" spacing={1} alignItems="center">
-              <Typography variant="body2">{scuffedErrorName(errors[index].message)}</Typography>
+              <Typography variant="body2">{scuffedErrorName(errors[index].message.replace(/http:\/\www\.netex\.org\.uk\/netex/g, ''))}</Typography>
               <Chip
                 label={errors[index].type}
                 variant="outlined"
@@ -138,7 +147,7 @@ const ErrorList = ({ errors }) => {
                 size="small"
               />
             </Stack>
-            <Typography variant="body1">{errors[index].message}</Typography>
+            <Typography variant="body1">{errors[index].message.replace(/\{http:\/\/www\.netex\.org\.uk\/netex\}/g, '')}</Typography>
           </Stack>
         </Alert>
       </Box>
@@ -146,7 +155,7 @@ const ErrorList = ({ errors }) => {
   );
 };
 
-const TaskTableRow = ({ validation }) => {
+const TaskTableRow = ({ validation }: any) => {
   const { name, status, valid, errors } = validation;
   const [open, setOpen] = React.useState(false);
 
@@ -154,13 +163,13 @@ const TaskTableRow = ({ validation }) => {
     <React.Fragment>
       <TableRow key={name}>
         <TableCell sx={{ width: '50px' }}>
-          <IconButton
+          { errors.length > 0 && <IconButton
             aria-label="expand row"
             size="small"
             onClick={() => setOpen(!open)}
           >
             {open ? <KeyboardArrowUpIcon /> : <KeyboardArrowDownIcon />}
-          </IconButton>
+          </IconButton> }
         </TableCell>
         <TableCell sx={{ width: '75px' }}>
           <StatusChip status={status} valid={valid} />
@@ -184,9 +193,11 @@ const TaskTableRow = ({ validation }) => {
       </TableRow>
       <TableRow>
         <TableCell style={{ paddingBottom: 0, paddingTop: 0 }} colSpan={6}>
-          <Collapse in={open} timeout="auto" unmountOnExit>
-            { errors.length > 0 ? <ErrorList errors={errors} /> : <div>no errors</div> }
-          </Collapse>
+          { errors.length > 0 && (
+            <Collapse in={open} timeout="auto" unmountOnExit>
+              <ErrorList errors={errors} />
+            </Collapse>
+          )}
         </TableCell>
       </TableRow>
     </React.Fragment>
@@ -194,11 +205,23 @@ const TaskTableRow = ({ validation }) => {
 };
 
 type TaskRowProps = {
+  session: Session;
   task: Task;
 }
 
-const TaskRow = ({ task }: TaskRowProps) => {
+const TaskRow = ({ session, task }: TaskRowProps) => {
   const { name, status, valid, validations } = task;
+  const apiClient = useApiClient();
+  const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
+  const open = Boolean(anchorEl);
+
+  const handleClick = (event: React.MouseEvent<HTMLButtonElement>) => {
+    setAnchorEl(event.currentTarget);
+  };
+
+  const handleClose = () => {
+    setAnchorEl(null);
+  };
 
   return (
     <Accordion sx={{ background: 'transparent' }}>
@@ -229,22 +252,58 @@ const TaskRow = ({ task }: TaskRowProps) => {
         </Stack>
       </AccordionSummary>
       <AccordionDetails>
-        <TableContainer component={Paper}>
-          <Table sx={{ minWidth: 650, border: '1px solid #e0e0e0' }} size="small">
-            <TableHead>
-              <TableRow>
-                <TableCell />
-                <TableCell>Status</TableCell>
-                <TableCell>Validation</TableCell>
-                <TableCell align="right">Errors</TableCell>
-                <TableCell align="right">Warnings</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              { validations.map(v => <TaskTableRow validation={v} />) }
-            </TableBody>
-          </Table>
-        </TableContainer>
+        <Stack spacing={2}>
+          <TableContainer component={Paper}>
+            <Table sx={{ minWidth: 650, border: '1px solid #e0e0e0' }} size="small">
+              <TableHead>
+                <TableRow>
+                  <TableCell />
+                  <TableCell>Status</TableCell>
+                  <TableCell>Validation</TableCell>
+                  <TableCell align="right">Errors</TableCell>
+                  <TableCell align="right">Warnings</TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                { validations.map(v => <TaskTableRow key={v.name} validation={v} />) }
+              </TableBody>
+            </Table>
+          </TableContainer>
+          <ButtonGroup disabled={task.valid || session.status !== 'complete'}>
+            <Link href={apiClient.reportFileLink(session.id, task.originalName, 'csv')}>
+              <a target="_blank" style={{textDecoration: 'none'}}>
+                <Button variant="contained">Download report</Button>
+              </a>
+            </Link>
+            <Button
+              variant="contained"
+              size="small"
+              onClick={handleClick}
+            >
+              <ArrowDropDownIcon />
+            </Button>
+            <Menu
+              anchorEl={anchorEl}
+              open={open}
+              onClose={handleClose}
+            >
+              <Link href={apiClient.reportFileLink(session.id, task.originalName, 'json')}>
+                <a target="_blank" style={{textDecoration: 'none'}}>
+                  <MenuItem onClick={handleClose}>
+                    json
+                  </MenuItem>
+                </a>
+              </Link>
+              <Link href={apiClient.reportFileLink(session.id, task.originalName, 'csv')}>
+                <a target="_blank" style={{textDecoration: 'none'}}>
+                  <MenuItem onClick={handleClose}>
+                    csv
+                  </MenuItem>
+                </a>
+              </Link>
+            </Menu>
+          </ButtonGroup>
+        </Stack>
       </AccordionDetails>
     </Accordion>
   )

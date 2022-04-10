@@ -5,11 +5,12 @@ import {
   CircularProgress,
   Container,
   Grid,
+  Skeleton,
   Stack,
   Typography,
 } from '@mui/material';
 import { styled } from '@mui/system';
-import NextPage from 'next';
+import { NextPage } from 'next';
 import Head from 'next/head';
 import React from 'react';
 import { Session } from '../api/client';
@@ -22,26 +23,24 @@ const Jobs: NextPage = () => {
   const [loading, setLoading] = React.useState<boolean>(true);
   const apiClient = useApiClient();
 
-  const loadSessions = () => {
-    setLoading(true);
-
-    apiClient.sessions()
-      .then(sessions => {
-        setSessions(sessions);
-        setLoading(false);
-      })
-      .catch(err => {
-        console.log(err);
-      });
-  }
-
   React.useEffect(() => {
-    loadSessions();
+    const loadSessions = () => {
+      setLoading(true);
+
+      apiClient.sessions()
+        .then(sessions => {
+          setSessions(sessions);
+          setLoading(false);
+        })
+        .catch(err => {
+          console.log(err);
+        });
+    };
 
     const tid = setInterval(() => loadSessions(), 5000);
 
     return () => clearInterval(tid);
-  }, []);
+  }, [apiClient]);
 
   return (
     <React.Fragment>
@@ -53,6 +52,18 @@ const Jobs: NextPage = () => {
       <MainContent>
         <Stack spacing={4}>
           <Typography variant="h3">Jobs</Typography>
+          { loading && (<>
+            <Box>
+              <Skeleton height={50} />
+              <Skeleton animation="wave" />
+              <Skeleton animation={false} />
+            </Box>
+            <Box>
+              <Skeleton height={50} />
+              <Skeleton animation="wave" />
+              <Skeleton animation={false} />
+            </Box>
+          </> )}
           { sessions && <JobTable jobs={sessions} /> }
         </Stack>
       </MainContent>

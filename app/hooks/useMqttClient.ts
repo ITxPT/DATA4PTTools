@@ -1,7 +1,8 @@
 import mqtt from 'mqtt';
 import React from 'react';
 
-const mqttClient = mqtt.connect(process.env.MQTT_URL); // TODO move this to provider maybe
+const host = typeof window !== 'undefined' ? window.location.host : '';
+const mqttClient = mqtt.connect(process.env.MQTT_URL || `ws://${host}/ws`);
 
 const useMqttClient = () => {
   return mqttClient;
