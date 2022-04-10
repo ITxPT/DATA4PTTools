@@ -34,6 +34,11 @@ typedef struct err_message {
   int line;
   int level;
   char *message;
+  int extra;
+  int col;
+  char * extra1;
+  char * extra2;
+  char * extra3;
 } err_message;
 
 typedef struct validation_result {
@@ -1485,10 +1490,8 @@ func XMLSchemaValidateDocument(schema PtrSource, document PtrSource, options ...
 	errs := make([]error, accum.index)
 	for i := 0; i < int(accum.index); i++ {
 		err := accum.errors[i]
-		errMessage := C.GoString(err.message)
-
 		errs[i] = SchemaValidationError{
-			Message: strings.TrimRight(errMessage, "\n"),
+			Message: strings.TrimSpace(C.GoString(err.message)),
 			Line:    int(err.line),
 		}
 	}

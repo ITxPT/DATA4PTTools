@@ -219,6 +219,13 @@ func validate(cmd *cobra.Command, args []string) {
 	details := []Details{}
 	validator.Validate(ctx)
 
+	buf, err := json.MarshalIndent(ctx.Results(), "", " ")
+	if err != nil {
+		fmt.Println(err)
+	} else {
+		fmt.Println(string(buf))
+	}
+
 	for _, r := range ctx.Results() {
 		if viper.GetBool("telemetry") {
 			p := newPoint("document")

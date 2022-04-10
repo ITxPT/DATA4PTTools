@@ -41,19 +41,28 @@ func (v *Validator) Validate(ctx *ValidationContext) {
 	for name, document := range ctx.documents {
 		ctx.startProgress(name, v.scripts)
 
-		validatorPool.Add(func(name string, doc types.Document) func(int) {
+		validatorPool.Add(func(name string, doc types.Document) TaskHandler {
 			return func(id int) {
 				res <- v.ValidateDocument(name, doc, ctx)
 			}
 		}(name, document))
 	}
 
+	go publishProgress(ctx)
+
 	for i := 0; i < numTasks; i++ {
 		if vr, ok := (<-res).(*ValidationResult); ok {
+			status := "valid"
+			if !vr.Valid {
+				status = "invalid"
+			}
+
 			ctx.results = append(ctx.results, vr)
-			ctx.addProgress(vr.Name, "", "", 1)
+			ctx.addProgress(vr.Name, "", "", 1, status)
 		}
 	}
+
+	ctx.done = true
 
 	sort.SliceStable(ctx.results, func(i, j int) bool { return ctx.results[i].Name < ctx.results[j].Name })
 }
@@ -95,7 +104,7 @@ func (v *Validator) ValidateDocument(name string, doc types.Document, ctx *Valid
 		l.AddTag(logger.NewTag("script", script.name, logger.WithTagMaxWidth(v.scripts.Keys())))
 		l.AddTag(logger.NewTag("document", name, logger.WithTagWidth(docMax)))
 
-		mainPool.Add(func(script *Script) func(int) {
+		mainPool.Add(func(script *Script) TaskHandler {
 			return func(id int) {
 				res <- script.Execute(ctx, v.schema, l, name, doc)
 			}
@@ -105,12 +114,14 @@ func (v *Validator) ValidateDocument(name string, doc types.Document, ctx *Valid
 	for i := 0; i < numTasks; i++ {
 		if vr, ok := (<-res).(*RuleValidation); ok {
 			message := fmt.Sprintf("\033[32mok\033[0m")
+			status := "valid"
 			if !vr.Valid {
 				message = fmt.Sprintf("\033[31mfailed\033[0m with %d errors and 0 warnings", vr.ErrorCount)
+				status = "invalid"
 			}
 
 			result.ValidationRules = append(result.ValidationRules, vr)
-			ctx.addProgress(name, vr.Name, message, 1)
+			ctx.addProgress(name, vr.Name, message, 1, status)
 		}
 	}
 

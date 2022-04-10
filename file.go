@@ -21,6 +21,7 @@ type processFileHandler func(*FileInfo) error
 type FileInfo struct {
 	Name     string
 	Checksum string
+	Size     int64
 	File     *os.File
 	FilePath string
 	FileType types.Type
@@ -105,11 +106,17 @@ func (c *FileContext) Add(name string, r io.Reader) (*FileInfo, error) {
 		return nil, err
 	}
 
+	fileStat, err := tempFile.Stat()
+	if err != nil {
+		return nil, err
+	}
+
 	tempFile.Close()
 
 	fi := &FileInfo{
 		Name:     name,
 		Checksum: fmt.Sprintf("%x", hasher.Sum(nil)),
+		Size:     fileStat.Size(),
 		File:     tempFile,
 		FilePath: tempFile.Name(),
 		FileType: fileType,
@@ -140,12 +147,12 @@ func (c *FileContext) Close() {
 }
 
 func (c *FileContext) unzip(fileInfo *FileInfo) error {
-	fileStat, err := fileInfo.File.Stat()
+	f, err := fileInfo.Open()
 	if err != nil {
 		return err
 	}
 
-	zr, err := zip.NewReader(fileInfo.File, fileStat.Size())
+	zr, err := zip.NewReader(f, fileInfo.Size)
 	if err != nil {
 		return err
 	}
@@ -169,7 +176,12 @@ func (c *FileContext) unzip(fileInfo *FileInfo) error {
 }
 
 func (c *FileContext) untar(fileInfo *FileInfo) error {
-	r := tar.NewReader(fileInfo.File)
+	f, err := fileInfo.Open()
+	if err != nil {
+		return err
+	}
+
+	r := tar.NewReader(f)
 	for {
 		file, err := r.Next()
 		if err != nil && err != io.EOF {
@@ -187,13 +199,23 @@ func (c *FileContext) untar(fileInfo *FileInfo) error {
 }
 
 func (c *FileContext) bunzip(fileInfo *FileInfo) error {
-	r := bzip2.NewReader(fileInfo.File)
+	f, err := fileInfo.Open()
+	if err != nil {
+		return err
+	}
+
+	r := bzip2.NewReader(f)
 
 	return c.Open(fmt.Sprintf("%s/%s", fileInfo.Name, fileInfo.Name[:len(fileInfo.Name)-3]), r)
 }
 
 func (c *FileContext) gunzip(fileInfo *FileInfo) error {
-	r, err := gzip.NewReader(fileInfo.File)
+	f, err := fileInfo.Open()
+	if err != nil {
+		return err
+	}
+
+	r, err := gzip.NewReader(f)
 	if err != nil {
 		return err
 	}

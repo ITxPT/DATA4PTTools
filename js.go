@@ -50,7 +50,7 @@ type jsContext struct {
 
 func (c *jsContext) log(level logger.LogLevel, v string, args ...interface{}) {
 	msg := fmt.Sprintf(v, args...)
-	c.context.addProgress(c.name, c.script.name, msg, 0)
+	c.context.addProgress(c.name, c.script.name, msg, 0, "running")
 	c.logger.Logf(level, v, args...)
 }
 

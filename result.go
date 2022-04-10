@@ -30,6 +30,27 @@ type ValidationResult struct {
 	ValidationRules []*RuleValidation `json:"validations,omitempty" xml:"Validation,omitempty"`
 }
 
+func (r ValidationResult) CsvRecords(includeHeader bool) [][]string {
+	res := [][]string{}
+	header := []string{"file_name", "validation_name", "valid", "error_line_no", "error_message"}
+
+	if includeHeader {
+		res = append(res, header)
+	}
+
+	for _, v := range r.ValidationRules {
+		if v.Valid {
+			res = append(res, []string{r.Name, v.Name, "true", "", ""})
+		} else {
+			for _, err := range v.Errors {
+				res = append(res, []string{r.Name, v.Name, "false", fmt.Sprintf("%d", err.Line), err.Message})
+			}
+		}
+	}
+
+	return res
+}
+
 type TaskError struct {
 	Message string `json:"message"`
 	Line    int    `json:"line,omitempty"`
