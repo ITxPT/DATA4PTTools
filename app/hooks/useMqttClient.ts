@@ -2,7 +2,8 @@ import mqtt from 'mqtt';
 import React from 'react';
 
 const host = typeof window !== 'undefined' ? window.location.host : '';
-const mqttClient = mqtt.connect(process.env.MQTT_URL || `ws://${host}/ws`);
+const ssl = typeof window !== 'undefined' && window.location.protocol === 'https:';
+const mqttClient = mqtt.connect(process.env.MQTT_URL || `ws${ssl ? 's' : ''}://${host}/ws`);
 
 const useMqttClient = () => {
   return mqttClient;
