@@ -1,4 +1,10 @@
 
+## v0.3.1 [2022-04-10]
+
+### Bug Fixes
+- Handle ws ssl ([93281fc](../../commit/93281fcc792c2bc3203c6ebc54013c322bbafb0b))
+
+
 ## v0.2 [2022-02-24]
 
 
