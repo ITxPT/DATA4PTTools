@@ -57,18 +57,28 @@
   docker pull lekojson/greenlight
   ```
 
-2. Running a validation
+##### Web GUI
+1. Running the web gui
+
+   ```sh
+   docker run -it -p 8080:8080 lekojson/greenlight server
+   ```
+
+2. Open a browser and navigate to `http://localhost:8080`
+
+##### CLI
+1. Running a validation
 
    - #### With demo files provided in the image
   
    ```sh
-   docker run -it lekojson/greenlight -i testdata
+   docker run -it lekojson/greenlight validate -i testdata
    ```
 
    - #### Providing your own files
   
    ```sh
-   docker run -it -v /path/to/documents:/greenlight/documents lekojson/greenlight
+   docker run -it -v /path/to/documents:/greenlight/documents lekojson/greenlight validate
    ```
 
 #### 🛠️ Building from source
