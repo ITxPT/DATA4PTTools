@@ -1,5 +1,16 @@
-const name = "frame-defaults";
+// ***************************************************************************
+//  Data4PT NeTEx Validator
+//
+//  Rule        : frameDefaultsHaveALocaleAndTimeZone
+//  Description : Validates consistency of DefaultLocale inside FrameDefaults element (if present)
+//
+//  Author      : Concrete IT on behalf of Data4PT
+// ***************************************************************************
+
+const name = "frameDefaultsHaveALocaleAndTimeZone";
 const description = "Validates consistency of DefaultLocale inside FrameDefaults element (if present)";
+
+// Valid country codes
 const countryCodes = [ // ISO 639-1 country codes
   "aa", "ab", "ae", "af", "ak", "am", "an", "ar", "as", "av",
   "ay", "az", "ba", "be", "bg", "bh", "bi", "bm", "bn", "bo",
@@ -21,6 +32,7 @@ const countryCodes = [ // ISO 639-1 country codes
   "uk", "ur", "uz", "ve", "vi", "vo", "wa", "wo", "xh", "yi",
   "yo", "za", "zh", "zu",
 ];
+
 const frameDefaultsPath = xpath.join("./", "FrameDefaults");
 const defaultLocalePath = xpath.join(".", "DefaultLocale");
 const defaultLangPath = xpath.join(".", "DefaultLanguage");
@@ -40,6 +52,7 @@ const stzPath = xpath.join(".", "SummerTimeZone");
  *  </FrameDefaults>
  * ```
  **/
+
 function main(ctx) {
   const frameDefaults = ctx.xpath.first(frameDefaultsPath);
   if (!frameDefaults) {
