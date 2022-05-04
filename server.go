@@ -9,10 +9,10 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"path"
 	"sort"
 	"time"
 
-	badger "github.com/dgraph-io/badger/v3"
 	"github.com/gorilla/websocket"
 	"github.com/koding/websocketproxy"
 	"github.com/labstack/echo/v4"
@@ -31,12 +31,37 @@ type StaticDir struct {
 	d http.Dir
 }
 
+func (d StaticDir) genericPath(name string) (http.File, error) {
+	dir := path.Dir(name)
+	f, err := d.d.Open(dir)
+	if err != nil {
+		return nil, err
+	}
+
+	fs, err := f.Stat()
+	if err != nil {
+		return nil, err
+	}
+	if fs.IsDir() {
+		files, err := f.Readdir(0)
+		if err != nil {
+			return nil, err
+		}
+
+		for _, file := range files {
+			if file.Name()[0] == '[' {
+				return d.d.Open(dir + "/" + file.Name())
+			}
+		}
+	}
+
+	return nil, fmt.Errorf("file not found")
+}
+
 func (d StaticDir) Open(name string) (http.File, error) {
 	f, err := d.d.Open(name)
 	if os.IsNotExist(err) {
-		if f, err := d.d.Open(name + ".html"); err == nil {
-			return f, nil
-		}
+		return d.genericPath(name)
 	}
 
 	fs, err := f.Stat()
@@ -62,11 +87,6 @@ func StartServer(cfg *ServerConfig) {
 	if cfg != nil && cfg.Port != "" {
 		port = cfg.Port
 	}
-	db, err := badger.Open(badger.DefaultOptions("").WithInMemory(true))
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer db.Close()
 
 	fs := http.FileServer(StaticDir{http.Dir("app/out")})
 	e := echo.New()
