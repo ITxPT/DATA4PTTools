@@ -17,14 +17,14 @@ const Job: NextPage = () => {
   const router= useRouter();
   const apiClient = useApiClient();
 
-  const handleValidate = (schema: string) => {
+  const handleValidate = (schema: string, rules: string[]) => {
     if (!session) {
       return;
     }
 
     setSession({ ...session, status: 'running' });
 
-    apiClient.validate(session.id, schema)
+    apiClient.validate(session.id, schema, rules)
       .then(session => setSession(session))
       .catch(err => {
         console.log('error caught running validation', err);

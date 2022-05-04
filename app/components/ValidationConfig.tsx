@@ -70,12 +70,13 @@ const StatusChip = ({ status }: StatusChipProps) => {
 
 type ValidationConfigProps = {
   session: Session;
-  onValidate: (schema: string) => void;
+  onValidate: (schema: string, rules: string[]) => void;
 };
 
 const ValidationConfig = (props: ValidationConfigProps) => {
   const { session, onValidate } = props;
-  const [profile, setProfile] = React.useState<string>('netex');
+  const [schema, setSchema] = React.useState<string>('netex');
+  const [rules, setRules] = React.useState<string[]>(['frame_defaults', 'stop_point_names']);
   const [fileList, setFileList] = React.useState<{ [key: string]: any }>({});
   const [canValidate, setCanValidate] = React.useState<boolean>(false);
   const apiClient = useApiClient();
@@ -85,7 +86,15 @@ const ValidationConfig = (props: ValidationConfigProps) => {
       return;
     }
 
-    setProfile(event.target.value);
+    setSchema(event.target.value);
+  };
+
+  const handleSelectMultChange = (event: SelectChangeEvent) => {
+    if (!event.target || !event.target.name || !Array.isArray(event.target.value)) {
+      return;
+    }
+
+    setRules(event.target.value);
   };
 
   const updateFileContext = (fileContext: any) => {
@@ -143,16 +152,30 @@ const ValidationConfig = (props: ValidationConfigProps) => {
           </ul>
         </Typography>
         <FormControl>
-          <InputLabel id="netex-profile-label">Schema</InputLabel>
+          <InputLabel id="netex-schema-label">Schema</InputLabel>
           <Select
-            labelId="netex-profile-label"
-            name="netex-profile"
-            value={profile}
+            labelId="netex-schema-label"
+            name="netex-schema"
+            value={schema}
             onChange={handleSelectChange}
           >
             <MenuItem key="netex" value="netex">NeTEx</MenuItem>
             <MenuItem key="netex-light" value="netex-light">NeTEx Light</MenuItem>
             <MenuItem key="epip" value="epip">EPIP</MenuItem>
+          </Select>
+        </FormControl>
+
+        <FormControl>
+          <InputLabel id="rules-label">Rules</InputLabel>
+          <Select
+            labelId="rules-label"
+            name="rules"
+            value={rules as any}
+            multiple
+            onChange={handleSelectMultChange}
+          >
+            <MenuItem key="frame_defaults" value="frame_defaults">Frame defaults</MenuItem>
+            <MenuItem key="stop_point_names" value="stop_point_names">Stop point names</MenuItem>
           </Select>
         </FormControl>
 
@@ -214,7 +237,13 @@ const ValidationConfig = (props: ValidationConfigProps) => {
             </Box>
           )}
 
-          <Button variant="contained" disabled={!canValidate} onClick={() => onValidate(profile)}>Validate</Button>
+          <Button
+            variant="contained"
+            disabled={!canValidate}
+            onClick={() => onValidate(schema, rules)}
+          >
+            Validate
+          </Button>
         </Stack>
       </Stack>
     </Stack>

@@ -25,6 +25,12 @@ var (
 	}
 )
 
+type ValidationQuery struct {
+	SessionID string   `param:"sid"`
+	Schema    string   `query:"schema"`
+	Rules     []string `query:"rules"`
+}
+
 type ServerConfig struct {
 	Port     string
 	MQTTPort string
@@ -130,7 +136,12 @@ func StartServer(cfg *ServerConfig) {
 	})
 
 	e.GET("/api/sessions/:sid/validate", func(c echo.Context) error {
-		session := sessions.Get(c.Param("sid"))
+		query := ValidationQuery{}
+		if err := c.Bind(&query); err != nil {
+			return err
+		}
+
+		session := sessions.Get(query.SessionID)
 		if session == nil {
 			return fmt.Errorf("session not found")
 		} else if session.Status != "created" {
@@ -156,7 +167,7 @@ func StartServer(cfg *ServerConfig) {
 			file.File.Seek(0, 0)
 		}
 
-		schema := c.QueryParam("schema")
+		schema := query.Schema
 		if schema == "" {
 			schema = "netex"
 		}
@@ -170,9 +181,17 @@ func StartServer(cfg *ServerConfig) {
 			schema = "xsd/epip/NeTEx_publication_EPIP.xsd"
 		}
 
+		scriptingPaths := []string{"builtin/xsd.js"}
+		if query.Rules != nil {
+			for _, rule := range query.Rules {
+				scriptingPaths = append(scriptingPaths, "builtin/"+rule+".js")
+			}
+		}
+
 		validator, err := NewValidator(
 			WithSchemaFile(schema),
-			WithBuiltinScripts(true),
+			WithBuiltinScripts(false),
+			WithScriptingPaths(scriptingPaths),
 		)
 		if err != nil {
 			session.Stopped = time.Now()

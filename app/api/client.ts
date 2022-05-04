@@ -89,11 +89,21 @@ class ApiClient {
     });
   }
 
-  async validate(id: string, schema: string) {
+  async validate(id: string, schema: string, rules: string[]) {
     return axios({
       method: 'get',
       url: this.withUrl(`sessions/${id}/validate`),
-      params: { schema },
+      params: { schema, rules },
+      paramsSerializer: params => {
+        return Object.keys(params).map((k) => {
+          const v = params[k];
+
+          return (Array.isArray(v) ? v : [v])
+            .map(v => `${k}=${v}`)
+            .join('&');
+        })
+        .join('&');
+      },
     })
     .then(res => res.data);
   }
