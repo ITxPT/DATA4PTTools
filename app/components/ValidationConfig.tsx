@@ -137,9 +137,9 @@ const ValidationConfig = (props: ValidationConfigProps) => {
         <Typography><b>1.</b> Begin by selecting which schema to validate against</Typography>
         <Typography>
           <ul style={{ marginTop: 0 }}>
-            <li>NeTEx - The full NeTEx schema (<Link href="https://netex-cen.eu/"><a target="_blank">more info</a></Link>)</li>
-            <li>NeTEx Light - NeTEx schema without constraint (<Link href="https://netex-cen.eu/"><a target="_blank">more info</a></Link>)</li>
-            <li>EPIP - NeTEx European Passenger Information Profile (<Link href="https://data4pt-project.eu/providing-netex-as-open-data-on-a-national-access-point-nap/"><a target="_blank">more info</a></Link>)</li>
+            <li>NeTEx - The full NeTEx schema (<Link href="https://github.com/NeTEx-CEN/NeTEx"><a target="_blank">more info</a></Link>)</li>
+            <li>NeTEx Light - NeTEx schema without constraint (<Link href="https://data4pt.org/wiki/NeTEX#NeTEx-Light"><a target="_blank">more info</a></Link>)</li>
+            <li>EPIP - NeTEx European Passenger Information Profile (<Link href="https://data4pt.org/NeTEx/GraphicKit/Documention_of_XSD_for_EPIP.html"><a target="_blank">more info</a></Link>)</li>
           </ul>
         </Typography>
         <FormControl>
