@@ -2,13 +2,16 @@
 //  Data4PT NeTEx Validator
 //
 //  Rule        : frameDefaultsHaveALocaleAndTimeZone
-//  Description : Validates consistency of DefaultLocale inside FrameDefaults element (if present)
+//  Description : Validates the correctness of DefaultLocale and TimeZone inside FrameDefaults
 //
 //  Author      : Concrete IT on behalf of Data4PT
 // ***************************************************************************
 
 const name = "frameDefaultsHaveALocaleAndTimeZone";
-const description = "Validates consistency of DefaultLocale inside FrameDefaults element (if present)";
+const description = `Validates the correctness of DefaultLocale and TimeZone inside FrameDefaults
+
+The test looks for FrameDefault and if present validates that the DefaultLocale has a valid CountryCode and that the TimeZone have a correct format and value.
+The TimeZone is validated against IANA Time Zone database (https://www.iana.org/time-zones) and the CountryCode must be in ISO 639-1`;
 
 // Valid country codes
 const countryCodes = [ // ISO 639-1 country codes
