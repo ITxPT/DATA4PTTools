@@ -15,7 +15,11 @@
 </p>
 
 <p align="center">
-  <a href="#-installation">Installation</a>
+  <a href="#-web-gui">Web</a>
+  ·
+  <a href="#%EF%B8%8F-cli">CLI</a>
+  ·
+  <a href="#%EF%B8%8F-building-from-source">Source</a>
   ·
   <a href="#%EF%B8%8F-configuration">Configuration</a>
 </p>
@@ -38,50 +42,64 @@
 
 <br>
 
-## 🚀 Installation
+## 🚀 Web GUI
 
 ### Prerequisites
 
 - [Docker](https://www.docker.com/) installed and ready to go
-- (optional) [Go](https://go.dev/) - required if you are intending to build from source (latest build using 1.17.2)
-- (optional) [libxml2](http://www.xmlsoft.org/) - required if you are intending to build from source
 
 ### Getting started
-
-**Note**: if you don't have NeTEx xml document (or two) ready to test with we provide a few demo files in the source and docker image
-
-#### 🐳 Using Docker
 
 1. Getting the latest image
   ```sh
   docker pull lekojson/greenlight
   ```
 
-##### Web GUI
-1. Running the web gui
-
+2. Start the web gui
    ```sh
    docker run -it -p 8080:8080 lekojson/greenlight server
    ```
 
-2. Open a browser and navigate to `http://localhost:8080`
+3. Open a browser and navigate to `http://localhost:8080`
 
-##### CLI
-1. Running a validation
+## 🖥️ CLI
+
+### Prerequisites
+
+- [Docker](https://www.docker.com/) installed and ready to go
+
+### Getting started
+
+**Note**: if you don't have NeTEx xml document (or two) ready to test with we provide a few demo files in the source and docker image
+
+1. Getting the latest image
+  ```sh
+  docker pull lekojson/greenlight
+  ```
+
+2. Running a validation
 
    - #### With demo files provided in the image
-  
+
    ```sh
    docker run -it lekojson/greenlight validate -i testdata
    ```
 
    - #### Providing your own files
-  
+
    ```sh
    docker run -it -v /path/to/documents:/greenlight/documents lekojson/greenlight validate
    ```
 
-#### 🛠️ Building from source
+## 🛠️ Building from source
+
+### Prerequisites
+
+- [Go](https://go.dev/)
+- [libxml2](http://www.xmlsoft.org/)
+- [nodejs](https://nodejs.org/)
+
+### Getting started
 
 **Note**: Greenlight is using Go and is powered by libxml2, so make sure those are installed and configured
 
@@ -95,23 +113,50 @@ git clone https://github.com/ITxPT/DATA4PTTools
 cd DATA4PTTools
 ```
 
-3. Getting dependencies
+3. Downloading dependencies
 ```sh
 go get
 ```
 
-4. Building and running validation
+#### 4.a CLI
+
+1. Building and running a validation
    - #### Validate with demo files provided in the source
    _changes in path definition will differ running on windows_
    ```sh
    go run cmd/*.go validate -i testdata
    ```
 
-   - #### Validate using your own files 
+   - #### Validate using your own files
    _changes in path definition will differ running on windows_
    ```sh
    go run cmd/*.go validate -i /path/to/documents
    ```
+
+#### 4.b Web GUI
+1. Buliding and running the backend server
+  - #### Build and start the server
+  ```sh
+  go run cmd/*.go server
+  ```
+
+2. Building and running the frontend application
+  - #### Navigate to directory
+  ```sh
+  cd app
+  ```
+
+  - #### Install dependencies
+  ```sh
+  npm i
+  ```
+
+  - #### Start the server
+  ```sh
+  npm run dev
+  ```
+
+3. Open a browser and navigate to `http://localhost:8080`
 
 ### ⚙️ Configuration
 
