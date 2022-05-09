@@ -1,11 +1,14 @@
 import ArrowDropDownIcon from '@mui/icons-material/ArrowDropDown';
-import { Box, Button, ButtonGroup, Menu, MenuItem, Skeleton, Stack, Typography } from '@mui/material';
+import { Box, Button, ButtonGroup, Grid, Menu, MenuItem, Skeleton, Stack, Typography } from '@mui/material';
 import Link from 'next/link';
+import { useRouter } from 'next/router';
 import React from 'react';
+import ErrorAlert from './ErrorAlert';
 import TaskRow from './TaskRow';
 import { Session } from '../api/client';
 import useApiClient from '../hooks/useApiClient';
 import { useSubscription } from '../hooks/useMqttClient';
+import useSessionStore from '../hooks/useSessionStore';
 import theme from '../styles/theme';
 
 function truncName(name: string) {
@@ -27,11 +30,30 @@ type ValidationResultProps = {
 
 const ValidationResult = (props: ValidationResultProps) => {
   const { session } = props;
+  const router = useRouter();
   const message = useSubscription(session ? `progress/${session.id}` : '');
   const [tasks, setTasks] = React.useState<any[]>([]);
+  const { setSession } = useSessionStore();
+  const [ errorOpen, setErrorOpen ] = React.useState<boolean>(false);
+  const [ errorMessage, setErrorMessage ] = React.useState<string>('test');
   const apiClient = useApiClient();
   const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
   const open = Boolean(anchorEl);
+
+  const handleValidateAnother = () => {
+    apiClient.createSession()
+      .then(session => {
+        setSession(session);
+        router.push('/jobs/' + session.id);
+      })
+      .catch(err => {
+        setSession(undefined);
+        setErrorOpen(true);
+        setErrorMessage(err.message);
+      });
+  };
+
+  const handleCloseError = () => setErrorOpen(false);
 
   const handleClick = (event: React.MouseEvent<HTMLButtonElement>) => {
     setAnchorEl(event.currentTarget);
@@ -87,6 +109,7 @@ const ValidationResult = (props: ValidationResultProps) => {
 
   return (
     <Stack spacing={4}>
+      <ErrorAlert open={errorOpen} message={errorMessage} onClose={handleCloseError} />
       <Stack spacing={1} direction="row">
         <Typography variant="h3">Validation result</Typography>
         { session && <Typography variant="body2" sx={{ [theme.breakpoints.down('md')]: { display: 'none' }}}>[{session.id}]</Typography> }
@@ -109,42 +132,52 @@ const ValidationResult = (props: ValidationResultProps) => {
           </>
         )}
       </Box>
-      <Box>
-        <ButtonGroup disabled={session.status !== 'complete'}>
-          <Link href={apiClient.reportLink(session.id, 'csv')}>
-            <a target="_blank" style={{textDecoration: 'none'}}>
-              <Button variant="contained">Download report</Button>
-            </a>
-          </Link>
-          <Button
-            variant="contained"
-            size="small"
-            onClick={handleClick}
-          >
-            <ArrowDropDownIcon />
-          </Button>
-          <Menu
-            anchorEl={anchorEl}
-            open={open}
-            onClose={handleClose}
-          >
-            <Link href={apiClient.reportLink(session.id, 'json')}>
-              <a target="_blank" style={{textDecoration: 'none'}}>
-                <MenuItem onClick={handleClose}>
-                  json
-                </MenuItem>
-              </a>
-            </Link>
+      <Grid container>
+        <Grid item xs={12} md={6}>
+          <ButtonGroup disabled={session.status !== 'complete'}>
             <Link href={apiClient.reportLink(session.id, 'csv')}>
               <a target="_blank" style={{textDecoration: 'none'}}>
-                <MenuItem onClick={handleClose}>
-                  csv
-                </MenuItem>
+                <Button variant="contained">Download report</Button>
               </a>
             </Link>
-          </Menu>
-        </ButtonGroup>
-      </Box>
+            <Button
+              variant="contained"
+              size="small"
+              onClick={handleClick}
+            >
+              <ArrowDropDownIcon />
+            </Button>
+            <Menu
+              anchorEl={anchorEl}
+              open={open}
+              onClose={handleClose}
+            >
+              <Link href={apiClient.reportLink(session.id, 'json')}>
+                <a target="_blank" style={{textDecoration: 'none'}}>
+                  <MenuItem onClick={handleClose}>
+                    json
+                  </MenuItem>
+                </a>
+              </Link>
+              <Link href={apiClient.reportLink(session.id, 'csv')}>
+                <a target="_blank" style={{textDecoration: 'none'}}>
+                  <MenuItem onClick={handleClose}>
+                    csv
+                  </MenuItem>
+                </a>
+              </Link>
+            </Menu>
+          </ButtonGroup>
+        </Grid>
+        <Grid item xs={12} md={6} sx={{ textAlign: 'end' }}>
+          <Button
+            variant="contained"
+            onClick={handleValidateAnother}
+          >
+            Validate more files
+          </Button>
+        </Grid>
+      </Grid>
     </Stack>
   );
 };

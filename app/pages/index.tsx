@@ -1,6 +1,6 @@
 import EmailIcon from '@mui/icons-material/Email';
 import GitHubIcon from '@mui/icons-material/GitHub';
-import { Alert, Box, Button, Grid, Snackbar, SnackbarContent, Stack, Typography } from '@mui/material';
+import { Box, Button, Grid, Stack, Typography } from '@mui/material';
 import { ThemeProvider } from '@mui/material/styles';
 import { NextPage } from 'next';
 import Head from 'next/head';
@@ -8,29 +8,11 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 import React from 'react';
+import ErrorAlert from '../components/ErrorAlert';
 import MainContent from '../components/MainContent';
 import useApiClient from '../hooks/useApiClient';
 import useSessionStore from '../hooks/useSessionStore';
 import theme from '../styles/theme';
-
-type ErrorAlertProps = {
-  message: string;
-  open: boolean;
-  onClose: () => void;
-}
-
-const ErrorAlert = (props: ErrorAlertProps) => {
-  const { message, open, onClose } = props;
-
-  return (
-    <Snackbar
-      open={open}
-      anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
-    >
-      <Alert severity="error" onClose={onClose}>{message}</Alert>
-    </Snackbar>
-  );
-};
 
 const Home: NextPage = () => {
   const apiClient = useApiClient();
