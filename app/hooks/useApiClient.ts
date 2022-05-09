@@ -1,6 +1,6 @@
 import ApiClient from '../api/client';
 
-const client = new ApiClient(process.env.API_URL || 'http://localhost:8080');
+const client = new ApiClient(process.env.API_URL || '');
 
 const useApiClient = (): ApiClient => {
   return client;
