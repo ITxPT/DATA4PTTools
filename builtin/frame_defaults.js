@@ -88,7 +88,6 @@ function main(ctx) {
     }
 
     if (!validLanguage(ctx.xpath.findValue(defaultLangPath, defaultLocale))) {
-      ctx.log.debug(line)
       errors.push({
         type: "consistency",
         message: "Invalid DefaultLanguage",

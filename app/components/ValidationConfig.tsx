@@ -165,6 +165,14 @@ const ValidationConfig = (props: ValidationConfigProps) => {
           </Select>
         </FormControl>
 
+        <Typography variant="h4">Rules</Typography>
+        <Typography><b>2.</b> In addition to the schema validation, we have also included a couple of optional rules that validate the consistency of the documents (work in progress)</Typography>
+        <Typography>
+          <ul style={{ marginTop: 0 }}>
+            <li>Frame defaults - Verifies the validity of the <Typography variant="caption" component="span">{'<FrameDefaults />'}</Typography> elements.</li>
+            <li>Stop point names - Checks that each <Typography variant="caption" component="span">{'<ScheduledStopPoint />'}</Typography> contain a valid <Typography variant="caption" component="span">{'<Name />'}</Typography>.</li>
+          </ul>
+        </Typography>
         <FormControl>
           <InputLabel id="rules-label">Rules</InputLabel>
           <Select
