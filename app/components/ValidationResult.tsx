@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/router';
 import React from 'react';
 import ErrorAlert from './ErrorAlert';
+import InfoMessage from './InfoMessage';
 import TaskRow from './TaskRow';
 import { Session } from '../api/client';
 import useApiClient from '../hooks/useApiClient';
@@ -63,7 +64,6 @@ const ValidationResult = (props: ValidationResultProps) => {
     setAnchorEl(null);
   };
 
-
   React.useEffect(() => {
     if (!session) {
       return;
@@ -114,6 +114,9 @@ const ValidationResult = (props: ValidationResultProps) => {
         <Typography variant="h3">Validation result</Typography>
         { session && <Typography variant="body2" sx={{ [theme.breakpoints.down('md')]: { display: 'none' }}}>[{session.id}]</Typography> }
       </Stack>
+      <InfoMessage>
+        <span>Are you interested in diving deeper? Consider testing it locally with <Link href="https://hub.docker.com/r/lekojson/greenlight"><a target="_blank">Docker</a></Link></span>
+      </InfoMessage>
       <Box>
         { tasks && tasks.length ? (
           tasks.map(task => <TaskRow key={task.name} session={session} task={task} />)
