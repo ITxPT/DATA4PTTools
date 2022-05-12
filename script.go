@@ -6,10 +6,10 @@ import (
 	"os"
 	"path"
 
-	"github.com/concreteit/greenlight/logger"
 	"github.com/dop251/goja"
 	"github.com/lestrrat-go/libxml2/types"
 	"github.com/lestrrat-go/libxml2/xsd"
+	"go.uber.org/zap"
 )
 
 var (
@@ -33,13 +33,24 @@ func (s *Script) Description() string {
 	return s.description
 }
 
+func Require(name string) jsObject {
+	ref := jsStandardLib[name]
+	if ref == nil {
+		return nil
+	}
+
+	if module, ok := ref.(jsObject); ok {
+		return module
+	}
+
+	return nil
+}
+
 func (s *Script) Runtime() (*goja.Runtime, error) {
 	vm := goja.New()
 
-	for k, v := range jsStandardLib {
-		if err := vm.GlobalObject().Set(k, v); err != nil {
-			return nil, err
-		}
+	if err := vm.GlobalObject().Set("require", Require); err != nil {
+		return nil, err
 	}
 
 	vm.RunProgram(s.program)
@@ -47,7 +58,7 @@ func (s *Script) Runtime() (*goja.Runtime, error) {
 	return vm, nil
 }
 
-func (s *Script) Execute(ctx *ValidationContext, schema *xsd.Schema, l *logger.Logger, name string, doc types.Document) *RuleValidation {
+func (s *Script) Execute(ctx *ValidationContext, schema *xsd.Schema, l *zap.Logger, name string, doc types.Document) *RuleValidation {
 	res := &RuleValidation{
 		Measure:     &Measure{},
 		Name:        s.name,

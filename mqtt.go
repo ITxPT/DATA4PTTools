@@ -22,7 +22,7 @@ func init() {
 	cfg.Debug = true
 	b, err := broker.NewBroker(nil)
 	if err != nil {
-		log.Fatal("New Broker error: ", err)
+		log.Fatal("error caught creating mqtt broker: ", err)
 	}
 	b.Start()
 

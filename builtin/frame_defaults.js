@@ -1,5 +1,7 @@
 const name = "frame-defaults";
 const description = "Validates consistency of DefaultLocale inside FrameDefaults element (if present)";
+const xpath = require('xpath');
+const time = require('time');
 const countryCodes = [ // ISO 639-1 country codes
   "aa", "ab", "ae", "af", "ak", "am", "an", "ar", "as", "av",
   "ay", "az", "ba", "be", "bg", "bh", "bi", "bm", "bn", "bo",

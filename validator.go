@@ -5,9 +5,9 @@ import (
 	"os"
 	"sort"
 
-	"github.com/concreteit/greenlight/logger"
 	"github.com/lestrrat-go/libxml2/types"
 	"github.com/lestrrat-go/libxml2/xsd"
+	"go.uber.org/zap"
 )
 
 const (
@@ -18,14 +18,16 @@ type ValidatorOption func(*Validator) error
 
 type Validator struct {
 	schema      *xsd.Schema
+	schemaPath  string
 	schemaSize  int64
 	useBuiltIn  bool
-	logger      *logger.Logger
+	logger      *zap.Logger
 	scriptPaths []string
 	scripts     ScriptMap
 }
 
 func (v *Validator) Schema() *xsd.Schema { return v.schema }
+func (v *Validator) SchemaPath() string  { return v.schemaPath }
 func (v *Validator) SchemaSize() int64   { return v.schemaSize }
 
 func (v *Validator) Validate(ctx *ValidationContext) {
@@ -99,10 +101,7 @@ func (v *Validator) ValidateDocument(name string, doc types.Document, ctx *Valid
 	}
 
 	for _, script := range v.scripts {
-		l := v.logger.Copy()
-		l.AddTag(logger.NewTag("name", "main", logger.WithTagWidth(10)))
-		l.AddTag(logger.NewTag("script", script.name, logger.WithTagMaxWidth(v.scripts.Keys())))
-		l.AddTag(logger.NewTag("document", name, logger.WithTagWidth(docMax)))
+		l := v.logger
 
 		mainPool.Add(func(script *Script) TaskHandler {
 			return func(id int) {
@@ -130,11 +129,18 @@ func (v *Validator) ValidateDocument(name string, doc types.Document, ctx *Valid
 
 func NewValidator(options ...ValidatorOption) (*Validator, error) {
 	var err error
+	var logger *zap.Logger
+
+	logger, err = zap.NewDevelopment()
+	if err != nil {
+		return nil, err
+	}
+
 	v := &Validator{
 		useBuiltIn:  true,
 		scriptPaths: []string{},
 		scripts:     map[string]*Script{},
-		logger:      logger.New(),
+		logger:      logger,
 	}
 
 	for _, option := range options {
@@ -168,6 +174,7 @@ func WithSchemaFile(filePath string) ValidatorOption {
 			return err
 		} else {
 			v.schema = schema
+			v.schemaPath = filePath
 		}
 
 		return nil
@@ -181,7 +188,7 @@ func WithBuiltinScripts(enabled bool) ValidatorOption {
 	}
 }
 
-func WithLogger(logger *logger.Logger) ValidatorOption {
+func WithLogger(logger *zap.Logger) ValidatorOption {
 	return func(v *Validator) error {
 		v.logger = logger
 		return nil

@@ -1,6 +1,7 @@
 const name = "stop-point-names";
 const description = "Make sure every ScheduledStopPoint have a name";
-const framesPath = xpath.join(".", "PublicationDelivery", "dataObjects", "CompositeFrame", "frames")
+const xpath = require('xpath');
+const framesPath = xpath.join(".", "PublicationDelivery", "dataObjects", "CompositeFrame", "frames");
 const scheduledStopPointsPath = xpath.join(framesPath, "ServiceFrame", "scheduledStopPoints", "ScheduledStopPoint");
 const namePath = xpath.join("Name");
 

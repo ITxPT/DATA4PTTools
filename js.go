@@ -4,11 +4,12 @@ import (
 	"fmt"
 	"sync"
 
-	"github.com/concreteit/greenlight/logger"
 	"github.com/dop251/goja"
 	"github.com/lestrrat-go/libxml2/types"
 	"github.com/lestrrat-go/libxml2/xpath"
 	"github.com/lestrrat-go/libxml2/xsd"
+	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
 )
 
 // TODO this file is in desperate need of refactoring
@@ -33,13 +34,21 @@ var (
 
 type jsObject map[string]interface{}
 
+func (o *jsObject) Set(field string, value interface{}) {
+	(*o)[field] = value
+}
+
+func (o *jsObject) Get(field string) interface{} {
+	return (*o)[field]
+}
+
 type jsTaskHandler func(ctx jsObject, stdlib jsObject, args ...interface{}) goja.Value // TODO fix response value
 
 type jsContext struct {
 	rw          sync.Mutex
 	script      *Script
 	context     *ValidationContext
-	logger      *logger.Logger
+	logger      *zap.Logger
 	tasks       []jsTask
 	schema      *xsd.Schema // TODO should wrap this in order to securely be passed down to script runtime
 	name        string
@@ -48,46 +57,72 @@ type jsContext struct {
 	node        types.Node
 }
 
-func (c *jsContext) log(level logger.LogLevel, v string, args ...interface{}) {
-	msg := fmt.Sprintf(v, args...)
-	c.context.addProgress(c.name, c.script.name, msg, 0, "running")
-	c.logger.Logf(level, v, args...)
+func (c *jsContext) log(level zapcore.Level, v string, fieldMaps ...map[string]interface{}) {
+	fields := []zap.Field{}
+	if fieldMaps != nil {
+		for _, m := range fieldMaps {
+			if m == nil {
+				continue
+			}
+			for k, v := range m {
+				fields = append(fields, zap.Any(k, v))
+			}
+		}
+	}
+
+	switch level {
+	case zapcore.DebugLevel:
+		c.logger.Debug(v, fields...)
+	case zapcore.InfoLevel:
+		c.logger.Info(v, fields...)
+	case zapcore.WarnLevel:
+		c.logger.Warn(v, fields...)
+	case zapcore.ErrorLevel:
+		c.logger.Error(v, fields...)
+	}
+
+	c.context.addProgress(c.name, c.script.name, v, 0, "running")
 }
 
 func (c *jsContext) object(id int) jsObject {
+	fields := map[string]interface{}{
+		"script":   c.script.name,
+		"document": c.name,
+	}
 	if id != 0 {
-		c.logger.AddTag(logger.NewTag("name", fmt.Sprintf("worker-%d", id), logger.WithTagWidth(10)))
+		fields["namespace"] = fmt.Sprintf("worker-%d", id)
+	} else {
+		fields["namespace"] = "main"
 	}
 
-	return jsObject{
-		"document":       c.document,
-		"importDocument": c.importDocument,
-		"log": jsObject{
-			"debug": func(v string, args ...interface{}) { c.log(logger.LogLevelDebug, v, args...) },
-			"info":  func(v string, args ...interface{}) { c.log(logger.LogLevelInfo, v, args...) },
-			"warn":  func(v string, args ...interface{}) { c.log(logger.LogLevelWarn, v, args...) },
-			"error": func(v string, args ...interface{}) { c.log(logger.LogLevelError, v, args...) },
-		},
-		"nodeContext": c.nodeContext,
-		"node":        c.node,
-		"schema":      c.schema,
-		"worker": jsObject{
-			"execute": c.Execute,
-			"queue":   c.Queue,
-		},
-		"xsd": jsObject{
-			"validate": c.validateSchema,
-		},
-		"xpath": jsObject{
-			"find":      c.findNodes,
-			"first":     c.findNode,
-			"findValue": c.findNodeValue,
-			"parent":    xpathNodeParent,
-			"value":     xpathNodeValue,
-			"join":      xpathJoin,
-			"line":      xpathNodeLine,
-		},
-	}
+	o := jsObject{}
+	o.Set("document", c.document)
+	o.Set("log", jsObject{
+		"debug": func(v string, extra jsObject) { c.log(zapcore.DebugLevel, v, extra, fields) },
+		"info":  func(v string, extra jsObject) { c.log(zapcore.InfoLevel, v, extra, fields) },
+		"warn":  func(v string, extra jsObject) { c.log(zapcore.WarnLevel, v, extra, fields) },
+		"error": func(v string, extra jsObject) { c.log(zapcore.ErrorLevel, v, extra, fields) },
+	})
+	o.Set("node", c.node)
+	o.Set("schema", c.schema)
+	o.Set("worker", jsObject{
+		"execute": c.Execute,
+		"queue":   c.Queue,
+	})
+	o.Set("xsd", jsObject{
+		"validate": c.validateSchema,
+	})
+	o.Set("xpath", jsObject{
+		"find":      c.findNodes,
+		"first":     c.findNode,
+		"findValue": c.findNodeValue,
+		"parent":    xpathNodeParent,
+		"value":     xpathNodeValue,
+		"join":      xpathJoin,
+		"line":      xpathNodeLine,
+	})
+
+	return o
 }
 
 func (c *jsContext) importDocument(name string) *xpath.Context {
@@ -121,7 +156,7 @@ func (c *jsContext) Queue(handler string, node types.Node, args ...interface{}) 
 		context: &jsContext{
 			context:     c.context,
 			script:      c.script,
-			logger:      c.logger.Copy(),
+			logger:      c.logger,
 			name:        c.name,
 			document:    c.document,
 			node:        node,
