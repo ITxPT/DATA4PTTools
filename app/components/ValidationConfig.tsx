@@ -32,6 +32,49 @@ import { Session } from '../api/client';
 import useApiClient from '../hooks/useApiClient';
 import theme from '../styles/theme';
 
+const ruleOptions = [
+  {
+    value: 'everyLineIsReferenced',
+    label: 'Every line is referenced',
+  },
+  {
+    value: 'everyScheduledStopPointHasAName',
+    label: 'Every scheduled stop has a name',
+  },
+  {
+    value: 'everyStopPlaceHasACorrectStopPlaceType',
+    label: 'Every stop place has a stop place type',
+  },
+  {
+    value: 'everyStopPlaceHasAName',
+    label: 'Every stop place has a name',
+  },
+  {
+    value: 'everyStopPlaceIsReferenced',
+    label: 'Every stop place is referenced',
+  },
+  {
+    value: 'everyStopPointHaveAnArrivalAndDepartureTime',
+    label: 'Every stop point have an arrival and departure time',
+  },
+  {
+    value: 'frameDefaultsHaveALocaleAndTimeZone',
+    label: 'Frame defauls have a local and timezone',
+  },
+  {
+    value: 'locationsAreReferencingTheSamePoint',
+    label: 'Locations are referencing the same point',
+  },
+  {
+    value: 'passingTimesHaveIncreasingTimes',
+    label: 'Passing times have increasing times',
+  },
+  {
+    value: 'stopPlaceQuayDistanceIsReasonable',
+    label: 'Stop place quay distance is reasonable',
+  },
+];
+
 export const FileInput = styled('input')({
   display: 'none',
 });
@@ -76,7 +119,18 @@ type ValidationConfigProps = {
 const ValidationConfig = (props: ValidationConfigProps) => {
   const { session, onValidate } = props;
   const [schema, setSchema] = React.useState<string>('netex');
-  const [rules, setRules] = React.useState<string[]>(['frame_defaults', 'stop_point_names']);
+  const [rules, setRules] = React.useState<string[]>([
+    'everyLineIsReferenced',
+    'everyScheduledStopPointHasAName',
+    'everyStopPlaceHasACorrectStopPlaceType',
+    'everyStopPlaceHasAName',
+    'everyStopPlaceIsReferenced',
+    'everyStopPointHaveAnArrivalAndDepartureTime',
+    'frameDefaultsHaveALocaleAndTimeZone',
+    'locationsAreReferencingTheSamePoint',
+    'passingTimesHaveIncreasingTimes',
+    'stopPlaceQuayDistanceIsReasonable',
+  ]);
   const [fileList, setFileList] = React.useState<{ [key: string]: any }>({});
   const [canValidate, setCanValidate] = React.useState<boolean>(false);
   const apiClient = useApiClient();
@@ -182,8 +236,9 @@ const ValidationConfig = (props: ValidationConfigProps) => {
             multiple
             onChange={handleSelectMultChange}
           >
-            <MenuItem key="frame_defaults" value="frame_defaults">Frame defaults</MenuItem>
-            <MenuItem key="stop_point_names" value="stop_point_names">Stop point names</MenuItem>
+            { ruleOptions.map((opt) => (
+              <MenuItem key={opt.value} value={opt.value}>{opt.label}</MenuItem>
+            )) }
           </Select>
         </FormControl>
 
