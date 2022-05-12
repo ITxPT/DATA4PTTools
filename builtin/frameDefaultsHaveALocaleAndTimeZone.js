@@ -1,7 +1,17 @@
-const name = "frame-defaults";
-const description = "Validates consistency of DefaultLocale inside FrameDefaults element (if present)";
-const xpath = require('xpath');
-const time = require('time');
+// ***************************************************************************
+//  Data4PT NeTEx Validator
+//
+//  Rule        : frameDefaultsHaveALocaleAndTimeZone
+//  Description : Validates the correctness of DefaultLocale and TimeZone inside FrameDefaults
+//
+//  Author      : Concrete IT on behalf of Data4PT
+// ***************************************************************************
+
+const name = "frameDefaultsHaveALocaleAndTimeZone";
+const description = `Validates the correctness of DefaultLocale and TimeZone inside FrameDefaults
+
+The test looks for FrameDefault and if present validates that the DefaultLocale has a valid CountryCode and that the TimeZone have a correct format and value.
+The TimeZone is validated against IANA Time Zone database (https://www.iana.org/time-zones) and the CountryCode must be in ISO 639-1`;
 const countryCodes = [ // ISO 639-1 country codes
   "aa", "ab", "ae", "af", "ak", "am", "an", "ar", "as", "av",
   "ay", "az", "ba", "be", "bg", "bh", "bi", "bm", "bn", "bo",
@@ -23,6 +33,8 @@ const countryCodes = [ // ISO 639-1 country codes
   "uk", "ur", "uz", "ve", "vi", "vo", "wa", "wo", "xh", "yi",
   "yo", "za", "zh", "zu",
 ];
+const xpath = require("xpath");
+const time = require("time");
 const frameDefaultsPath = xpath.join("./", "FrameDefaults");
 const defaultLocalePath = xpath.join(".", "DefaultLocale");
 const defaultLangPath = xpath.join(".", "DefaultLanguage");
@@ -42,7 +54,9 @@ const stzPath = xpath.join(".", "SummerTimeZone");
  *  </FrameDefaults>
  * ```
  **/
+
 function main(ctx) {
+  const errors = [];
   const frameDefaults = ctx.xpath.first(frameDefaultsPath);
   if (!frameDefaults) {
     return [{
@@ -50,8 +64,6 @@ function main(ctx) {
       message: "Document is missing element FrameDefaults",
     }];
   }
-
-  const errors = [];
 
   // not to bothered by errors since its optional according to  xsd schema
   const defaultLocale = ctx.xpath.first(defaultLocalePath, frameDefaults);

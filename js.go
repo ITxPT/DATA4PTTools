@@ -104,6 +104,7 @@ func (c *jsContext) object(id int) jsObject {
 		"error": func(v string, extra jsObject) { c.log(zapcore.ErrorLevel, v, extra, fields) },
 	})
 	o.Set("node", c.node)
+	o.Set("nodeContext", c.nodeContext)
 	o.Set("schema", c.schema)
 	o.Set("worker", jsObject{
 		"execute": c.Execute,
@@ -121,6 +122,7 @@ func (c *jsContext) object(id int) jsObject {
 		"join":      xpathJoin,
 		"line":      xpathNodeLine,
 	})
+	o.Set("importDocument", c.importDocument)
 
 	return o
 }

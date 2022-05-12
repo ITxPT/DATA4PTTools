@@ -184,7 +184,7 @@ type ScriptMap map[string]*Script
 func (m ScriptMap) Add(s *Script) error {
 	if existing := m[s.name]; existing != nil {
 		if existing.checksum != s.checksum {
-			return fmt.Errorf("script with the name '%s' already exist with a different checksum", s.name)
+			return fmt.Errorf("script with the name '%s' already exist with a different checksum '%s'", s.name, existing.name)
 		}
 
 		return nil // identical script alridentical eady loaded
