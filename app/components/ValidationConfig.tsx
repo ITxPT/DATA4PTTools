@@ -59,7 +59,7 @@ const ruleOptions = [
   },
   {
     value: 'frameDefaultsHaveALocaleAndTimeZone',
-    label: 'Frame defauls have a local and timezone',
+    label: 'Frame defauls have a locale and timezone',
   },
   {
     value: 'locationsAreReferencingTheSamePoint',
@@ -78,6 +78,12 @@ const ruleOptions = [
 export const FileInput = styled('input')({
   display: 'none',
 });
+
+const Caption = ({ children }: { children: JSX.Element | string }) => {
+  return (
+    <Typography variant="caption" component="span">{children}</Typography>
+  );
+};
 
 type StatusChipProps = {
   status: string;
@@ -223,8 +229,16 @@ const ValidationConfig = (props: ValidationConfigProps) => {
         <Typography><b>2.</b> In addition to the schema validation, we have also included a couple of optional rules that validate the consistency of the documents (work in progress)</Typography>
         <Typography>
           <ul style={{ marginTop: 0 }}>
-            <li>Frame defaults - Verifies the validity of the <Typography variant="caption" component="span">{'<FrameDefaults />'}</Typography> elements.</li>
-            <li>Stop point names - Checks that each <Typography variant="caption" component="span">{'<ScheduledStopPoint />'}</Typography> contain a valid <Typography variant="caption" component="span">{'<Name />'}</Typography>.</li>
+            <li><i>Every line is referenced</i> - Make sure every Line <Caption>{'<Line />'}</Caption> is referenced from another element.</li>
+            <li><i>Every scheduled stop point has a name</i> - Make sure every <Caption>{'<ScheduledStopPoint />'}</Caption> has a <Caption>{'<Name />'}</Caption> or <Caption>{'<ShortName />'}</Caption>.</li>
+            <li><i>Every stop place has a correct stop place type</i> - Make sure every <Caption>{'<StopPlace />'}</Caption> has a <Caption>{'<stopPlaceType />'}</Caption> and that it is of correct type.</li>
+            <li><i>Every stop place has a name</i> - Make sure every <Caption>{'<StopPlace />'}</Caption> has a name.</li>
+            <li><i>Every stop place is referenced</i> - Make sure every <Caption>{'<StopPlace />'}</Caption> is referenced from another element.</li>
+            <li><i>Every stop point have an arrival and departure time</i> - Make sure every <Caption>{'<ScheduledStopPointRef />'}</Caption> have an <Caption>{'<ArrivalTime />'}</Caption> and <Caption>{'<DepartureTime />'}</Caption>.</li>
+            <li><i>Frame defaults have a locale and timezone</i> - Validates the correctness of <Caption>{'<DefaultLocale />'}</Caption> and <Caption>{'<TimeZone />'}</Caption> inside <Caption>{'<FrameDefaults />'}</Caption>.</li>
+            <li><i>Locations are referencing the same point</i> - Make sure every <Caption>{'<Location />'}</Caption> in <Caption>{'<StopPlace />'}</Caption> and <Caption>{'<ScheduledStopPoint />'}</Caption> for the same <Caption>{'<StopAssignment />'}</Caption> are pointing to the same coordinates.</li>
+            <li><i>Passing times have increasing times</i> - Make sure passing times have increasing times and day offsets.</li>
+            <li><i>Stop place quay distance is reasonable</i> - Check the distance between a <Caption>{'<StopPlace />'}</Caption> and its <Caption>{'<Quay />'}</Caption>{`'`}s.</li>
           </ul>
         </Typography>
         <FormControl>
