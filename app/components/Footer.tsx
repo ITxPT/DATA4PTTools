@@ -1,4 +1,4 @@
-import { Box, Chip, Container, Grid, Tooltip, Typography, Stack } from '@mui/material';
+import { Box, Chip, Container, Grid, Stack, Tooltip, Typography } from '@mui/material';
 import { green, red } from '@mui/material/colors';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -61,6 +61,9 @@ const Footer = () => {
               </Box>
             </Grid>
           </Grid>
+          <Stack sx={{ marginTop: '20px' }} alignItems="center">
+            <Typography>The tool is developed by ITxPT co-funded by CEF Initiative in the framework of DATA4PT project. <Link href="https://github.com/ITxPT/DATA4PTTools/blob/develop/LICENSE"><a target="_blank">MIT license</a></Link> is applied.</Typography>
+          </Stack>
         </MainContent>
       </Box>
       <Box
@@ -114,14 +117,6 @@ const Footer = () => {
                     />
                   </Tooltip>
                 </Stack>
-              </Grid>
-              <Grid item xs={12} md={6} sx={{
-                textAlign: 'right',
-                [theme.breakpoints.down('md')]: {
-                  textAlign: 'center',
-                }
-              }}>
-                <Typography>Copyright © 2022 ITxPT</Typography>
               </Grid>
             </Grid>
 

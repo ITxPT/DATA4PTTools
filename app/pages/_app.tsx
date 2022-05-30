@@ -33,7 +33,8 @@ const App = ({ Component, pageProps }: AppProps) => {
           paddingTop: '20px',
         },
       }}>
-        <span>Note that this is an early build, please provide feedback in <Link href="https://forms.gle/eRfRYeFs2D7JhmPRA"><a target="_blank">this form</a></Link> or one of the channels listed to the right</span>
+        <span>Note that this is an early build and more capabilities will be available soon. Visit us regularly!
+        You may provide your feedback in <Link href="https://forms.gle/eRfRYeFs2D7JhmPRA"><a target="_blank">this form</a></Link> or one of the channels listed to the right.</span>
         <ArrowForwardIcon />
       </InfoMessage>
       <BugReport />
