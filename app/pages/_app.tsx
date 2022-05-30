@@ -25,12 +25,11 @@ const App = ({ Component, pageProps }: AppProps) => {
   return (
     <ThemeProvider theme={theme}>
       <InfoMessage sx={{
-        paddingLeft: '80px',
+        paddingLeft: '120px',
         paddingTop: '20px',
         paddingRight: '40px',
         [theme.breakpoints.down('md')]: {
           paddingLeft: '0',
-          paddingTop: '20px',
         },
       }}>
         <span>Note that this is an early build and more capabilities will be available soon. Visit us regularly!

@@ -1,6 +1,6 @@
 import EmailIcon from '@mui/icons-material/Email';
 import GitHubIcon from '@mui/icons-material/GitHub';
-import { Box, Button, Grid, Stack, Typography } from '@mui/material';
+import { Alert, Box, Button, Grid, Stack, Typography } from '@mui/material';
 import { ThemeProvider } from '@mui/material/styles';
 import { NextPage } from 'next';
 import Head from 'next/head';
@@ -74,6 +74,9 @@ The DATA4PT project aims to advance data-sharing practices in the public transpo
               If you have feedback, questions or bug reports please do not hesitate to send them our way through <Link href="https://github.com/ITxPT/DATA4PTTools"><a target="_blank"><GitHubIcon sx={{ fontSize: '12px' }} /> GitHub</a></Link> or <Link passHref href="mailto:anastasia.founta@itxpt.org;jesper.j.tornros@concreteit.se;petter.kvarnfors@concreteit.se"><a target="_blank"><EmailIcon sx={{ fontSize: '12px' }} /> Email</a></Link>.
             </Typography>
           </Stack>
+          <Alert severity="info">
+            Using the online version may apply limitations. For regular use, download and install the tool for free from <Link href="https://github.com/ITxPT/DATA4PTTools"><a target="_blank">GitHub</a></Link> or <Link href="https://hub.docker.com/r/lekojson/greenlight"><a target="_blank">Docker</a></Link>
+          </Alert>
           <Stack alignItems="center">
             <Button
               onClick={handleClick}
