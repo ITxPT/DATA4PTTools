@@ -1,3 +1,21 @@
+
+## v0.3.4 [2022-05-30]
+
+### Chore
+- Update license and texts ([507890d](../../commit/507890d9fdf2211570cd637f297043b940b81c2f))
+- Update rule texts ([a3a4462](../../commit/a3a44628c68cf7aaca4bd52fa494085ae39cbc14))
+- Add note about limitations ([9175549](../../commit/917554959b42672b89fc8c6c04721683cc185bc4))
+
+
+### Refactor
+- Replace logger, update config and implement require model ([f3d1c54](../../commit/f3d1c54bbb4585d4dfd9a9a7b99dd9f0576400c9))
+- Move file upload in prep for custom xsd ([51768ea](../../commit/51768ea60e9ad72bb0a7ecce62f12d883fdbad09))
+
+
+### Features
+- New rules and some cleanup ([1d496a4](../../commit/1d496a4fb6124bc6f742d5e1661a60af0b3147b1))
+- Add additional rules to web gui ([ba98fdd](../../commit/ba98fdd686708408d09705ff2b23faa31a5ba4f3))
+
 ## v0.3.3 [2022-05-09]
 
 
