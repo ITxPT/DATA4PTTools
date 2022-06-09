@@ -1,4 +1,5 @@
-# Greenlight
+# Greenlight - The Data4PT Validation tool
+
 
 <p align="center">
   <img src="https://img.shields.io/badge/go%20version-%3E=1.17-61CFDD.svg?style=for-the-badge&logo=appveyor" alt="Go Version">
@@ -13,7 +14,6 @@
       alt="Docker stars"
   /></a>
 </p>
-
 <p align="center">
   <a href="#-web-gui">Web</a>
   ·
@@ -23,7 +23,6 @@
   ·
   <a href="#%EF%B8%8F-configuration">Configuration</a>
 </p>
-
 <h1></h1>
 
 <img
@@ -42,25 +41,56 @@
 
 <br>
 
-## 🚀 Web GUI
 
-### Prerequisites
 
-- [Docker](https://www.docker.com/) installed and ready to go
+# Getting started
 
-### Getting started
+To use the tool you need to install Docker on the computer that you will use. You can use Windows, Mac or Linux as your base operating system, and you will find Docker and instructions on how to install in the [Docker Getting Started](https://www.docker.com/get-started/) guide. 
 
-1. Getting the latest image
-  ```sh
-  docker pull lekojson/greenlight
-  ```
+After you have installed Docker you can get the latest image by typing the following command in a terminal window:
 
-2. Start the web gui
-   ```sh
-   docker run -it -p 8080:8080 lekojson/greenlight server
-   ```
+```
+docker pull lekojson/greenlight
+```
 
-3. Open a browser and navigate to `http://localhost:8080`
+Then you can then start the container with the command:
+
+```
+docker run -it -p 8080:8080 lekojson/greenlight server
+```
+
+You can also start the container via Docker Desktop, find the downloaded image and klick on start:
+
+![Docker Desktop](media/getting-started_docker-desktop.png?raw=true)
+
+# Web interface
+
+When the container is running you can use the web interface by opening a web browser and type the address [http://localhost:8080/](http://localhost:8080/), and then click on **Begin validating** to start a new validation session. 
+
+![Web Start page](media/getting-started_web-start.png?raw=true)
+
+Configuration
+
+First you select which schema/profile to use in the validation. In the current version three default schemas are available; NeTEx Standard, NeTEx Light and EPIP. In a future version of the tool it will be possible to upload your own local schema.
+
+![Web Select schema](media/getting-started_web-schema-selection.png?raw=true)
+
+The next step is to select which additional rules you want to check. You first get an overview and brief description of each rule. Zero or more rules can be selected by clicking the rules in the list box.
+
+![Web Select rules](media/getting-started_web-rule-selection.png?raw=true)
+
+The last step is to upload the files to be validated, it can be single files or multiple files compressed in an archive. Click **Upload files** to select which files to upload and then wait until all files has been uploaded, see the Status indicator in the files list.
+
+![Web Start upload](media/getting-started_web-start-upload.png?raw=true)
+
+When all files are uploaded you start the validation by clicking on **Validate**.
+
+![Web Uploaded files](media/getting-started_web-uploaded-files.png)
+
+The validation will start by validating each file against the selected schema and rules. Depending on the number of files and their sizes the validation can take some time to complete. When the validation is done the result for each file is displayed. You can also download the result in json or csv format to a local file to process it further.
+
+![Web Validation result](media/getting-started_web-validation-result.png)
+
 
 ## 🖥️ CLI
 
