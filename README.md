@@ -1,4 +1,6 @@
-# Greenlight
+# Greenlight - The Data4PT Validation tool
+
+
 
 <p align="center">
   <img src="https://img.shields.io/badge/go%20version-%3E=1.17-61CFDD.svg?style=for-the-badge&logo=appveyor" alt="Go Version">
@@ -23,9 +25,10 @@
   ·
   <a href="#%EF%B8%8F-configuration">Configuration</a>
 </p>
-
 <h1></h1>
 
+<table>
+<tr><td>
 <img
   src="https://github.com/concreteit/greenlight-media/raw/develop/greenlight.gif"
   alt="Simple validation"
@@ -39,28 +42,80 @@
 - **Scripting** write your own validation rules using javascript
 - **Fancy** shows relevant information at a glance.
 - **Easy:** quick to install – start using it in minutes.
+</td>
+</tr>
+</table>
 
-<br>
 
-## 🚀 Web GUI
+# Introduction
+The tool consists of a number of components, each with a different responsibility. This will ensure that the tool is modular and that each component is easy to understand and maintain.
 
-### Prerequisites
 
-- [Docker](https://www.docker.com/) installed and ready to go
+<img
+  src="media/getting-started_components.png"
+  alt="Components"
+    style="margin-bottom:20px;margin-top:10px"
+/>
 
-### Getting started
+**Core** - This is the main component of the tool, it reads the configuration, handles file imports, calls the validation scripts and summarizes the result. The Core provides an API that other components use to control the validation or to get access to shared functions, e.g, in libXML. The API also makes it possible to extend the tool with different front ends, as the CLI and Web Interface.
 
-1. Getting the latest image
-  ```sh
-  docker pull lekojson/greenlight
-  ```
+**libXML** - An [open source, standard library](https://gitlab.gnome.org/GNOME/libxml2/-/wikis/home) integrated into the tool. It is libXML that does all the XSD and XML validation. It is called from the scripts via the API in the Core component.
 
-2. Start the web gui
-   ```sh
-   docker run -it -p 8080:8080 lekojson/greenlight server
-   ```
+**CLI** - The Command Line Interface is used in a terminal or integrated in an import/export pipeline. Parameters are used to configure the tool and to specify the files to be validated. The result can be read in the terminal or saved as a file.
 
-3. Open a browser and navigate to `http://localhost:8080`
+**Web Interface** - Provides an easy to use interface via the web browser. The web interface makes the tool easer to use for the occasional user or for just testing small files. After loading the web page you can select the NeTEx profile to use, select one or more validation rules and then run the validation. After completion you get the result on the web page but can also download it to a file.
+
+**Scripts** - Individual validation rules implemented as scripts. The scripts are written in JavaScript that is easy to start with and JavaScript is also well documented. The validation scripts are small programs that each implements one or more validation rules. The scrips provided with the tool implements one rule per script to make it easy to follow and understand how they work. To gain a better performance several rules can be implemented in the same script. Each script uses the API in Core to load the files to validate and to call functions in libXML. XPath provided via libXML is used by most of the scripts to search for and compare different elements in the NeTEx-files. 
+</p>
+
+# Getting started
+
+To use the tool you need to install Docker on the computer that you will use. You can use Windows, Mac or Linux as your base operating system, and you will find Docker and instructions on how to install in the [Docker Getting Started](https://www.docker.com/get-started/) guide. 
+
+After you have installed Docker you can get the latest image by typing the following command in a terminal window:
+
+```
+docker pull lekojson/greenlight
+```
+
+Then you can then start the container with the command:
+
+```
+docker run -it -p 8080:8080 lekojson/greenlight server
+```
+
+You can also start the container via Docker Desktop, find the downloaded image and click on start:
+
+![Docker Desktop](media/getting-started_docker-desktop.png?raw=true)
+
+# Web interface
+
+When the container is running you can use the web interface by opening a web browser and type the address [http://localhost:8080/](http://localhost:8080/), and then click on **Begin validating** to start a new validation session. 
+
+![Web Start page](media/getting-started_web-start.png?raw=true)
+
+Configuration
+
+First you select which schema/profile to use in the validation. In the current version three default schemas are available; NeTEx Standard, NeTEx Light and EPIP. In a future version of the tool it will be possible to upload your own local schema.
+
+![Web Select schema](media/getting-started_web-schema-selection.png?raw=true)
+
+The next step is to select which additional rules you want to check. You first get an overview and brief description of each rule. Zero or more rules can be selected by clicking the rules in the list box.
+
+![Web Select rules](media/getting-started_web-rule-selection.png?raw=true)
+
+The last step is to upload the files to be validated, it can be single files or multiple files compressed in an archive. Click **Upload files** to select which files to upload and then wait until all files has been uploaded, see the Status indicator in the files list.
+
+![Web Start upload](media/getting-started_web-start-upload.png?raw=true)
+
+When all files are uploaded you start the validation by clicking on **Validate**.
+
+![Web Uploaded files](media/getting-started_web-uploaded-files.png)
+
+The validation will start by validating each file against the selected schema and rules. Depending on the number of files and their sizes the validation can take some time to complete. When the validation is done the result for each file is displayed. You can also download the result in json or csv format to a local file to process it further.
+
+![Web Validation result](media/getting-started_web-validation-result.png)
+
 
 ## 🖥️ CLI
 
