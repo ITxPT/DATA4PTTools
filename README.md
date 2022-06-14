@@ -65,7 +65,7 @@ The tool consists of a number of components, each with a different responsibilit
 
 **Web Interface** - Provides an easy to use interface via the web browser. The web interface makes the tool easer to use for the occasional user or for just testing small files. After loading the web page you can select the NeTEx profile to use, select one or more validation rules and then run the validation. After completion you get the result on the web page but can also download it to a file.
 
-**Scripts** - Individual validation rules implemented as scripts. The scrips are written in JavaScript that is easy to start with and JavaScript is also well documented. The validation scripts are small programs that each implements one or more validation rules. The scrips provided with the tool implements one rule per script to make it easy to follow and understand how they work. To gain a better performance several rules can be implemented in the same script. Each script uses the API in Core to load the files to validate and to call functions in libXML. xPath provided via libXML is used by most of the scripts to search for and compare different elements in the NeTEx-files. 
+**Scripts** - Individual validation rules implemented as scripts. The scripts are written in JavaScript that is easy to start with and JavaScript is also well documented. The validation scripts are small programs that each implements one or more validation rules. The scrips provided with the tool implements one rule per script to make it easy to follow and understand how they work. To gain a better performance several rules can be implemented in the same script. Each script uses the API in Core to load the files to validate and to call functions in libXML. XPath provided via libXML is used by most of the scripts to search for and compare different elements in the NeTEx-files. 
 </p>
 
 # Getting started
@@ -84,7 +84,7 @@ Then you can then start the container with the command:
 docker run -it -p 8080:8080 lekojson/greenlight server
 ```
 
-You can also start the container via Docker Desktop, find the downloaded image and klick on start:
+You can also start the container via Docker Desktop, find the downloaded image and click on start:
 
 ![Docker Desktop](media/getting-started_docker-desktop.png?raw=true)
 
