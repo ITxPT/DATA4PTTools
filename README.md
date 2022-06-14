@@ -1,6 +1,7 @@
 # Greenlight - The Data4PT Validation tool
 
 
+
 <p align="center">
   <img src="https://img.shields.io/badge/go%20version-%3E=1.17-61CFDD.svg?style=for-the-badge&logo=appveyor" alt="Go Version">
   <a href="https://hub.docker.com/r/lekojson/greenlight"
@@ -14,6 +15,7 @@
       alt="Docker stars"
   /></a>
 </p>
+
 <p align="center">
   <a href="#-web-gui">Web</a>
   ·
@@ -25,6 +27,8 @@
 </p>
 <h1></h1>
 
+<table>
+<tr><td>
 <img
   src="https://github.com/concreteit/greenlight-media/raw/develop/greenlight.gif"
   alt="Simple validation"
@@ -38,10 +42,31 @@
 - **Scripting** write your own validation rules using javascript
 - **Fancy** shows relevant information at a glance.
 - **Easy:** quick to install – start using it in minutes.
+</td>
+</tr>
+</table>
 
-<br>
+
+# Introduction
+The tool consists of a number of components, each with a different responsibility. This will ensure that the tool is modular and that each component is easy to understand and maintain.
 
 
+<img
+  src="media/getting-started_components.png"
+  alt="Components"
+    style="margin-bottom:20px;margin-top:10px"
+/>
+
+**Core** - This is the main component of the tool, it reads the configuration, handles file imports, calls the validation scripts and summarizes the result. The Core provides an API that other components use to control the validation or to get access to shared functions, e.g, in libXML. The API also makes it possible to extend the tool with different front ends, as the CLI and Web Interface.
+
+**libXML** - An [open source, standard library](https://gitlab.gnome.org/GNOME/libxml2/-/wikis/home) integrated into the tool. It is libXML that does all the XSD and XML validation. It is called from the scripts via the API in the Core component.
+
+**CLI** - The Command Line Interface is used in a terminal or integrated in an import/export pipeline. Parameters are used to configure the tool and to specify the files to be validated. The result can be read in the terminal or saved as a file.
+
+**Web Interface** - Provides an easy to use interface via the web browser. The web interface makes the tool easer to use for the occasional user or for just testing small files. After loading the web page you can select the NeTEx profile to use, select one or more validation rules and then run the validation. After completion you get the result on the web page but can also download it to a file.
+
+**Scripts** - Individual validation rules implemented as scripts. The scrips are written in JavaScript that is easy to start with and JavaScript is also well documented. The validation scripts are small programs that each implements one or more validation rules. The scrips provided with the tool implements one rule per script to make it easy to follow and understand how they work. To gain a better performance several rules can be implemented in the same script. Each script uses the API in Core to load the files to validate and to call functions in libXML. xPath provided via libXML is used by most of the scripts to search for and compare different elements in the NeTEx-files. 
+</p>
 
 # Getting started
 
