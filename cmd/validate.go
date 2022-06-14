@@ -2,33 +2,19 @@ package main
 
 import (
 	"context"
-	"crypto/sha256"
 	"encoding/json"
 	"encoding/xml"
 	"fmt"
 	"log"
 	"os"
 	"path"
-	"runtime"
 	"strings"
-	"time"
 
 	"github.com/concreteit/greenlight"
-	"github.com/influxdata/influxdb-client-go/v2"
-	"github.com/influxdata/influxdb-client-go/v2/api/write"
-	"github.com/shirou/gopsutil/cpu"
-	"github.com/shirou/gopsutil/mem"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
-)
-
-const (
-	influxURL    = "https://europe-west1-1.gcp.cloud2.influxdata.com"
-	influxToken  = "ZgkcIAuMuoSM0KcG38iui5nLQrYv9oLiSCfJ2sin2exvxJnbMQjUea1kGQrsGteKCazgo_83thED1lS1O1XYEw=="
-	influxOrg    = "4b2adfedb7f7619e"
-	influxBucket = "greenlight"
 )
 
 var (
@@ -70,7 +56,6 @@ func init() {
 	validateCmd.Flags().BoolP("no-result", "", false, "Whether result output should be disabled")
 	validateCmd.Flags().StringP("schema", "s", "xsd/NeTEx_publication.xsd", "Use XML Schema file for validation")
 	validateCmd.Flags().StringP("scripts", "", "", "Directory or file path to look for scripts")
-	validateCmd.Flags().BoolP("telemetry", "", true, "Whether to collect and send information about execution time")
 
 	// default script paths
 	viper.SetDefault("scripts", stringsJoin("scripts", configPaths, path.Join))
@@ -217,70 +202,6 @@ func validate(cmd *cobra.Command, args []string) {
 			}
 		}
 	}
-
-	if viper.GetBool("telemetry") {
-		logTelemetry(validator, ctx.Results())
-	}
-}
-
-func logTelemetry(validator *greenlight.Validator, results []*greenlight.ValidationResult) {
-	client := influxdb2.NewClient(influxURL, influxToken)
-	defer client.Close()
-
-	writeAPI := client.WriteAPI(influxOrg, influxBucket)
-
-	for _, r := range results {
-		if viper.GetBool("telemetry") {
-			p := newPoint("document")
-			p.AddField("schema_name", validator.SchemaPath())
-			p.AddField("schema_bytes", validator.SchemaSize())
-			p.AddField("execution_time_ms", r.ExecutionTime().Milliseconds())
-			p.AddField("name", r.Name)
-			p.AddField("valid", r.Valid)
-			writeAPI.WritePoint(p)
-
-			for _, rule := range r.ValidationRules {
-				p := newPoint("rule")
-				p.AddField("schema_name", validator.SchemaPath())
-				p.AddField("schema_bytes", validator.SchemaSize())
-				p.AddField("execution_time_ms", rule.ExecutionTime().Milliseconds())
-				p.AddField("document_name", r.Name)
-				p.AddTag("name", rule.Name)
-				p.AddField("valid", rule.Valid)
-				p.AddField("error_count", rule.ErrorCount)
-				writeAPI.WritePoint(p)
-			}
-		}
-	}
-
-	writeAPI.Flush()
-}
-
-func newPoint(measurement string) *write.Point {
-	p := influxdb2.NewPointWithMeasurement(measurement).
-		SetTime(time.Now()).
-		AddTag("os", runtime.GOOS).
-		AddTag("arch", runtime.GOARCH)
-
-	if name, err := os.Hostname(); err == nil {
-		p.AddTag("host", fmt.Sprintf("%x", sha256.Sum256([]byte(name))))
-	}
-	if n, err := cpu.Counts(true); err == nil {
-		p.AddField("cpu_count", n)
-	}
-	if info, err := cpu.Info(); err == nil && len(info) > 0 {
-		p.AddField("cpu_model", info[0].ModelName)
-	}
-	if info, err := mem.SwapMemory(); err == nil {
-		p.AddField("swap_mem_total", info.Total).
-			AddField("swap_mem_used", info.Used)
-	}
-	if info, err := mem.VirtualMemory(); err == nil {
-		p.AddField("virtual_mem_total", info.Total).
-			AddField("virtual_mem_used", info.Used)
-	}
-
-	return p
 }
 
 func newLogger() (*zap.Logger, error) {
