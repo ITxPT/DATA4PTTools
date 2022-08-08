@@ -32,11 +32,12 @@ func netexContext(n types.Node) (*xpath.Context, error) {
 }
 
 func xpathFindNodes(ctx *xpath.Context, pattern string, node types.Node) types.NodeList {
+	validContext := ctx
 	if node != nil {
-		ctx.SetContextNode(node)
+		validContext, _ = netexContext(node)
 	}
 
-	return xpath.NodeList(ctx.Find(pattern))
+	return xpath.NodeList(validContext.Find(pattern))
 }
 
 func xpathFindNode(ctx *xpath.Context, pattern string, node types.Node) types.Node {
