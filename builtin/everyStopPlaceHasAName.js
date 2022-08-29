@@ -1,39 +1,61 @@
-// ***************************************************************************
-//  Data4PT NeTEx Validator
-//
-//  Rule        : everyStopPlaceHasAName
-//  Description : Make sure every StopPlace has a name
-//
-//  Author      : Concrete IT on behalf of Data4PT
-// ***************************************************************************
-
+/**
+ * @name everyStopPlaceHasAName
+ * @overview Make sure every StopPlace has a name
+ * @author Concrete IT
+ */
 const name = "everyStopPlaceHasAName";
-const description = "Make sure every StopPlace has a name";
+const errors = require("errors");
+const { Context } = require("types");
 const xpath = require("xpath");
-const framesPath = xpath.join(".", "PublicationDelivery", "dataObjects", "CompositeFrame", "frames");
-const stopPlacesPath = xpath.join(framesPath, "SiteFrame", "stopPlaces", "StopPlace");
+const stopPlacesPath = xpath.join(
+  xpath.path.FRAMES,
+  "SiteFrame",
+  "stopPlaces",
+  "StopPlace",
+);
 const namePath = xpath.join("Name");
 const shortNamePath = xpath.join("ShortName");
 
+/**
+ * Make sure every StopPlace has a name
+ * @param {Context} ctx
+ */
 function main(ctx) {
-  const errors = [];
-  const stopPlaces = ctx.xpath.find(stopPlacesPath);
+  return ctx.node.find(stopPlacesPath)
+    .map(v => v.reduce((res, node) => {
+      const id = node.valueAt("@id").get();
 
-  ctx.log.debug(`${stopPlaces.length} stopPlaces`);
+      if (!id) {
+        res.push({
+          type: "consistency",
+          message: `StopPlace is missing attribute @id`,
+          line: node.line(),
+        });
+        return res;
+      }
 
-  stopPlaces.forEach(stopPlace => {
-    const id = ctx.xpath.findValue("@id", stopPlace);
-    const name = ctx.xpath.findValue(namePath, stopPlace);
-    const shortName = ctx.xpath.findValue(shortNamePath, stopPlace);
+      const name = node.valueAt(namePath).get();
+      const shortName = node.valueAt(shortNamePath).get();
 
-    if (!name && !shortName) {
-      errors.push({
-        type: "consistency",
-        message: `Missing name for StopPlace(@id=${id})`,
-        line: ctx.xpath.line(stopPlace),
-      });
-    }
-  });
+      if (!name && !shortName) {
+        res.push({
+          type: "consistency",
+          message: `Missing name for StopPlace(@id=${id})`,
+          line: node.line(),
+        });
+      }
 
-  return errors;
+      return res;
+    }, []))
+    .getOrElse(err => {
+      if (err == errors.NODE_NOT_FOUND) {
+        return [];
+      } else if (err) {
+        return [{
+          type: "internal",
+          message: err,
+          line: 0,
+        }];
+      }
+    });
 }

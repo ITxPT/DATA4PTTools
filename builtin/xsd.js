@@ -1,19 +1,28 @@
-// ***************************************************************************
-//  Data4PT NeTEx Validator
-//
-//  Rule        : xsd
-//  Description : General XSD schema validation
-//
-//  Author      : Concrete IT on behalf of Data4PT
-// ***************************************************************************
-
+/**
+ * @name xsd
+ * @overview General XSD schema validation
+ * @author Concrete IT
+ */
 const name = "xsd";
-const description = "General XSD schema validation";
+const { Context } = require("types");
 
+/**
+ * General XSD schema validation
+ * @param {Context} ctx
+ */
 function main(ctx) {
-  ctx.log.debug("running xsd validation");
+  ctx.log.debug(`validation using schema "${ctx.config.schema}"`);
 
-  const [n, errors] = ctx.xsd.validate();
+  const res = ctx.xsd.validate(ctx.config.schema);
 
-  return errors
+  ctx.log.warn(`xsd -> valid: ${res.isErr()}`);
+
+  if (res.isErr()) {
+    return [{
+      type: "xsd",
+      message: `xsd validation failed`, // TODO fix me
+    }]
+  }
+
+  return [];
 }

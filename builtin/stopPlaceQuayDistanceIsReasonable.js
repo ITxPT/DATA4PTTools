@@ -1,38 +1,52 @@
-// ***************************************************************************
-//  Data4PT NeTEx Validator
-//
-//  Rule        : stopPlaceQuayDistanceIsReasonable
-//  Description : Check the distance between a StopPlace and its Quays
-//
-//  Author      : Concrete IT on behalf of Data4PT
-// ***************************************************************************
-
+/**
+ * @name stopPlaceQuayDistanceIsReasonable
+ * @overview Check the distance between a StopPlace and its Quays
+ * @author Concrete IT
+ */
 const name = "stopPlaceQuayDistanceIsReasonable";
-const description = "Validate the distance between a StopPlace and its Quays";
+const { Context } = require("types");
 const xpath = require("xpath");
 const frameDefaultsPath = xpath.join("./", "FrameDefaults");
 const defaultLocationSystemPath = xpath.join(".", "DefaultLocationSystem");
-const framesPath = xpath.join(".", "PublicationDelivery", "dataObjects", "CompositeFrame", "frames");
+const framesPath = xpath.join(
+  ".",
+  "PublicationDelivery",
+  "dataObjects",
+  "CompositeFrame",
+  "frames",
+);
 const stopPlacesPath = xpath.join(framesPath, "SiteFrame", "stopPlaces", "StopPlace");
 const quayPath = xpath.join("quays", "Quay");
 const longitudePath = xpath.join("Centroid", "Location", "Longitude");
 const latitudePath = xpath.join("Centroid", "Location", "Latitude");
 
+/**
+ * Check the distance between a StopPlace and its Quays
+ * @param {Context} ctx
+ */
 function main(ctx) {
-  const errors = [];
-  const frameDefaults = ctx.xpath.first(frameDefaultsPath); // Find the LocationSystem and verify that it is WGS84 / 4326
+  const config = { distance: 500, ...ctx.config };
+  const res = [];
+  const frameDefaults = ctx.document.first(frameDefaultsPath).get(); // Find the LocationSystem and verify that it is WGS84 / 4326
+
   if (!frameDefaults) {
     return [{
       type: "not_found",
-      message: "Document is missing element FrameDefaults",
+      message: "Document is missing element <FrameDefaults />",
     }];
   }
 
-  const defaultLocationSystem = ctx.xpath.findValue(defaultLocationSystemPath, frameDefaults);
+  const defaultLocationSystem = frameDefaults.valueAt(defaultLocationSystemPath).get();
 
-  ctx.log.debug("defaultLocationSystem : " + defaultLocationSystem);
+  ctx.log.debug(`defaultLocationSystem: ${defaultLocationSystem}`);
+  ctx.log.debug(`configured max distance: ${config.distance}`);
 
-  if (!defaultLocationSystem.includes("4326")) {
+  if (!defaultLocationSystem) {
+    return [{
+      type: "error",
+      message: "Element <FrameDefaults /> is missing child <DefaultLocationSystem />",
+    }];
+  } else if (!defaultLocationSystem.includes("4326")) {
     return [{
       type: "error",
       message: "Document coordinates is not in WGS84/EPSG:4326",
@@ -40,40 +54,45 @@ function main(ctx) {
   }
 
   // Find all stopPlaces and check the distance to the quays
-  const stopPlaces = ctx.xpath.find(stopPlacesPath);
+  ctx.node.find(stopPlacesPath)
+    .getOrElse(() => [])
+    .forEach(node => {
+      const id = node.valueAt("@id").get();
+      const long = parseFloat(node.valueAt(longitudePath).get());
+      const lat = parseFloat(node.valueAt(latitudePath).get());
 
-  stopPlaces.forEach(stopPlace => {
-    const id = ctx.xpath.findValue("@id", stopPlace);
-    const long = ctx.xpath.findValue(longitudePath, stopPlace);
-    const lat = ctx.xpath.findValue(latitudePath, stopPlace);
+      node.find(quayPath)
+        .getOrElse(() => [])
+        .forEach(quay => {
+          const idQuay = quay.valueAt("@id").get();
+          const longQuay = parseFloat(quay.valueAt(longitudePath).get());
+          const latQuay = parseFloat(quay.valueAt(latitudePath).get());
+          const d = getDistanceFromLatLonInKm(lat, long, latQuay, longQuay);
+          const distance = Math.round(d * 1000);
 
-    const quays = ctx.xpath.find(quayPath, stopPlace);
-
-    quays.forEach(quay => {
-    const idQuay = ctx.xpath.findValue("@id", quay);
-    const longQuay = ctx.xpath.findValue(longitudePath, quay);
-      const latQuay = ctx.xpath.findValue(latitudePath, quay);
-
-      const distance = Math.round(getDistanceFromLatLonInKm(lat, long, latQuay, longQuay) * 1000);
-      //ctx.log.debug("Quay Distance : " + distance);
-
-      if (distance > 500) {
-        errors.push({
-          type: "quality",
-          message: `Distance between StopPlace and Quay greater than 500m (stopPlace @id=${id}, Quay @id=${idQuay}, distance=${distance}m)`,
-          line: ctx.xpath.line(stopPlace),
+          if (distance > config.distance) {
+            res.push({
+              type: "quality",
+              message: `Distance between StopPlace and Quay greater than 500m (stopPlace @id=${id}, Quay @id=${idQuay}, distance=${distance}m)`,
+              line: node.line(),
+            });
+          }
         });
-      }
-
     });
-  });
 
-  return errors;
+  return res;
 }
 
-// calculate the distance between two points
-// https://stackoverflow.com/questions/27928/calculate-distance-between-two-latitude-longitude-points-haversine-formula
-function getDistanceFromLatLonInKm(lat1,lon1,lat2,lon2) {
+/**
+ * Calculate the distance between two points
+ * https://stackoverflow.com/questions/27928/calculate-distance-between-two-latitude-longitude-points-haversine-formula
+ * @param {number} lat1
+ * @param {number} lon1
+ * @param {number} lat2
+ * @param {number} lon2
+ * @returns {number}
+ */
+function getDistanceFromLatLonInKm(lat1, lon1, lat2, lon2) {
   const R = 6371; // radius of the earth in km
   const dLat = deg2rad(lat2-lat1); // deg2rad below
   const dLon = deg2rad(lon2-lon1);
@@ -82,11 +101,14 @@ function getDistanceFromLatLonInKm(lat1,lon1,lat2,lon2) {
     Math.cos(deg2rad(lat1)) * Math.cos(deg2rad(lat2)) *
     Math.sin(dLon/2) * Math.sin(dLon/2);
   const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-  const d = R * c; // distance in km
 
-  return d;
+  return R * c; // distance in km
 }
 
+/**
+ * @param {number} deg
+ * @returns {number}
+ */
 function deg2rad(deg) {
   return deg * (Math.PI/180);
 }
