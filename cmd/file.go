@@ -1,4 +1,4 @@
-package greenlight
+package main
 
 import (
 	"archive/tar"

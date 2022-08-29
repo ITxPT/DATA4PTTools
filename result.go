@@ -2,28 +2,13 @@ package greenlight
 
 import (
 	"fmt"
-	"time"
 )
+
+// TODO find a new way to measure execution
 
 const maxErrorCount = 1000
 
-type Measure struct {
-	start         time.Time
-	stop          time.Time
-	executionTime time.Duration
-}
-
-func (m *Measure) Start() { m.start = time.Now() }
-func (m *Measure) Stop() {
-	m.stop = time.Now()
-	m.executionTime = m.stop.Sub(m.start)
-}
-
-func (m *Measure) ExecutionTime() time.Duration { return m.executionTime }
-
 type ValidationResult struct {
-	*Measure
-
 	Name            string            `json:"name" xml:"name,attr"`
 	Valid           bool              `json:"valid" xml:"valid,attr"`
 	GeneralError    string            `json:"general_error,omitempty" xml:"GeneralError,omitempty"`
@@ -58,8 +43,6 @@ type TaskError struct {
 }
 
 type RuleValidation struct {
-	*Measure
-
 	Name        string      `json:"name" xml:"name,attr"`
 	Description string      `json:"description,omitempty" xml:"description,attr,omitempty"`
 	Valid       bool        `json:"valid" xml:"valid,attr"`

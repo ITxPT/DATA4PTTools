@@ -2,19 +2,16 @@ package main
 
 import (
 	"context"
-	"encoding/json"
-	"encoding/xml"
 	"fmt"
-	"log"
 	"os"
-	"path"
 	"strings"
 
 	"github.com/concreteit/greenlight"
+	"github.com/concreteit/greenlight/internal"
+	"github.com/concreteit/greenlight/js"
+	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-	"go.uber.org/zap"
-	"go.uber.org/zap/zapcore"
 )
 
 var (
@@ -23,13 +20,7 @@ var (
 		Short: "Validate NeTEx files",
 		Run:   validate,
 	}
-	configPaths = []string{
-		"$HOME/.greenlight",
-		"/etc/greenlight",
-		"/",
-		"/greenlight",
-		".",
-	}
+	scripts = map[string]*js.Script{}
 )
 
 type encoder interface {
@@ -47,29 +38,14 @@ func stringsJoin(v string, o []string, joinHandler func(elem ...string) string) 
 }
 
 func init() {
-	validateCmd.Flags().StringP("builtin-scripts", "", "true", "Whether to use built in validation rules")
-	validateCmd.Flags().StringP("input", "i", "", "XML file, dir or archive to validate")
-	validateCmd.Flags().StringP("log-level", "l", "debug", "Set logger level")
-	validateCmd.Flags().BoolP("no-log", "", false, "Whether log output should be disabled")
-	validateCmd.Flags().BoolP("no-constraint", "", false, "Use lite schema validation (w/o constraint)")
-	validateCmd.Flags().StringP("result-format", "", "json", "Detailed validation result format")
-	validateCmd.Flags().BoolP("no-result", "", false, "Whether result output should be disabled")
-	validateCmd.Flags().StringP("schema", "s", "xsd/NeTEx_publication.xsd", "Use XML Schema file for validation")
-	validateCmd.Flags().StringP("scripts", "", "", "Directory or file path to look for scripts")
-
-	// default script paths
-	viper.SetDefault("scripts", stringsJoin("scripts", configPaths, path.Join))
-
-	// set paths to look for configuration file (first come, first serve)
-	for _, p := range configPaths {
-		viper.AddConfigPath(p)
+	if scriptMap, err := js.CompilePath("builtin"); err != nil {
+		log.Fatal(err)
+	} else {
+		scripts = scriptMap
 	}
 
-	// name of configuration file, supported formats are JSON, TOML, YAML, HCL, INI, envfile or Java properties file
-	viper.SetConfigName("config")
-
-	// if no configuration is found defaults will be used
-	viper.ReadInConfig()
+	validateCmd.Flags().StringP("input", "i", "", "XML file, dir or archive to validate")
+	validateCmd.Flags().StringP("schema", "s", "netex@1.2", "Which xsd schema to use (supported \"netex@1.2\", \"netex@1.2-nc\", \"epip@1.1.1\", \"epip@1.1.1-nc\")")
 
 	// read properties from environment
 	viper.SetEnvPrefix("GREENLIGHT")
@@ -90,7 +66,7 @@ func init() {
 	rootCmd.AddCommand(validateCmd)
 }
 
-func openWithContext(ctx *greenlight.FileContext, input string) error {
+func openWithContext(ctx *FileContext, input string) error {
 	fi, err := os.Stat(input)
 	if err != nil {
 		return err
@@ -121,9 +97,29 @@ func openWithContext(ctx *greenlight.FileContext, input string) error {
 	return nil
 }
 
-func createValidationContext(input string) (*greenlight.ValidationContext, error) {
-	ctx := greenlight.NewValidationContext(input)
-	fileContext := greenlight.NewFileContext(context.Background())
+func createValidation(input string) (*greenlight.Validation, error) {
+	validation, err := greenlight.NewValidation()
+	if err != nil {
+		return nil, err
+	}
+
+	schema := viper.GetString("schema")
+	if schema == "" {
+		return nil, fmt.Errorf("no schema version defined")
+	}
+
+	/* validation.AddScript(scripts["stopPlaceQuayDistanceIsReasonable"], nil) */
+	/* validation.AddScript(scripts["xsd"], map[string]interface{}{
+	 *   "schema": schema,
+	 * }) */
+	for name, script := range scripts {
+		if name == "xsd" {
+			continue
+		}
+		validation.AddScript(script, nil)
+	}
+
+	fileContext := NewFileContext(context.Background())
 	defer fileContext.Close()
 	if err := openWithContext(fileContext, input); err != nil {
 		return nil, err
@@ -135,91 +131,83 @@ func createValidationContext(input string) (*greenlight.ValidationContext, error
 			return nil, err
 		}
 
-		if err := ctx.AddReader(file.Name, f); err != nil {
+		if err := validation.AddReader(file.Name, f); err != nil {
 			return nil, err
 		}
 	}
 
-	return ctx, nil
+	// subscribe to validation updates
+	validation.Subscribe(func(event internal.Event) {
+		fields := log.Fields{
+			"id":    event.ContextID,
+			"type":  event.Type,
+			"scope": "main",
+		}
+
+		if event.Type == internal.EventTypeLog && event.Data != nil {
+			level := log.DebugLevel
+			message := ""
+			for k, v := range event.Data {
+				if k == "message" {
+					message = v.(string)
+				} else if k == "level" {
+					l, ok := v.(string)
+					if ok {
+						switch l {
+						case "debug":
+							level = log.DebugLevel
+							break
+						case "info":
+							level = log.InfoLevel
+							break
+						case "warn":
+							level = log.WarnLevel
+							break
+						case "error":
+							level = log.ErrorLevel
+							break
+						}
+					}
+				} else {
+					fields[k] = v
+				}
+			}
+
+			log.WithTime(event.Timestamp).WithFields(fields).Log(level, message)
+		} else {
+			log.WithTime(event.Timestamp).WithFields(fields).Trace(event.Type)
+		}
+	})
+
+	return validation, nil
 }
 
 func validate(cmd *cobra.Command, args []string) {
-	logger, err := newLogger()
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer logger.Sync()
-
-	schema := viper.GetString("schema")
-	if nc, err := cmd.Flags().GetBool("no-constraint"); nc && err == nil {
-		schema = "xsd/NeTEx_publication-NoConstraint.xsd"
-	}
-	validator, err := greenlight.NewValidator(
-		greenlight.WithSchemaFile(schema),
-		greenlight.WithLogger(logger),
-		greenlight.WithBuiltinScripts(viper.GetBool("builtin")),
-		greenlight.WithScriptingPaths(viper.GetStringSlice("scripts")),
-	)
-	if err != nil {
-		log.Fatal(err)
-	}
+	log.SetLevel(log.DebugLevel)
+	log.SetFormatter(&log.TextFormatter{
+		FullTimestamp: true,
+	})
 
 	input := viper.GetString("input")
 	if input == "" {
 		log.Fatal("no input provided")
 	}
 
-	ctx, err := createValidationContext(greenlight.EnvPath(input))
+	validation, err := createValidation(internal.DirExpand(input))
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	validator.Validate(ctx)
+	res := validation.Validate(context.Background())
+	log.Println(res)
 
-	if !viper.GetBool("output.result.disabled") {
-		switch viper.GetString("output.result.format") {
-		case "json":
-			buf, err := json.MarshalIndent(ctx.Results(), "", " ")
-			if err != nil {
-				fmt.Println(err)
-			} else {
-				fmt.Println(string(buf))
-			}
-		case "plain":
-			results := ctx.Results()
-			for _, result := range results {
-				rows := result.CsvRecords(true)
-				for _, row := range rows {
-					fmt.Println(strings.Join(row, ","))
-				}
-			}
-		case "xml":
-			buf, err := xml.MarshalIndent(ctx.Results(), "", " ")
-			if err != nil {
-				fmt.Println(err)
-			} else {
-				fmt.Println(string(buf))
-			}
-		}
-	}
-}
-
-func newLogger() (*zap.Logger, error) {
-	loggerOptions := []zap.Option{}
-	if viper.GetBool("output.log.disabled") {
-		loggerOptions = append(loggerOptions, zap.IncreaseLevel(zapcore.FatalLevel))
-	} else if viper.GetString("output.log.level") != "" {
-		switch viper.GetString("output.log.level") {
-		case "debug":
-			loggerOptions = append(loggerOptions, zap.IncreaseLevel(zapcore.DebugLevel))
-		case "info":
-			loggerOptions = append(loggerOptions, zap.IncreaseLevel(zapcore.InfoLevel))
-		case "warn":
-			loggerOptions = append(loggerOptions, zap.IncreaseLevel(zapcore.WarnLevel))
-		case "error":
-			loggerOptions = append(loggerOptions, zap.IncreaseLevel(zapcore.ErrorLevel))
-		}
-	}
-
-	return zap.NewDevelopment(loggerOptions...)
+	/* for _, r := range res {
+	 *   rows := r.CsvRecords(false)
+	 *   log.Println(len(rows))
+	 *   if len(rows) > 5 {
+	 *     log.Println(rows[:5])
+	 *   } else {
+	 *     log.Println(rows)
+	 *   }
+	 * } */
 }

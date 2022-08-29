@@ -1,4 +1,4 @@
-package greenlight
+package main
 
 import (
 	"context"
@@ -6,6 +6,7 @@ import (
 	"sync"
 	"time"
 
+	/* "github.com/concreteit/greenlight" */
 	"github.com/matoous/go-nanoid"
 )
 
@@ -47,7 +48,7 @@ type Session struct {
 	Stopped     time.Time    `json:"stopped"`
 	fileContext *FileContext `json:"-"`
 	Status      string       `json:"status"`
-	Results     []*ValidationResult
+	Results     interface{}
 }
 
 func (s Session) MarshalJSON() ([]byte, error) {
