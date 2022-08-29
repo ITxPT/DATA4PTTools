@@ -7,7 +7,7 @@ replace github.com/lestrrat-go/libxml2 v0.0.0-00010101000000-000000000000 => ./f
 replace github.com/fhmq/hmq v0.0.0-20220119031624-bf2b91c535a8 => ./fork/hmq
 
 require (
-	github.com/dop251/goja v0.0.0-20211207134806-acd374ca9c94
+	github.com/dop251/goja v0.0.0-20220806120448-1444e6b94559
 	github.com/eclipse/paho.mqtt.golang v1.3.5
 	github.com/fhmq/hmq v0.0.0-20220119031624-bf2b91c535a8
 	github.com/gorilla/websocket v1.4.2
@@ -16,16 +16,17 @@ require (
 	github.com/labstack/echo/v4 v4.6.3
 	github.com/lestrrat-go/libxml2 v0.0.0-00010101000000-000000000000
 	github.com/matoous/go-nanoid v1.5.0
+	github.com/matoous/go-nanoid/v2 v2.0.0
+	github.com/sirupsen/logrus v1.9.0
 	github.com/spf13/cobra v1.2.1
 	github.com/spf13/viper v1.10.1
-	go.uber.org/zap v1.21.0
 )
 
 require (
 	github.com/Shopify/sarama v1.34.1 // indirect
 	github.com/bitly/go-simplejson v0.5.0 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
-	github.com/dlclark/regexp2 v1.4.1-0.20201116162257-a2a8dda75c91 // indirect
+	github.com/dlclark/regexp2 v1.7.0 // indirect
 	github.com/eapache/go-resiliency v1.2.0 // indirect
 	github.com/eapache/go-xerial-snappy v0.0.0-20180814174437-776d5712da21 // indirect
 	github.com/eapache/queue v1.1.0 // indirect
@@ -79,9 +80,10 @@ require (
 	github.com/valyala/fasttemplate v1.2.1 // indirect
 	go.uber.org/atomic v1.7.0 // indirect
 	go.uber.org/multierr v1.6.0 // indirect
+	go.uber.org/zap v1.21.0 // indirect
 	golang.org/x/crypto v0.0.0-20220214200702-86341886e292 // indirect
 	golang.org/x/net v0.0.0-20220520000938-2e3eb7b945c2 // indirect
-	golang.org/x/sys v0.0.0-20220114195835-da31bd327af9 // indirect
+	golang.org/x/sys v0.0.0-20220715151400-c0bba94af5f8 // indirect
 	golang.org/x/text v0.3.7 // indirect
 	golang.org/x/time v0.0.0-20210220033141-f8bda1e9f3ba // indirect
 	google.golang.org/protobuf v1.27.1 // indirect
