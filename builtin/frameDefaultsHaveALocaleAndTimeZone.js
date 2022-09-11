@@ -6,7 +6,7 @@
 const name = "frameDefaultsHaveALocaleAndTimeZone";
 const errors = require("errors");
 const time = require("time");
-const { Context } = require("types");
+const types = require("types");
 const xpath = require("xpath");
 const countryCodes = new Set([ // ISO 639-1 country codes
   "aa", "ab", "ae", "af", "ak", "am", "an", "ar", "as", "av",
@@ -29,7 +29,6 @@ const countryCodes = new Set([ // ISO 639-1 country codes
   "uk", "ur", "uz", "ve", "vi", "vo", "wa", "wo", "xh", "yi",
   "yo", "za", "zh", "zu",
 ]);
-const frameDefaultsPath = xpath.join("./", "FrameDefaults");
 const defaultLocalePath = xpath.join(".", "DefaultLocale");
 const defaultLangPath = xpath.join(".", "DefaultLanguage");
 const tzOffsetPath = xpath.join(".", "TimeZoneOffset");
@@ -44,15 +43,13 @@ const stzPath = xpath.join(".", "SummerTimeZone");
  * DefaultLocale has a valid CountryCode and that the TimeZone have a correct
  * format and value. The TimeZone is validated against IANA Time Zone database
  * (https://www.iana.org/time-zones) and the CountryCode must be in ISO 639-1
- * @param {Context} ctx
+ * @param {types.Context} ctx
+ * @return {errors.ScriptError[]?}
  */
 function main(ctx) {
-  const node = ctx.node.first(frameDefaultsPath).get();
+  const node = ctx.node.first(xpath.path.FRAME_DEFAULTS).get();
   if (!node) {
-    return [{
-      type: "not_found",
-      message: "Document is missing element FrameDefaults",
-    }];
+    return [errors.NotFoundError("Document is missing element <FrameDefaults />")];
   }
 
   return node.first(defaultLocalePath)
@@ -60,58 +57,48 @@ function main(ctx) {
       const res = [];
 
       if (!validTimeZoneOffset(node.valueAt(tzOffsetPath).get())) {
-        res.push({
-          type: "consistency",
-          message: "Invalid <TimeZoneOffset />",
-          line: node.line(),
-        });
+        res.push(errors.ConsistencyError(
+          "Invalid <TimeZoneOffset />",
+          { line: node.line() },
+        ));
       }
 
       if (!validTimeZone(node.valueAt(tzPath).get())) {
-        res.push({
-          type: "consistency",
-          message: "Invalid <TimeZone />",
-          line: node.line(),
-        });
+        res.push(errors.ConsistencyError(
+          "Invalid <TimeZone />",
+          { line: node.line() },
+        ));
       }
 
       if (!validTimeZoneOffset(node.valueAt(stzOffsetPath).get())) {
-        res.push({
-          type: "consistency",
-          message: "Invalid <SummerTimeZoneOffset />",
-          line: node.line(),
-        });
+        res.push(errors.ConsistencyError(
+          "Invalid <SummerTimeZoneOffset />",
+          { line: node.line() },
+        ));
       }
 
       if (!validTimeZone(node.valueAt(stzPath).get())) {
-        res.push({
-          type: "consistency",
-          message: "Invalid <SummerTimeZone />",
-          line: node.line(),
-        });
+        res.push(errors.ConsistencyError(
+          "Invalid <SummerTimeZone />",
+          { line: node.line() },
+        ));
       }
 
       if (!validLanguage(node.valueAt(defaultLangPath).get())) {
-        res.push({
-          type: "consistency",
-          message: "Invalid <DefaultLanguage />",
-          line: node.line(),
-        });
+        res.push(errors.ConsistencyError(
+          "Invalid <DefaultLanguage />",
+          { line: node.line() },
+        ));
       }
 
       return res;
     })
-    // TODO fix response type
     // @ts-ignore
     .getOrElse(err => {
       if (err == errors.NODE_NOT_FOUND) {
         return [];
       } else if (err) {
-        return [{
-          type: "internal",
-          message: err,
-          line: 0,
-        }];
+        return [errors.GeneralError(err)];
       }
     });
 }

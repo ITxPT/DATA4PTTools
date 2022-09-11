@@ -5,7 +5,7 @@
  */
 const name = "everyStopPlaceHasAName";
 const errors = require("errors");
-const { Context } = require("types");
+const types = require("types");
 const xpath = require("xpath");
 const stopPlacesPath = xpath.join(
   xpath.path.FRAMES,
@@ -18,7 +18,8 @@ const shortNamePath = xpath.join("ShortName");
 
 /**
  * Make sure every StopPlace has a name
- * @param {Context} ctx
+ * @param {types.Context} ctx
+ * @return {errors.ScriptError[]?}
  */
 function main(ctx) {
   return ctx.node.find(stopPlacesPath)
@@ -26,11 +27,10 @@ function main(ctx) {
       const id = node.valueAt("@id").get();
 
       if (!id) {
-        res.push({
-          type: "consistency",
-          message: `StopPlace is missing attribute @id`,
-          line: node.line(),
-        });
+        res.push(errors.ConsistencyError(
+          `StopPlace is missing attribute @id`,
+          { line: node.line() },
+        ));
         return res;
       }
 
@@ -38,11 +38,10 @@ function main(ctx) {
       const shortName = node.valueAt(shortNamePath).get();
 
       if (!name && !shortName) {
-        res.push({
-          type: "consistency",
-          message: `Missing name for StopPlace(@id=${id})`,
-          line: node.line(),
-        });
+        res.push(errors.ConsistencyError(
+          `Missing name for StopPlace(@id=${id})`,
+          { line: node.line() },
+        ));
       }
 
       return res;
@@ -51,11 +50,7 @@ function main(ctx) {
       if (err == errors.NODE_NOT_FOUND) {
         return [];
       } else if (err) {
-        return [{
-          type: "internal",
-          message: err,
-          line: 0,
-        }];
+        return [errors.GeneralError(err)];
       }
     });
 }

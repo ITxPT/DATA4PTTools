@@ -4,7 +4,8 @@
  * @author Concrete IT
  */
 const name = "everyStopPlaceHasACorrectStopPlaceType";
-const { Context } = require("types");
+const errors = require("errors");
+const types = require("types");
 const xpath = require("xpath");
 const stopPlacesPath = xpath.join(
   xpath.path.FRAMES,
@@ -33,7 +34,8 @@ const interestingItems = new Set([
 
 /**
  * Make sure every StopPlace has a stopPlaceType and that it is of correct type.
- * @param {Context} ctx
+ * @param {types.Context} ctx
+ * @return {errors.ScriptError[]?}
  */
 function main(ctx) {
   return ctx.node.find(stopPlacesPath)
@@ -42,22 +44,20 @@ function main(ctx) {
       const stopType = node.valueAt(stopPlaceTypePath).get();
 
       if (!stopType) {
-        res.push({
-          type: "consistency",
-          message: `StopPlaceType is not set for StopPlace(@id=${id})`,
-          line: node.line(),
-        });
+        res.push(errors.ConsistencyError(
+          `StopPlaceType is not set for StopPlace(@id=${id})`,
+          { line: node.line() },
+        ));
         return res;
       }
 
       const isItemInSet = interestingItems.has(stopType);
 
       if (!isItemInSet) {
-        res.push({
-          type: "consistency",
-          message: `StopPlaceType is not valid for StopPlace(@id=${id})`,
-          line: node.line(),
-        });
+        res.push(errors.ConsistencyError(
+          `StopPlaceType is not valid for StopPlace(@id=${id})`,
+          { line: node.line() },
+        ));
       }
 
       return res;

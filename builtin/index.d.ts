@@ -1,3 +1,4 @@
+import { ScriptError } from "errors";
 
 declare module "types" {
   export type M = { [key: string]: any }
@@ -93,7 +94,7 @@ declare module "types" {
     queue(handler: string, node: Node): void;
 
     /** */
-    run(): Result<any[]>;
+    run(): Result<ScriptError[]?>;
   }
 
   export interface Xsd {
@@ -116,7 +117,7 @@ declare module "types" {
 }
 
 declare module "time" {
-  import { Result } from "types";
+  import { M, Result } from "types";
 
   export function validLocation(name: string): Result<boolean>;
 }
@@ -128,6 +129,7 @@ declare module "xpath" {
       export const BASE: string;
       export const DATA_OBJECTS: string;
       export const FRAMES: string;
+      export const FRAME_DEFAULTS: string;
   }
 }
 
@@ -135,4 +137,21 @@ declare module "errors" {
   export const NODE_NOT_FOUND: Error;
   export const SCHEMA_NOT_FOUND: Error;
   export const XSD_VALIDATION_INVALID: Error;
+
+  export const TYPE_CONSISTENCY: Error;
+  export const TYPE_GENERAL_ERROR: Error;
+  export const TYPE_NOT_FOUND: Error;
+  export const TYPE_QUALITY: Error;
+
+  export type ScriptError = {
+    type: Error;
+    message: string;
+    extra: M;
+  }
+
+  export function create(type: Error, message: string | Error, extra?: M): ScriptError;
+  export function ConsistencyError(message: string | Error, extra?: M): ScriptError;
+  export function GeneralError(message: string | Error, extra?: M): ScriptError;
+  export function NotFoundError(message: string | Error, extra?: M): ScriptError;
+  export function QualityError(message: string | Error, extra?: M): ScriptError;
 }

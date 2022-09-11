@@ -5,7 +5,7 @@
  */
 const name = "passingTimesHaveIncreasingTimes";
 const errors = require("errors");
-const { Context } = require("types");
+const types = require("types");
 const xpath = require("xpath");
 const timetablePath = xpath.join(xpath.path.FRAMES, "TimetableFrame", "vehicleJourneys", "ServiceJourney", "passingTimes");
 const stopPointPath = xpath.join(xpath.path.FRAMES, "ServiceFrame", "journeyPatterns", "*[contains(name(), 'JourneyPattern')]", "pointsInSequence");
@@ -17,18 +17,20 @@ const departureOffsetPath = xpath.join("DepartureDayOffset");
 
 /**
  * Makes sure passing times have increasing times and day offsets
- * @param {Context} ctx
+ * @param {types.Context} ctx
+ * @return {errors.ScriptError[]?}
  */
 function main(ctx) {
   ctx.node.find(timetablePath)
     .getOrElse(() => [])
     .forEach(n => ctx.worker.queue("worker", n));
 
-  return ctx.worker.run();
+  return ctx.worker.run().get();
 }
 
 /**
- * @param {Context} ctx
+ * @param {types.Context} ctx
+ * @return {errors.ScriptError[]?}
  */
 function worker(ctx) {
   const res = [];
@@ -49,26 +51,23 @@ function worker(ctx) {
 
     if (i !== 0) {
       if (prevDepartureTime >= arrivalTime && arrivalDayOffset === prevArrivalDayOffset) {
-        res.push({
-          type: "consistency",
-          message: `Expected passing time to increase in ServiceJourney(@id=${id}), TimetabledPassingTime(@id=${tid})`,
-          line: node.line(),
-        });
+        res.push(errors.ConsistencyError(
+          `Expected passing time to increase in ServiceJourney(@id=${id}), TimetabledPassingTime(@id=${tid})`,
+          { line: node.line() },
+        ));
       }
     }
     if (arrivalDayOffset && prevArrivalDayOffset && arrivalDayOffset < prevArrivalDayOffset) {
-      res.push({
-        type: "consistency",
-        message: `ArrivalDayOffset must not decrease in sequence in ServiceJourney(@id=${id}), TimetabledPassingTime(@id=${tid})`,
-        line: node.line(),
-      });
+      res.push(errors.ConsistencyError(
+        `ArrivalDayOffset must not decrease in sequence in ServiceJourney(@id=${id}), TimetabledPassingTime(@id=${tid})`,
+        { line: node.line() },
+      ));
     }
     if (departureDayOffset && prevDepartureDayOffset && departureDayOffset < prevDepartureDayOffset) {
-      res.push({
-        type: "consistency",
-        message: `DepartureDayOffset must not decrease in sequence in ServiceJourney(@id=${id}), TimetabledPassingTime(@id=${tid})`,
-        line: node.line(),
-      });
+      res.push(errors.ConsistencyError(
+        `DepartureDayOffset must not decrease in sequence in ServiceJourney(@id=${id}), TimetabledPassingTime(@id=${tid})`,
+        { line: node.line() },
+      ));
     }
 
     prevArrivalDayOffset = arrivalDayOffset;
@@ -79,11 +78,10 @@ function worker(ctx) {
       stopPointPath,
       `StopPointInJourneyPattern[@id = '${stopPointID}']`,
     ))) {
-      res.push({
-        type: "consistency",
-        message: `Expected StopPointInJourneyPattern(@id=${id}`,
-        line: node.line(),
-      });
+      res.push(errors.ConsistencyError(
+        `Expected StopPointInJourneyPattern(@id=${id}`,
+        { line: node.line() },
+      ));
     }
   });
 

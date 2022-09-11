@@ -4,7 +4,8 @@
  * @author Concrete IT
  */
 const name = "everyStopPointHaveArrivalAndDepartureTime";
-const { Context, Node, Result } = require("types");
+const errors = require("errors");
+const types = require("types");
 const xpath = require("xpath");
 const journeyPatternsPath = xpath.join(
   xpath.path.FRAMES,
@@ -42,18 +43,20 @@ const arrivalTimePath = xpath.join("ArrivalTime");
 /**
  * Make sure that every StopPointInJourneyPattern contains a arrival/departure 
  * time and that every ScheduledStopPointRef exist.
- * @param {Context} ctx
+ * @param {types.Context} ctx
+ * @return {errors.ScriptError[]?}
  */
 function main(ctx) {
   ctx.node.find(journeyPatternsPath)
     .getOrElse(() => [])
-    .forEach((/** @type {Node} */ n) => ctx.worker.queue("worker", n));
+    .forEach((/** @type {types.Node} */ n) => ctx.worker.queue("worker", n));
 
-  return ctx.worker.run();
+  return ctx.worker.run().get();
 }
 
 /**
- * @param {Context} ctx
+ * @param {types.Context} ctx
+ * @return {errors.ScriptError[]?}
  */
 function worker(ctx) {
   return [
@@ -63,23 +66,23 @@ function worker(ctx) {
 }
 
 /**
- * @param {Context} ctx
+ * @param {types.Context} ctx
  */
 function validateStopPointReferences(ctx) {
   const res = [];
 
   ctx.node.find(stopPointRefPath)
     .getOrElse(() => [])
-    .forEach((/** @type {Node} */ node) => {
+    .forEach((/** @type {types.Node} */ node) => {
+      const line = node.parent().get().line();
       const ref = `ScheduledStopPoint[@id = '${node.value()}']`;
       const stopPath = xpath.join(scheduledStopPointsPath, ref);
 
       if (!ctx.collection.first(stopPath).get()) {
-        res.push({
-          type: "consistency",
-          message: `Missing ${ref}`,
-          line: node.line(),
-        });
+        res.push(errors.ConsistencyError(
+          `Missing ${ref}`,
+          { line },
+        ));
       }
     });
 
@@ -87,14 +90,15 @@ function validateStopPointReferences(ctx) {
 }
 
 /**
- * @param {Context} ctx
+ * @param {types.Context} ctx
  */
 function validatePassingTimes(ctx) {
   const res = [];
 
   ctx.node.find(stopPointIDPath)
     .getOrElse(() => [])
-    .forEach((/** @type {Node} */ node, i, nodes) => {
+    .forEach((/** @type {types.Node} */ node, i, nodes) => {
+      const line = node.parent().get().line();
       const id = node.value();
       const ref = `StopPointInJourneyPatternRef[@ref = '${id}']`;
       const passingTimesPath = xpath.join(timetablePath, ref);
@@ -104,10 +108,7 @@ function validatePassingTimes(ctx) {
       const isLastElement = i === nodes.length - 1;
 
       if (!passingTimes) {
-        res.push({
-          type: "consistency",
-          message: `Expected passing times ${errorMessageBase}`,
-        });
+        res.push(errors.ConsistencyError(`Expected passing times ${errorMessageBase}`));
         return;
       }
 
@@ -116,22 +117,22 @@ function validatePassingTimes(ctx) {
         const tid = node.valueAt("@id").get();
 
         if (!tid) {
-          res.push({
-            message: `Element <TimetabledpassingTime /> is missing attribute @id ${errorMessageBase}`,
-            line: node.line(),
-          });
+          res.push(errors.ConsistencyError(
+            `Element <TimetabledpassingTime /> is missing attribute @id ${errorMessageBase}`,
+            { line },
+          ));
         }
         if (!isFirstElement && !node.find(departureTimePath).get()) {
-          res.push({
-            message: `Expected departure time in <TimetabledpassingTime id='${tid}' /> ${errorMessageBase}`,
-            line: node.line(),
-          });
+          res.push(errors.ConsistencyError(
+            `Expected departure time in <TimetabledpassingTime id='${tid}' /> ${errorMessageBase}`,
+            { line },
+          ));
         }
         if (!isLastElement && !node.find(arrivalTimePath).get()) {
-          res.push({
-            message: `Expected arrival time in <TimetabledpassingTime id='${tid}' /> ${errorMessageBase}`,
-            line: node.line(),
-          });
+          res.push(errors.ConsistencyError(
+            `Expected arrival time in <TimetabledpassingTime id='${tid}' /> ${errorMessageBase}`,
+            { line },
+          ));
         }
       });
     });

@@ -5,13 +5,23 @@
  */
 const name = "locationsAreReferencingTheSamePoint";
 const errors = require("errors");
-const { Context, Node } = require("types");
+const types = require("types");
 const xpath = require("xpath");
 const passengerStopAssignmentsPath = xpath.join(
   xpath.path.FRAMES,
   "ServiceFrame",
   "stopAssignments",
   "PassengerStopAssignment",
+);
+const stopPlacesPath = xpath.join(
+  xpath.path.FRAMES,
+  "SiteFrame",
+  "stopPlaces",
+);
+const scheduledStopPointsPath = xpath.join(
+  xpath.path.FRAMES,
+  "ServiceFrame",
+  "scheduledStopPoints",
 );
 const scheduledStopPointRefPath = xpath.join("ScheduledStopPointRef/@ref");
 const stopPlaceRefPath = xpath.join("StopPlaceRef/@ref");
@@ -23,7 +33,8 @@ const sspLatitudePath = xpath.join("Location", "Latitude");
 /**
  * Make sure every Location in StopPlace and ScheduledStopPoint for the same
  * StopAssignment are pointing to the same coordinates
- * @param {Context} ctx
+ * @param {types.Context} ctx
+ * @return {errors.ScriptError[]?}
  */
 function main(ctx) {
   const config = { distance: 100, ...ctx.config };
@@ -32,35 +43,31 @@ function main(ctx) {
     .map(v => v.reduce((res, node) => {
       const id = node.valueAt("@id").get();
       const scheduledStopPoint = node.first(scheduledStopPointRefPath)
-        .map(n => xpath.join( // TODO very slow lookup in large files
-          xpath.path.FRAMES,
-          "./",
+        .map(n => xpath.join(
+          scheduledStopPointsPath,
           `ScheduledStopPoint[@id='${n.value()}']`,
         ))
         .map(p => ctx.document.first(p).get())
         .get();
       const stopPlace = node.first(stopPlaceRefPath)
-        .map(n => xpath.join( // TODO very slow lookup in large files
-          xpath.path.FRAMES,
-          "./",
+        .map(n => xpath.join(
+          stopPlacesPath,
           `StopPlace[@id='${n.value()}']`),
         )
         .map(p => ctx.document.first(p).get())
         .get();
 
       if (!scheduledStopPoint) {
-        res.push({
-          type: "consistency",
-          message: `Missing ScheduledStopPoint (PassengerStopAssignment @id=${id})`,
-          line: node.line(),
-        });
+        res.push(errors.ConsistencyError(
+          `Missing ScheduledStopPoint (PassengerStopAssignment @id=${id})`,
+          { line: node.line() },
+        ));
       }
       if (!stopPlace) {
-        res.push({
-          type: "consistency",
-          message: `Missing StopPoint (PassengerStopAssignment @id=${id})`,
-          line: node.line(),
-        });
+        res.push(errors.ConsistencyError(
+          `Missing StopPoint (PassengerStopAssignment @id=${id})`,
+          { line: node.line() },
+        ));
       }
       if (!scheduledStopPoint || !stopPlace) {
         return res;
@@ -68,11 +75,10 @@ function main(ctx) {
 
       const distance = getDistance(stopPlace, scheduledStopPoint); // argument order is important!
       if (distance > config.distance) {
-        res.push({
-          type: "consistency",
-          message: `ScheduledStopPoint and StopPlace is too far apart (PassengerStopAssignment @id=${id})`,
-          line: node.line(),
-        });
+        res.push(errors.ConsistencyError(
+          `ScheduledStopPoint and StopPlace is too far apart (PassengerStopAssignment @id=${id})`,
+          { line: node.line() },
+        ));
       }
 
       return res;
@@ -81,19 +87,15 @@ function main(ctx) {
       if (err == errors.NODE_NOT_FOUND) {
         return [];
       } else if (err) {
-        return [{
-          type: "internal",
-          message: err,
-          line: 0,
-        }];
+        return [errors.GeneralError(err)];
       }
     });
 }
 
 /**
  * Calculate the distance between two nodes
- * @param {Node} n1
- * @param {Node} n2
+ * @param {types.Node} n1
+ * @param {types.Node} n2
  * @returns {number}
  */
 function getDistance(n1, n2) {

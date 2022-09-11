@@ -4,25 +4,17 @@
  * @author Concrete IT
  */
 const name = "xsd";
-const { Context } = require("types");
+const errors = require("errors");
+const types = require("types");
 
 /**
  * General XSD schema validation
- * @param {Context} ctx
+ * @param {types.Context} ctx
+ * @return {errors.ScriptError[]?}
  */
 function main(ctx) {
   ctx.log.debug(`validation using schema "${ctx.config.schema}"`);
 
-  const res = ctx.xsd.validate(ctx.config.schema);
-
-  ctx.log.warn(`xsd -> valid: ${res.isErr()}`);
-
-  if (res.isErr()) {
-    return [{
-      type: "xsd",
-      message: `xsd validation failed`, // TODO fix me
-    }]
-  }
-
-  return [];
+  // TODO hydrate validation errors (line no, beautify message etc)
+  return ctx.xsd.validate(ctx.config.schema).get()
 }

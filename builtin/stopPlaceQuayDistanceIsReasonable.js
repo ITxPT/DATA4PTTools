@@ -4,9 +4,9 @@
  * @author Concrete IT
  */
 const name = "stopPlaceQuayDistanceIsReasonable";
-const { Context } = require("types");
+const errors = require("errors");
+const types = require("types");
 const xpath = require("xpath");
-const frameDefaultsPath = xpath.join("./", "FrameDefaults");
 const defaultLocationSystemPath = xpath.join(".", "DefaultLocationSystem");
 const framesPath = xpath.join(
   ".",
@@ -22,18 +22,16 @@ const latitudePath = xpath.join("Centroid", "Location", "Latitude");
 
 /**
  * Check the distance between a StopPlace and its Quays
- * @param {Context} ctx
+ * @param {types.Context} ctx
+ * @return {errors.ScriptError[]?}
  */
 function main(ctx) {
   const config = { distance: 500, ...ctx.config };
   const res = [];
-  const frameDefaults = ctx.document.first(frameDefaultsPath).get(); // Find the LocationSystem and verify that it is WGS84 / 4326
+  const frameDefaults = ctx.document.first(xpath.path.FRAME_DEFAULTS).get(); // Find the LocationSystem and verify that it is WGS84 / 4326
 
   if (!frameDefaults) {
-    return [{
-      type: "not_found",
-      message: "Document is missing element <FrameDefaults />",
-    }];
+    return [errors.NotFoundError("Document is missing element <FrameDefaults />")];
   }
 
   const defaultLocationSystem = frameDefaults.valueAt(defaultLocationSystemPath).get();
@@ -42,15 +40,9 @@ function main(ctx) {
   ctx.log.debug(`configured max distance: ${config.distance}`);
 
   if (!defaultLocationSystem) {
-    return [{
-      type: "error",
-      message: "Element <FrameDefaults /> is missing child <DefaultLocationSystem />",
-    }];
+    return [errors.GeneralError("Element <FrameDefaults /> is missing child <DefaultLocationSystem />")];
   } else if (!defaultLocationSystem.includes("4326")) {
-    return [{
-      type: "error",
-      message: "Document coordinates is not in WGS84/EPSG:4326",
-    }];
+    return [errors.GeneralError("Document coordinates is not in WGS84/EPSG:4326")];
   }
 
   // Find all stopPlaces and check the distance to the quays
@@ -71,11 +63,10 @@ function main(ctx) {
           const distance = Math.round(d * 1000);
 
           if (distance > config.distance) {
-            res.push({
-              type: "quality",
-              message: `Distance between StopPlace and Quay greater than 500m (stopPlace @id=${id}, Quay @id=${idQuay}, distance=${distance}m)`,
-              line: node.line(),
-            });
+            res.push(errors.QualityError(
+              `Distance between StopPlace and Quay greater than 500m (stopPlace @id=${id}, Quay @id=${idQuay}, distance=${distance}m)`,
+              { line: node.line() },
+            ))
           }
         });
     });

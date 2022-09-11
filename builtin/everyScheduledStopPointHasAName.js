@@ -5,7 +5,7 @@
  */
 const name = "everyScheduledStopPointHasAName";
 const errors = require("errors");
-const { Context } = require("types");
+const types = require("types");
 const xpath = require("xpath");
 const scheduledStopPointsPath = xpath.join(
   xpath.path.FRAMES,
@@ -21,7 +21,8 @@ const shortNamePath = xpath.join("ShortName");
  * The test goes through all the ScheduledStopPoints in the ServiceFrame and
  * checks that either a Name or a ShortName is specified. If none of the names
  * are specified, the validation will mark the StopPoint as incorrect.
- * @param {Context} ctx
+ * @param {types.Context} ctx
+ * @return {errors.ScriptError[]?}
  */
 function main(ctx) {
   const res = [];
@@ -32,11 +33,10 @@ function main(ctx) {
         const id = node.valueAt("@id").get();
 
         if (!id) {
-          res.push({
-            type: "consistency",
-            message: `StopPoint is missing attribute @id`,
-            line: node.line(),
-          });
+          res.push(errors.ConsistencyError(
+            `StopPoint is missing attribute @id`,
+            { line: node.line() },
+          ));
           return;
         }
 
@@ -44,11 +44,10 @@ function main(ctx) {
         const shortName = node.valueAt(xpath.join("ShortName")).get();
 
         if (!name && !shortName) {
-          res.push({
-            type: "consistency",
-            message: `Missing name for ScheduledStopPoint(@id=${id})`,
-            line: node.line(),
-          });
+          res.push(errors.ConsistencyError(
+            `Missing name for ScheduledStopPoint(@id=${id})`,
+            { line: node.line() },
+          ));
         }
       });
     })
@@ -56,11 +55,7 @@ function main(ctx) {
       if (err == errors.NODE_NOT_FOUND) {
         return [];
       } else if (err) {
-        return [{
-          type: "internal",
-          message: err,
-          line: 0,
-        }];
+        return [errors.GeneralError(err)];
       }
     });
 }
