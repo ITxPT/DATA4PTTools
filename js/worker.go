@@ -82,6 +82,20 @@ func (w *Worker) Run() internal.Result { // TODO type response object
 		}())
 	}
 
-	// TODO
-	return internal.NewResult(queue.Run(), nil)
+	res := []ScriptError{}
+	for _, r := range queue.Run() {
+		if v, ok := r.Get().([]interface{}); !ok {
+			return internal.NewResult(nil, fmt.Errorf("expected '%v' to be of type []interface{}", r))
+		} else {
+			for _, vs := range v {
+				if vse, ok := vs.(ScriptError); !ok {
+					return internal.NewResult(nil, fmt.Errorf("expected '%v' to be of type ScriptError", vs))
+				} else {
+					res = append(res, vse)
+				}
+			}
+		}
+	}
+
+	return internal.NewResult(res, nil)
 }

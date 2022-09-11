@@ -35,6 +35,12 @@ func (fnp fieldNameMapper) MethodName(_ reflect.Type, m reflect.Method) string {
 	return uncapitalize(m.Name)
 }
 
+type ScriptResult struct {
+	Name        string
+	Description string
+	Errors      []ScriptError
+}
+
 type Script struct {
 	name        string
 	description string
@@ -70,9 +76,9 @@ func (s *Script) Run(name string, doc types.Document, emitter *internal.Emitter,
 		"scope":    "main",
 		"script":   s.name,
 		"document": name,
+		"valid":    false,
 	}
 	emitter.Emit(internal.EventTypeScriptStart, fields)
-	defer emitter.Emit(internal.EventTypeScriptStop, fields)
 
 	var handler ContextHandler
 
@@ -90,16 +96,6 @@ func (s *Script) Run(name string, doc types.Document, emitter *internal.Emitter,
 		WithConfig(config),
 		WithEmitter(emitter),
 		WithMetaFields(fields),
-		/* if id != 0 {
-		 *   fields["scope"] = fmt.Sprintf("worker-%d", id)
-		 * } else {
-		 *   // TODO sigsev issue running this in a worker
-		 *   callstack := c.runtime.CaptureCallStack(2, nil)
-		 *   if len(callstack) == 2 {
-		 *     frame := callstack[1]
-		 *     fields["position"] = frame.Position()
-		 *   }
-		 * } */
 		WithNode(doc),
 		WithDocument(doc),
 		WithCollection(coll),
@@ -108,10 +104,23 @@ func (s *Script) Run(name string, doc types.Document, emitter *internal.Emitter,
 		return internal.NewResult(nil, err)
 	}
 
-	return internal.NewResult(map[string]interface{}{
-		"name":        s.name,
-		"description": s.description,
-		"errors":      handler(ctx),
+	errors := []ScriptError{}
+	for _, r := range handler(ctx) {
+		if v, ok := r.(ScriptError); !ok {
+			return internal.NewResult(nil, fmt.Errorf("expected '%v' is not of type ScriptError", r))
+		} else {
+			errors = append(errors, v)
+		}
+	}
+
+	fields["valid"] = len(errors) == 0
+	fields["errors"] = errors
+	defer emitter.Emit(internal.EventTypeScriptStop, fields)
+
+	return internal.NewResult(ScriptResult{
+		Name:        s.name,
+		Description: s.description,
+		Errors:      errors,
 	}, nil)
 }
 

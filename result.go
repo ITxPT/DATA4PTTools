@@ -4,14 +4,11 @@ import (
 	"fmt"
 )
 
-// TODO find a new way to measure execution
-
 const maxErrorCount = 1000
 
 type ValidationResult struct {
 	Name            string            `json:"name" xml:"name,attr"`
 	Valid           bool              `json:"valid" xml:"valid,attr"`
-	GeneralError    string            `json:"general_error,omitempty" xml:"GeneralError,omitempty"`
 	ValidationRules []*RuleValidation `json:"validations,omitempty" xml:"Validation,omitempty"`
 }
 
@@ -61,8 +58,7 @@ func (v *RuleValidation) AddError(err TaskError) {
 
 func generalValidationError(name string, err error) *ValidationResult {
 	return &ValidationResult{
-		Name:         name,
-		Valid:        false,
-		GeneralError: fmt.Sprintf("%s", err),
+		Name:  name,
+		Valid: false,
 	}
 }

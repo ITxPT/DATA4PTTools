@@ -2,6 +2,7 @@ package greenlight
 
 import (
 	"context"
+	"fmt"
 	"io"
 
 	"github.com/concreteit/greenlight/internal"
@@ -67,24 +68,67 @@ func (v *Validation) AddScript(script *js.Script, cfg map[string]interface{}) {
 	}
 }
 
-// TODO fix result
-func (v *Validation) Validate(ctx context.Context) internal.Result {
-	v.Emit(internal.EventTypeValidationStart, nil)
+func (v *Validation) Validate(ctx context.Context) ([]ValidationResult, error) {
+	emitData := internal.M{
+		"documentCount": len(v.documentMap),
+		"scriptCount":   len(v.scripts),
+	}
+	v.Emit(internal.EventTypeValidationStart, emitData)
 	defer v.documentColl.Free()
 	defer v.emitter.Close()
-	defer v.Emit(internal.EventTypeValidationStop, nil)
+	defer v.Emit(internal.EventTypeValidationStop, emitData)
 
 	n := len(v.documentMap)
 	queue := internal.NewQueue(0, n)
 	for name, doc := range v.documentMap {
 		queue.Add(func(name string, doc types.Document) internal.Task {
 			return func(id int) internal.Result {
-				return internal.NewResult(v.validateDocument(name, doc), nil)
+				emitData := internal.M{
+					"document":    name,
+					"scriptCount": len(v.scripts),
+				}
+				v.Emit(internal.EventTypeValidateDocumentStart, emitData)
+				defer v.Emit(internal.EventTypeValidateDocumentStop, emitData)
+
+				res := ValidationResult{
+					Name:            name,
+					Valid:           true,
+					ValidationRules: []*RuleValidation{},
+				}
+				or := v.validateDocument(name, doc)
+				for _, r := range or {
+					if r.IsErr() {
+						return internal.NewResult(nil, r.Message())
+					}
+					if v, ok := r.Get().(*RuleValidation); !ok {
+						return internal.NewResult(nil, fmt.Errorf("expected '%+v' to be of type '*RuleValidation'", r.Get()))
+					} else {
+						res.ValidationRules = append(res.ValidationRules, v)
+
+						if !v.Valid {
+							res.Valid = false
+						}
+					}
+				}
+
+				return internal.NewResult(res, nil)
 			}
 		}(name, doc))
 	}
 
-	return internal.NewResult(queue.Run(), nil)
+	res := []ValidationResult{}
+	for _, r := range queue.Run() {
+		if r.IsErr() {
+			return nil, r.Message()
+		}
+		if vr, ok := r.Get().(ValidationResult); !ok {
+			return nil, fmt.Errorf("expected '%+v' to be of type 'ValidationResult'", r.Get())
+		} else {
+			res = append(res, vr)
+		}
+	}
+
+	return res, nil
 }
 
 func (v *Validation) validateDocument(name string, doc types.Document) []internal.Result {
@@ -93,7 +137,38 @@ func (v *Validation) validateDocument(name string, doc types.Document) []interna
 	for _, script := range v.scripts {
 		queue.Add(func(env ScriptEnv) internal.Task {
 			return func(id int) internal.Result {
-				return env.script.Run(name, doc, v.emitter, v.documentColl, env.cfg)
+				res := env.script.Run(name, doc, v.emitter, v.documentColl, env.cfg)
+				if res.IsErr() {
+					return res
+				}
+				if res.Get() == nil {
+				}
+				sr, ok := res.Get().(js.ScriptResult)
+				if !ok {
+				}
+
+				rv := &RuleValidation{
+					Name:   env.script.Name(),
+					Valid:  true,
+					Errors: []TaskError{},
+				}
+
+				if sr.Errors != nil {
+					for _, err := range sr.Errors {
+						te := TaskError{
+							Message: err.Message,
+							Type:    err.Type,
+						}
+
+						if err.Extra != nil && err.Extra["line"] != nil {
+							te.Line = int(err.Extra["line"].(int64))
+						}
+
+						rv.AddError(te)
+					}
+				}
+
+				return internal.NewResult(rv, nil)
 			}
 		}(script))
 	}

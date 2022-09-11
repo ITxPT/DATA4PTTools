@@ -2,13 +2,12 @@ package js
 
 import (
 	"github.com/concreteit/greenlight/internal"
-	"github.com/dop251/goja"
 	"github.com/lestrrat-go/libxml2/types"
 )
 
 type ContextOption = func(c *Context) error
 
-type ContextHandler = func(c *Context) goja.Value
+type ContextHandler = func(c *Context) []interface{}
 
 func WithMetaFields(fields map[string]interface{}) ContextOption {
 	return func(c *Context) error {

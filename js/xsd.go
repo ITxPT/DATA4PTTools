@@ -38,11 +38,23 @@ type Xsd struct {
 }
 
 func (x Xsd) Validate(version string) internal.Result {
+	res := []ScriptError{}
 	if err := ValidateSchema(x.document, version); err != nil {
-		return internal.NewResult(nil, err) // TODO error details
+		if sve, ok := err.(*ValidationError); ok {
+			for _, d := range sve.Details() {
+				res = append(res, ScriptError{
+					Type:    ErrTypeXSD.Error(),
+					Message: d.Error(),
+				})
+			}
+
+			return internal.NewResult(res, err)
+		} else {
+			return internal.NewResult(nil, err)
+		}
 	}
 
-	return internal.NewResult(true, nil)
+	return internal.NewResult(res, nil)
 }
 
 func newXPathContext(nodes ...types.Node) (*xpath.Context, error) {

@@ -60,7 +60,14 @@ func (n Node) parent() (*Node, error) {
 }
 
 func (n *Node) find(p string) ([]*Node, error) {
-	res, err := n.context.Find(p)
+	// have to create a new context due to the risk of reusing pointer in workers
+	nn, err := NewNode(n.node)
+	if err != nil {
+		return nil, err
+	}
+	defer nn.Free()
+
+	res, err := nn.context.Find(p)
 	if err != nil {
 		return nil, err
 	}

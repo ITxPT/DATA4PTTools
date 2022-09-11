@@ -40,12 +40,12 @@ func (s *Collection) Add(node *Node) {
 	s.data[node.Ref()] = node
 }
 
-func (s *Collection) find(pattern string) ([]*Node, error) {
-	s.Lock()
-	defer s.Unlock()
+func (c *Collection) find(pattern string) ([]*Node, error) {
+	c.Lock()
+	defer c.Unlock()
 
 	nodes := []*Node{}
-	for _, node := range s.data {
+	for _, node := range c.data {
 		rnodes, err := node.find(pattern)
 		if err != nil && err != ErrNodeNotFound {
 			return nil, err
