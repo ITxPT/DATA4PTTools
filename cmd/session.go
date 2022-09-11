@@ -3,10 +3,11 @@ package main
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"sync"
 	"time"
 
-	/* "github.com/concreteit/greenlight" */
+	"github.com/concreteit/greenlight"
 	"github.com/matoous/go-nanoid"
 )
 
@@ -48,7 +49,70 @@ type Session struct {
 	Stopped     time.Time    `json:"stopped"`
 	fileContext *FileContext `json:"-"`
 	Status      string       `json:"status"`
-	Results     interface{}
+	Results     []greenlight.ValidationResult
+}
+
+func (s *Session) NewValidation(schema string, rules []string) (*greenlight.Validation, error) {
+	validation, err := greenlight.NewValidation()
+	if err != nil {
+		return nil, err
+	}
+
+	s.Results = []greenlight.ValidationResult{}
+
+	for _, file := range s.fileContext.Find("xml") {
+		f, err := file.Open()
+		if err != nil {
+			return nil, err
+		}
+
+		if err := validation.AddReader(file.Name, f); err != nil {
+			return nil, err
+		}
+
+		file.File.Seek(0, 0)
+
+		rvs := []*greenlight.RuleValidation{{
+			Name:       "xsd",
+			Valid:      false,
+			ErrorCount: 0,
+			Errors:     []greenlight.TaskError{},
+		}}
+
+		if rules != nil {
+			for _, rule := range rules {
+				rvs = append(rvs, &greenlight.RuleValidation{
+					Name:       rule,
+					Valid:      false,
+					ErrorCount: 0,
+					Errors:     []greenlight.TaskError{},
+				})
+			}
+		}
+
+		s.Results = append(s.Results, greenlight.ValidationResult{
+			Name:            file.Name,
+			Valid:           false,
+			ValidationRules: rvs,
+		})
+	}
+
+	validation.AddScript(scripts["xsd"], map[string]interface{}{
+		"schema": schema,
+	})
+
+	if rules != nil {
+		for _, r := range rules {
+			script := scripts[r]
+			if script == nil {
+				return nil, fmt.Errorf("script '%v' not found", r)
+			}
+
+			validation.AddScript(script, nil)
+		}
+	}
+
+	return validation, nil
 }
 
 func (s Session) MarshalJSON() ([]byte, error) {

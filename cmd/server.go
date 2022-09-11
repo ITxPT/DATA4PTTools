@@ -5,19 +5,14 @@ import (
 	"bytes"
 	"context"
 	"encoding/csv"
-	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
 	"net/url"
-	"runtime"
 	"sort"
 	"time"
 
-	"github.com/concreteit/greenlight"
-	"github.com/concreteit/greenlight/js"
-	"github.com/eclipse/paho.mqtt.golang/packets"
-	"github.com/fhmq/hmq/broker"
+	"github.com/concreteit/greenlight/internal"
 	"github.com/gorilla/websocket"
 	"github.com/koding/websocketproxy"
 	"github.com/labstack/echo/v4"
@@ -32,9 +27,7 @@ var (
 		Short: "Start NeTEx validation server",
 		Run:   startServer,
 	}
-	defaultPort     = "8080"
-	defaultMQTTPort = "1883"
-	sessions        = SessionMap{
+	sessions = SessionMap{
 		sessions: map[string]*Session{},
 	}
 )
@@ -49,89 +42,24 @@ func init() {
 	rootCmd.AddCommand(serverCmd)
 }
 
-func brokerConfig() *broker.Config {
-	runtime.GOMAXPROCS(runtime.NumCPU())
-
-	cfg := broker.DefaultConfig
-	cfg.WsPath = "/ws"
-	cfg.WsPort = "1888"
-	cfg.Debug = true
-
-	return cfg
-}
-
-// TODO call this from server instance
-func publishMessage(b *broker.Broker, topic string, message interface{}) error {
-	if b == nil {
-		return nil
-	}
-
-	buf, err := json.Marshal(message)
-	if err != nil {
-		return err
-	}
-
-	pub := packets.NewControlPacket(packets.Publish).(*packets.PublishPacket)
-	pub.Qos = 0
-	pub.TopicName = topic
-	pub.Payload = buf
-
-	b.PublishMessage(pub)
-
-	return nil
-}
-
 type ValidationQuery struct {
 	SessionID string   `param:"sid"`
 	Schema    string   `query:"schema"`
 	Rules     []string `query:"rules"`
 }
 
-func validateSession(ctx context.Context, rules []string, files []*FileInfo) (interface{}, error) {
-	validation, err := greenlight.NewValidation()
-	if err != nil {
-		return nil, err
-	}
-
-	for _, file := range files {
-		f, err := file.Open()
-		if err != nil {
-			return nil, err
-		}
-
-		if err := validation.AddReader(file.Name, f); err != nil {
-			return nil, err
-		}
-
-		file.File.Seek(0, 0)
-	}
-
-	scriptingPaths := []string{"builtin/xsd.js"}
-	if rules != nil {
-		for _, rule := range rules {
-			scriptingPaths = append(scriptingPaths, "builtin/"+rule+".js")
-		}
-	}
-
-	scriptMap, err := js.CompilePath(scriptingPaths...)
-	if err != nil {
-		return nil, err
-	}
-
-	for _, script := range scriptMap {
-		validation.AddScript(script, nil)
-	}
-
-	return validation.Validate(ctx), nil
-}
-
 func startServer(cmd *cobra.Command, args []string) {
 	port := viper.GetString("port")
 	if port == "" {
-		port = defaultPort
+		port = "8080"
 	}
 
-	// viper.GetString("mqtt-port")
+	broker, err := NewMQTTBroker(DefaultBrokerConfig())
+	if err != nil {
+		log.Fatalln(err)
+	}
+
+	broker.Start()
 
 	fs := http.FileServer(StaticDir{http.Dir("app/out")})
 	e := echo.New()
@@ -241,7 +169,23 @@ func startServer(cmd *cobra.Command, args []string) {
 
 		session.Status = "running"
 
-		res, err := validateSession(c.Request().Context(), query.Rules, session.fileContext.Find("xml"))
+		v, err := session.NewValidation(query.Schema, query.Rules)
+		if err != nil {
+			session.Stopped = time.Now()
+			session.Status = "failure"
+			return err
+		}
+
+		v.Subscribe(func(event internal.Event) {
+			switch event.Type {
+			case internal.EventTypeValidateDocumentStart, internal.EventTypeValidateDocumentStop:
+				broker.PublishMessage(fmt.Sprintf("sessions/%s/documents/%s", session.ID, event.Data["document"]), event)
+			case internal.EventTypeScriptStart, internal.EventTypeScriptStop:
+				broker.PublishMessage(fmt.Sprintf("sessions/%s/documents/%s/scripts/%s", session.ID, event.Data["document"], event.Data["script"]), event)
+			}
+		})
+
+		res, err := v.Validate(context.Background())
 		if err != nil {
 			session.Stopped = time.Now()
 			session.Status = "failure"
@@ -268,38 +212,38 @@ func startServer(cmd *cobra.Command, args []string) {
 			}
 		}
 
-		/*     for _, v := range session.Results {
-		 *       if v.Name != c.Param("name") {
-		 *         continue
-		 *       }
-		 *
-		 *       format := c.QueryParam("f")
-		 *       switch format {
-		 *       case "json":
-		 *         return c.JSON(http.StatusOK, v)
-		 *       case "csv":
-		 *         var buf bytes.Buffer
-		 *         bw := bufio.NewWriter(&buf)
-		 *         w := csv.NewWriter(bw)
-		 *         records := v.CsvRecords(true)
-		 *
-		 *         for _, record := range records {
-		 *           if err := w.Write(record); err != nil {
-		 *             return err
-		 *           }
-		 *         }
-		 *
-		 *         w.Flush()
-		 *
-		 *         if err := w.Error(); err != nil {
-		 *           return err
-		 *         }
-		 *
-		 *         return c.Blob(http.StatusOK, "text/csv", buf.Bytes())
-		 *       default:
-		 *         return c.String(http.StatusBadRequest, "unsupported file format")
-		 *       }
-		 *     } */
+		for _, v := range session.Results {
+			if v.Name != c.Param("name") {
+				continue
+			}
+
+			format := c.QueryParam("f")
+			switch format {
+			case "json":
+				return c.JSON(http.StatusOK, v)
+			case "csv":
+				var buf bytes.Buffer
+				bw := bufio.NewWriter(&buf)
+				w := csv.NewWriter(bw)
+				records := v.CsvRecords(true)
+
+				for _, record := range records {
+					if err := w.Write(record); err != nil {
+						return err
+					}
+				}
+
+				w.Flush()
+
+				if err := w.Error(); err != nil {
+					return err
+				}
+
+				return c.Blob(http.StatusOK, "text/csv", buf.Bytes())
+			default:
+				return c.String(http.StatusBadRequest, "unsupported file format")
+			}
+		}
 
 		return c.String(http.StatusNotFound, "validation report not found")
 	})
@@ -327,15 +271,15 @@ func startServer(cmd *cobra.Command, args []string) {
 			w := csv.NewWriter(bw)
 			w.Write([]string{"file_name", "validation_name", "valid", "error_line_no", "error_message"})
 
-			/*       for _, res := range session.Results {
-			 *         records := res.CsvRecords(false)
-			 *
-			 *         for _, record := range records {
-			 *           if err := w.Write(record); err != nil {
-			 *             return err
-			 *           }
-			 *         }
-			 *       } */
+			for _, res := range session.Results {
+				records := res.CsvRecords(false)
+
+				for _, record := range records {
+					if err := w.Write(record); err != nil {
+						return err
+					}
+				}
+			}
 
 			w.Flush()
 

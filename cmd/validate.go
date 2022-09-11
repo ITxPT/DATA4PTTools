@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"os"
 	"strings"
@@ -108,10 +109,9 @@ func createValidation(input string) (*greenlight.Validation, error) {
 		return nil, fmt.Errorf("no schema version defined")
 	}
 
-	/* validation.AddScript(scripts["stopPlaceQuayDistanceIsReasonable"], nil) */
-	/* validation.AddScript(scripts["xsd"], map[string]interface{}{
-	 *   "schema": schema,
-	 * }) */
+	validation.AddScript(scripts["xsd"], map[string]interface{}{
+		"schema": schema,
+	})
 	for name, script := range scripts {
 		if name == "xsd" {
 			continue
@@ -198,16 +198,15 @@ func validate(cmd *cobra.Command, args []string) {
 		log.Fatal(err)
 	}
 
-	res := validation.Validate(context.Background())
-	log.Println(res)
+	res, err := validation.Validate(context.Background())
+	if err != nil {
+		log.Fatal(err)
+	}
 
-	/* for _, r := range res {
-	 *   rows := r.CsvRecords(false)
-	 *   log.Println(len(rows))
-	 *   if len(rows) > 5 {
-	 *     log.Println(rows[:5])
-	 *   } else {
-	 *     log.Println(rows)
-	 *   }
-	 * } */
+	buf, err := json.MarshalIndent(res, "", " ")
+	if err != nil {
+		fmt.Println(err)
+	} else {
+		fmt.Println(string(buf))
+	}
 }
