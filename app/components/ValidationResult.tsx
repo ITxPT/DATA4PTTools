@@ -1,5 +1,5 @@
 import ArrowDropDownIcon from '@mui/icons-material/ArrowDropDown';
-import { Box, Button, ButtonGroup, Grid, Menu, MenuItem, Skeleton, Stack, Typography } from '@mui/material';
+import { Box, Button, ButtonGroup, Divider, Grid, Menu, MenuItem, Skeleton, Stack, Typography } from '@mui/material';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 import React from 'react';
@@ -32,7 +32,7 @@ type ValidationResultProps = {
 const ValidationResult = (props: ValidationResultProps) => {
   const { session } = props;
   const router = useRouter();
-  const message = useSubscription(session ? `progress/${session.id}` : '');
+  const documentStatus = useSubscription(session ? `sessions/${session.id}/documents/+` : '');
   const [tasks, setTasks] = React.useState<any[]>([]);
   const { setSession } = useSessionStore();
   const [ errorOpen, setErrorOpen ] = React.useState<boolean>(false);
@@ -40,6 +40,28 @@ const ValidationResult = (props: ValidationResultProps) => {
   const apiClient = useApiClient();
   const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
   const open = Boolean(anchorEl);
+
+  React.useEffect(() => {
+    if (!documentStatus) {
+      return;
+    }
+
+    const data = documentStatus.d;
+    const taskIndex = tasks.findIndex(t => t.originalName === data.document);
+
+    if (taskIndex === -1) {
+      setTasks([
+        ...tasks,
+        {
+          name: truncName(data.document),
+          originalName: data.document,
+          valid: false,
+          status: documentStatus.t === 'VALIDATE_DOCUMENT_START' ? 'running' : 'complete',
+          validations: [],
+        }
+      ].sort((a: any, b: any) => a.name > b.name ? 1 : -1));
+    }
+  }, [documentStatus]);
 
   const handleValidateAnother = () => {
     apiClient.createSession()
@@ -65,47 +87,30 @@ const ValidationResult = (props: ValidationResultProps) => {
   };
 
   React.useEffect(() => {
-    if (!session) {
+    if (!session || !session.results) {
       return;
     }
 
-    if (session.status !== 'running') {
-      const tasks = session.results.map(v => {
-        return {
-          name: truncName(v.name),
-          originalName: v.name,
+    const tasks = session.results.map(v => {
+      const running = v.validations.find(v => !v.valid && !v.errors);
+
+      return {
+        name: truncName(v.name),
+        originalName: v.name,
+        valid: v.valid,
+        status: running ? 'running' : 'complete',
+        validations: v.validations.map((v: any) => ({
+          name: v.name,
           valid: v.valid,
-          status: 'complete',
-          validations: v.validations.map((v: any) => ({
-            name: v.name,
-            valid: v.valid,
-            errors: v.errors || [],
-          })),
-        }
-      })
-      .sort((a, b) => a.name > b.name ? 1 : -1);
+          status: running ? 'running' : 'complete',
+          errors: v.errors || [],
+        })),
+      }
+    })
+    .sort((a, b) => a.name > b.name ? 1 : -1);
 
-      setTasks(tasks);
-    } else if (message) {
-      const tasks = message.map((p: any) => {
-        return {
-          name: truncName(p.name),
-          originalName: p.name,
-          valid: p.status === 'valid',
-          status: p.status === 'running' ? 'running' : 'complete',
-          validations: Object.keys(p.jobStatus).map((k) => ({
-            name: k,
-            valid: p.jobStatus[k] === 'valid',
-            status: p.jobStatus[k],
-            errors: [],
-          })),
-        };
-      })
-      .sort((a: any, b: any) => a.name > b.name ? 1 : -1)
-
-      setTasks(tasks);
-    }
-  }, [message, session]);
+    setTasks(tasks);
+  }, [session]);
 
   return (
     <Stack spacing={4}>
@@ -135,6 +140,7 @@ const ValidationResult = (props: ValidationResultProps) => {
           </>
         )}
       </Box>
+      <Divider />
       <Grid container>
         <Grid item xs={12} md={6}>
           <ButtonGroup disabled={session.status !== 'complete'}>

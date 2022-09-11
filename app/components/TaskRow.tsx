@@ -142,7 +142,7 @@ const ErrorList = ({ errors }: any) => {
                 color="error"
               />
               <Chip
-                label={'line no: ' + errors[index].line}
+                label={`line: ${errors[index].line || 'unknown'}`}
                 variant="outlined"
                 size="small"
               />
@@ -155,7 +155,7 @@ const ErrorList = ({ errors }: any) => {
   );
 };
 
-const TaskTableRow = ({ validation }: any) => {
+const TaskTableRow = ({ session, name: taskName, validation }: any) => {
   const { name, status, valid, errors } = validation;
   const [open, setOpen] = React.useState(false);
 
@@ -265,7 +265,7 @@ const TaskRow = ({ session, task }: TaskRowProps) => {
                 </TableRow>
               </TableHead>
               <TableBody>
-                { validations.map(v => <TaskTableRow key={v.name} validation={v} />) }
+                { validations.map(v => <TaskTableRow key={v.name} session={session} name={task.name} validation={v} />) }
               </TableBody>
             </Table>
           </TableContainer>

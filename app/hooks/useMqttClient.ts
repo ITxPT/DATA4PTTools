@@ -11,8 +11,13 @@ const useMqttClient = () => {
 
 export const useSubscription = (topic: string) => {
   const [message, setMessage] = React.useState<any>(null);
+  const pattern = new RegExp(`^${topic.replace(/[+]/g, '[^\\/]+').replace(/[#]/g, '.+')}$`);
 
   const handler = React.useCallback((topic: string, payload: any) => {
+    if (!topic.match(pattern)) {
+      return;
+    }
+
     try {
       setMessage(JSON.parse(payload.toString()));
     } catch (err) {
@@ -21,7 +26,7 @@ export const useSubscription = (topic: string) => {
   }, [topic]);
 
   React.useEffect(() => {
-    mqttClient.subscribe(topic); // TODO unsubscribe
+    mqttClient.subscribe(topic);
     mqttClient.on('message', handler);
 
     return () => {
