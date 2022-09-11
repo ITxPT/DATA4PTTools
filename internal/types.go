@@ -10,6 +10,8 @@ type Result struct {
 	err   error
 }
 
+func (r Result) Message() error { return r.err }
+
 func (r Result) IsErr() bool { return r.err != nil }
 
 func (r Result) Get() interface{} { return r.value }

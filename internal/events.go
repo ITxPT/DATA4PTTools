@@ -8,13 +8,15 @@ import (
 type EventType string
 
 const (
-	EventTypeLog             EventType = "LOG"
-	EventTypeValidationStart EventType = "VALIDATION_START"
-	EventTypeValidationStop  EventType = "VALIDATION_STOP"
-	EventTypeScriptStart     EventType = "SCRIPT_START"
-	EventTypeScriptStop      EventType = "SCRIPT_STOP"
-	EventTypeWorkerStart     EventType = "WORKER_START"
-	EventTypeWorkerStop      EventType = "WORKER_STOP"
+	EventTypeLog                   EventType = "LOG"
+	EventTypeValidationStart       EventType = "VALIDATION_START"
+	EventTypeValidationStop        EventType = "VALIDATION_STOP"
+	EventTypeValidateDocumentStart EventType = "VALIDATE_DOCUMENT_START"
+	EventTypeValidateDocumentStop  EventType = "VALIDATE_DOCUMENT_STOP"
+	EventTypeScriptStart           EventType = "SCRIPT_START"
+	EventTypeScriptStop            EventType = "SCRIPT_STOP"
+	EventTypeWorkerStart           EventType = "WORKER_START"
+	EventTypeWorkerStop            EventType = "WORKER_STOP"
 )
 
 type Event struct {
@@ -68,7 +70,7 @@ func (e *Emitter) Unsubscribe(id int) {
 	}
 }
 
-func (e *Emitter) Emit(t EventType, data map[string]interface{}) Event {
+func (e *Emitter) Emit(t EventType, data M) Event {
 	e.Lock()
 	defer e.Unlock()
 
