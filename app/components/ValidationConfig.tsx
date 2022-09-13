@@ -184,7 +184,7 @@ const ValidationConfig = (props: ValidationConfigProps) => {
     if (session.files.length) {
       setCanValidate(true);
     }
-  }, [session, setCanValidate]);
+  });
 
   return (
     <Stack spacing={4}>

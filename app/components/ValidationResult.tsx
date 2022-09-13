@@ -92,7 +92,7 @@ const ValidationResult = (props: ValidationResultProps) => {
     }
 
     const tasks = session.results.map(v => {
-      const running = v.validations.find(v => !v.valid && !v.errors);
+      const running = v.validations.find((v: any) => !v.valid && !v.errors);
 
       return {
         name: truncName(v.name),
