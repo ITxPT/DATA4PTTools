@@ -23,10 +23,7 @@ type Validation struct {
 	documentMap  map[string]types.Document
 	documentColl *js.Collection
 	scripts      map[string]ScriptEnv
-	results      []*ValidationResult
 }
-
-func (v *Validation) Results() []*ValidationResult { return v.results }
 
 func (v *Validation) Emit(t internal.EventType, data map[string]interface{}) {
 	v.emitter.Emit(t, data)
@@ -188,7 +185,6 @@ func NewValidation() (*Validation, error) {
 		documentMap:  map[string]types.Document{},
 		documentColl: js.NewCollection(),
 		scripts:      map[string]ScriptEnv{},
-		results:      []*ValidationResult{},
 	}
 
 	go ctx.emitter.Start()
