@@ -1,18 +1,18 @@
-// ***************************************************************************
-//  Data4PT NeTEx Validator
-//
-//  Rule        : everyStopPlaceHasAName
-//  Description : Make sure every StopPlace has a stopPlaceType and that
-//                it is of correct type.
-//
-//  Author      : Concrete IT on behalf of Data4PT
-// ***************************************************************************
-
+/**
+ * @name everyStopPlaceHasACorrectStopPlaceType
+ * @overview Make sure every StopPlace has a stopPlaceType and that it is of correct type.
+ * @author Concrete IT
+ */
 const name = "everyStopPlaceHasACorrectStopPlaceType";
-const description = "Make sure every StopPlace has a name";
+const errors = require("errors");
+const types = require("types");
 const xpath = require("xpath");
-const framesPath = xpath.join(".", "PublicationDelivery", "dataObjects", "CompositeFrame", "frames");
-const stopPlacesPath = xpath.join(framesPath, "SiteFrame", "stopPlaces", "StopPlace");
+const stopPlacesPath = xpath.join(
+  xpath.path.FRAMES,
+  "SiteFrame",
+  "stopPlaces",
+  "StopPlace",
+);
 const stopPlaceTypePath = xpath.join("StopPlaceType");
 const interestingItems = new Set([
   "onstreetBus",
@@ -32,34 +32,35 @@ const interestingItems = new Set([
   "other",
 ]);
 
+/**
+ * Make sure every StopPlace has a stopPlaceType and that it is of correct type.
+ * @param {types.Context} ctx
+ * @return {errors.ScriptError[]?}
+ */
 function main(ctx) {
-  const errors = [];
-  const stopPlaces = ctx.xpath.find(stopPlacesPath);
+  return ctx.node.find(stopPlacesPath)
+    .map(v => v.reduce((res, node) => {
+      const id = node.valueAt("@id").get();
+      const stopType = node.valueAt(stopPlaceTypePath).get();
 
-  stopPlaces.forEach(stopPlace => {
-    const id = ctx.xpath.findValue("@id", stopPlace);
-    const type = ctx.xpath.findValue(stopPlaceTypePath, stopPlace);
+      if (!stopType) {
+        res.push(errors.ConsistencyError(
+          `StopPlaceType is not set for StopPlace(@id=${id})`,
+          { line: node.line() },
+        ));
+        return res;
+      }
 
-    if (type == null || type == "") {
-      errors.push({
-        type: "consistency",
-        message: `StopPlaceType is not set for StopPlace(@id=${id})`,
-        line: ctx.xpath.line(stopPlace),
-      });
+      const isItemInSet = interestingItems.has(stopType);
 
-      return;
-    }
+      if (!isItemInSet) {
+        res.push(errors.ConsistencyError(
+          `StopPlaceType is not valid for StopPlace(@id=${id})`,
+          { line: node.line() },
+        ));
+      }
 
-    const isItemInSet = interestingItems.has(type);
-
-    if (!isItemInSet) {
-      errors.push({
-        type: "consistency",
-        message: `StopPlaceType is not valid for StopPlace(@id=${id})`,
-        line: ctx.xpath.line(stopPlace),
-      });
-    }
-  });
-
-  return errors;
+      return res;
+    }, []))
+    .getOrElse(() => []);
 }

@@ -49,7 +49,7 @@ const Home: NextPage = () => {
   return (
     <React.Fragment>
       <Head>
-        <title>Greenlight | NeTEx validation</title>
+        <title>NeTEx validation | Greenlight</title>
         <meta name="description" content="Fast and simple NeTEx validation" />
       </Head>
 

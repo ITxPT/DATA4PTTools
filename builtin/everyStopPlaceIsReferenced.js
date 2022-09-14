@@ -1,35 +1,46 @@
-// ***************************************************************************
-//  Data4PT NeTEx Validator
-//
-//  Rule        : everyStopPlaceIsReferenced
-//  Description : Make sure every StopPlace is referenced from another element
-//
-//  Author      : Concrete IT on behalf of Data4PT
-// ***************************************************************************
-
+/**
+ * @name everyStopPlaceIsReferenced
+ * @overview Make sure every StopPlace is referenced from another element
+ * @author Concrete IT
+ */
 const name = "everyStopPlaceIsReferenced";
-const description = "Make sure every StopPlace is referenced from another element";
+const errors = require("errors");
+const types = require("types");
 const xpath = require("xpath");
-const framesPath = xpath.join(".", "PublicationDelivery", "dataObjects", "CompositeFrame", "frames")
-const stopPlacesPath = xpath.join(framesPath, "SiteFrame", "stopPlaces", "StopPlace");
+const stopPlacesPath = xpath.join(xpath.path.FRAMES, "SiteFrame", "stopPlaces", "StopPlace");
 
+/**
+ * Make sure every StopPlace is referenced from another element
+ * @param {types.Context} ctx
+ * @return {errors.ScriptError[]?}
+ */
 function main(ctx) {
-  const errors = [];
-  const stopPlaces = ctx.xpath.find(stopPlacesPath);
+  return ctx.node.find(stopPlacesPath)
+    .map(v => v.reduce((res, node) => {
+      const id = node.valueAt("@id").get();
+      if (!id) {
+        res.push(errors.ConsistencyError(
+          `StopPlace is missing attribute @id`,
+          { line: node.line() },
+        ));
+        return res;
+      }
 
-  stopPlaces.forEach(stopPlace => {
-    const id = ctx.xpath.findValue("@id", stopPlace);
-    const stopPlaceRefs = xpath.join("./", `StopPlaceRef[@ref='${id}']`);
-    const references = ctx.xpath.find(stopPlaceRefs, ctx.document);
+      const stopPlaceRefs = xpath.join("./", `StopPlaceRef[@ref='${id}']`);
+      const refs = ctx.document.find(stopPlaceRefs).get();
 
-    if (references == null || references.length === 0) {
-      errors.push({
-        type: "consistency",
-        message: `Missing reference for StopPlace(@id=${id})`,
-        line: ctx.xpath.line(stopPlace),
-      });
-    }
-  });
-
-  return errors;
+      if (!refs || refs.length === 0) {
+        res.push(errors.ConsistencyError(
+          `Missing reference for StopPlace(@id=${id})`,
+          { line: node.line() },
+        ));
+      }
+    }, []))
+    .getOrElse(err => {
+      if (err == errors.NODE_NOT_FOUND) {
+        return [];
+      } else if (err) {
+        return [errors.GeneralError(err)];
+      }
+    });
 }

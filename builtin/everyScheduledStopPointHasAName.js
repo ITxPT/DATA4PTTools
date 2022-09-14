@@ -1,40 +1,61 @@
-// ***************************************************************************
-//  Data4PT NeTEx Validator
-//
-//  Rule        : everyScheduledStopPointHasAName
-//  Description : Make sure every ScheduledStopPoint has a Name or ShortName
-//
-//  Author      : Concrete IT on behalf of Data4PT
-// ***************************************************************************
-
+/**
+ * @name everyScheduledStopPointHasAName
+ * @overview Make sure every ScheduledStopPoint has a Name or ShortName
+ * @author Concrete IT
+ */
 const name = "everyScheduledStopPointHasAName";
-const description = `Make sure every ScheduledStopPoint has a Name or ShortName
-
-The test goes through all the ScheduledStopPoints in the ServiceFrame and checks that either a Name or a ShortName is specified.
-If none of the names are specified, the validation will mark the StopPoint as incorrect.`;
+const errors = require("errors");
+const types = require("types");
 const xpath = require("xpath");
-const framesPath = xpath.join(".", "PublicationDelivery", "dataObjects", "CompositeFrame", "frames");
-const scheduledStopPointsPath = xpath.join(framesPath, "ServiceFrame", "scheduledStopPoints", "ScheduledStopPoint");
-const namePath = xpath.join("Name");
+const scheduledStopPointsPath = xpath.join(
+  xpath.path.FRAMES,
+  "ServiceFrame",
+  "scheduledStopPoints",
+  "ScheduledStopPoint",
+);
 const shortNamePath = xpath.join("ShortName");
 
+/**
+ * Make sure every ScheduledStopPoint has a Name or ShortName
+ *
+ * The test goes through all the ScheduledStopPoints in the ServiceFrame and
+ * checks that either a Name or a ShortName is specified. If none of the names
+ * are specified, the validation will mark the StopPoint as incorrect.
+ * @param {types.Context} ctx
+ * @return {errors.ScriptError[]?}
+ */
 function main(ctx) {
-  const errors = [];
-  const stopPoints = ctx.xpath.find(scheduledStopPointsPath);
+  const res = [];
 
-  stopPoints.forEach(stopPoint => {
-    const id = ctx.xpath.findValue("@id", stopPoint);
-    const name = ctx.xpath.findValue(namePath, stopPoint);
-    const shortName = ctx.xpath.findValue(shortNamePath, stopPoint);
+  return ctx.node.find(scheduledStopPointsPath)
+    .map(v => {
+      v.forEach((node) => {
+        const id = node.valueAt("@id").get();
 
-    if (!name && !shortName) {
-      errors.push({
-        type: "consistency",
-        message: `Missing name for ScheduledStopPoint(@id=${id})`,
-        line: ctx.xpath.line(stopPoint),
+        if (!id) {
+          res.push(errors.ConsistencyError(
+            `StopPoint is missing attribute @id`,
+            { line: node.line() },
+          ));
+          return;
+        }
+
+        const name = node.valueAt(xpath.join("Name")).get();
+        const shortName = node.valueAt(xpath.join("ShortName")).get();
+
+        if (!name && !shortName) {
+          res.push(errors.ConsistencyError(
+            `Missing name for ScheduledStopPoint(@id=${id})`,
+            { line: node.line() },
+          ));
+        }
       });
-    }
-  });
-
-  return errors;
+    })
+    .getOrElse(err => {
+      if (err == errors.NODE_NOT_FOUND) {
+        return [];
+      } else if (err) {
+        return [errors.GeneralError(err)];
+      }
+    });
 }

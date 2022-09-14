@@ -52,7 +52,7 @@ const ruleOptions = [
     label: 'Every stop place is referenced',
   },
   {
-    value: 'everyStopPointHaveAnArrivalAndDepartureTime',
+    value: 'everyStopPointHaveArrivalAndDepartureTime',
     label: 'Every stop point have an arrival and departure time',
   },
   {
@@ -90,14 +90,14 @@ type ValidationConfigProps = {
 
 const ValidationConfig = (props: ValidationConfigProps) => {
   const { session, onValidate } = props;
-  const [schema, setSchema] = React.useState<string>('netex');
+  const [schema, setSchema] = React.useState<string>('netex@1.2');
   const [rules, setRules] = React.useState<string[]>([
     'everyLineIsReferenced',
     'everyScheduledStopPointHasAName',
     'everyStopPlaceHasACorrectStopPlaceType',
     'everyStopPlaceHasAName',
     'everyStopPlaceIsReferenced',
-    'everyStopPointHaveAnArrivalAndDepartureTime',
+    'everyStopPointHaveArrivalAndDepartureTime',
     'frameDefaultsHaveALocaleAndTimeZone',
     'locationsAreReferencingTheSamePoint',
     'passingTimesHaveIncreasingTimes',
@@ -180,6 +180,12 @@ const ValidationConfig = (props: ValidationConfigProps) => {
     }
   }
 
+  React.useState(() => {
+    if (session.files.length) {
+      setCanValidate(true);
+    }
+  });
+
   return (
     <Stack spacing={4}>
       <Stack spacing={1} direction="row">
@@ -204,9 +210,10 @@ const ValidationConfig = (props: ValidationConfigProps) => {
             value={schema}
             onChange={handleSelectChange}
           >
-            <MenuItem key="netex" value="netex">NeTEx</MenuItem>
-            <MenuItem key="netex-light" value="netex-light">NeTEx Light</MenuItem>
-            <MenuItem key="epip" value="epip">EPIP</MenuItem>
+            <MenuItem key="netex" value="netex@1.2">NeTEx (v1.2)</MenuItem>
+            <MenuItem key="netex-light" value="netex@1.2-nc">NeTEx Light (v1.2)</MenuItem>
+            <MenuItem key="epip" value="epip@1.1.1">EPIP (v1.1.1)</MenuItem>
+            <MenuItem key="epip-light" value="epip@1.1.1-nc">EPIP Light (v1.1.1)</MenuItem>
           </Select>
         </FormControl>
 

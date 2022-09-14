@@ -1,17 +1,28 @@
-// ***************************************************************************
-//  Data4PT NeTEx Validator
-//
-//  Rule        : locationsAreReferencingTheSamePoint
-//  Description : Make sure every Location in StopPlace and ScheduledStopPoint for the same StopAssignment are pointing to the same koordinates
-//
-//  Author      : Concrete IT on behalf of Data4PT
-// ***************************************************************************
-
+/**
+ * @name locationsAreReferencingTheSamePoint
+ * @overview Make sure every Location in StopPlace and ScheduledStopPoint for the same StopAssignment are pointing to the same coordinates
+ * @author Concrete IT
+ */
 const name = "locationsAreReferencingTheSamePoint";
-const description = "Make sure StopPlace and ScheduledStopPoint has the same Location";
+const errors = require("errors");
+const types = require("types");
 const xpath = require("xpath");
-const framesPath = xpath.join(".", "PublicationDelivery", "dataObjects", "CompositeFrame", "frames")
-const passengerStopAssignmentsPath = xpath.join(framesPath, "ServiceFrame", "stopAssignments", "PassengerStopAssignment");
+const passengerStopAssignmentsPath = xpath.join(
+  xpath.path.FRAMES,
+  "ServiceFrame",
+  "stopAssignments",
+  "PassengerStopAssignment",
+);
+const stopPlacesPath = xpath.join(
+  xpath.path.FRAMES,
+  "SiteFrame",
+  "stopPlaces",
+);
+const scheduledStopPointsPath = xpath.join(
+  xpath.path.FRAMES,
+  "ServiceFrame",
+  "scheduledStopPoints",
+);
 const scheduledStopPointRefPath = xpath.join("ScheduledStopPointRef/@ref");
 const stopPlaceRefPath = xpath.join("StopPlaceRef/@ref");
 const spLongitudePath = xpath.join("Centroid", "Location", "Longitude");
@@ -19,49 +30,93 @@ const spLatitudePath = xpath.join("Centroid", "Location", "Latitude");
 const sspLongitudePath = xpath.join("Location", "Longitude");
 const sspLatitudePath = xpath.join("Location", "Latitude");
 
+/**
+ * Make sure every Location in StopPlace and ScheduledStopPoint for the same
+ * StopAssignment are pointing to the same coordinates
+ * @param {types.Context} ctx
+ * @return {errors.ScriptError[]?}
+ */
 function main(ctx) {
-  const errors = [];
-  const stopAssignments = ctx.xpath.find(passengerStopAssignmentsPath);
+  const config = { distance: 100, ...ctx.config };
 
-  stopAssignments.forEach(stopAssignment => {
-    const id = ctx.xpath.findValue("@id", stopAssignment);
-    const scheduledStopPointId = ctx.xpath.findValue(scheduledStopPointRefPath, stopAssignment);
-    const stopPlaceId = ctx.xpath.findValue(stopPlaceRefPath, stopAssignment);
-    const scheduledStopPointPath = xpath.join("./", `ScheduledStopPoint[@id='${scheduledStopPointId}']`);
-    const scheduledStopPoint = ctx.xpath.first(scheduledStopPointPath, ctx.document);
-    const stopPlacePath = xpath.join("./", `StopPlace[@id='${stopPlaceId}']`);
-    const stopPlace = ctx.xpath.first(stopPlacePath, ctx.document);
+  return ctx.node.find(passengerStopAssignmentsPath)
+    .map(v => v.reduce((res, node) => {
+      const id = node.valueAt("@id").get();
+      const scheduledStopPoint = node.first(scheduledStopPointRefPath)
+        .map(n => xpath.join(
+          scheduledStopPointsPath,
+          `ScheduledStopPoint[@id='${n.value()}']`,
+        ))
+        .map(p => ctx.document.first(p).get())
+        .get();
+      const stopPlace = node.first(stopPlaceRefPath)
+        .map(n => xpath.join(
+          stopPlacesPath,
+          `StopPlace[@id='${n.value()}']`),
+        )
+        .map(p => ctx.document.first(p).get())
+        .get();
 
-    if (scheduledStopPoint == null || stopPlace == null) {
-      errors.push({
-        type: "consistency",
-        message: `Missing StopPlace or ScheduledStopPoint (PassengerStopAssignment @id=${id})`,
-        line: ctx.xpath.line(stopAssignment),
-      });
+      if (!scheduledStopPoint) {
+        res.push(errors.ConsistencyError(
+          `Missing ScheduledStopPoint (PassengerStopAssignment @id=${id})`,
+          { line: node.line() },
+        ));
+      }
+      if (!stopPlace) {
+        res.push(errors.ConsistencyError(
+          `Missing StopPoint (PassengerStopAssignment @id=${id})`,
+          { line: node.line() },
+        ));
+      }
+      if (!scheduledStopPoint || !stopPlace) {
+        return res;
+      }
 
-      return;
-    }
+      const distance = getDistance(stopPlace, scheduledStopPoint); // argument order is important!
+      if (distance > config.distance) {
+        res.push(errors.ConsistencyError(
+          `ScheduledStopPoint and StopPlace is too far apart (PassengerStopAssignment @id=${id})`,
+          { line: node.line() },
+        ));
+      }
 
-    const spLong = ctx.xpath.findValue(spLongitudePath, stopPlace);
-    const spLat = ctx.xpath.findValue(spLatitudePath, stopPlace);
-    const sspLong = ctx.xpath.findValue(sspLongitudePath, scheduledStopPoint);
-    const sspLat = ctx.xpath.findValue(sspLatitudePath, scheduledStopPoint);
-    const distance = Math.round(getDistanceFromLatLonInKm(spLat, spLong, sspLat, sspLong) * 1000);
-
-    if (distance > 100) {
-      errors.push({
-        type: "consistency",
-        message: `ScheduledStopPoint and StopPlace is too far apart (PassengerStopAssignment @id=${id})`,
-        line: ctx.xpath.line(stopAssignment),
-      });
-    }
-  });
-
-  return errors;
+      return res;
+    }, []))
+    .getOrElse(err => {
+      if (err == errors.NODE_NOT_FOUND) {
+        return [];
+      } else if (err) {
+        return [errors.GeneralError(err)];
+      }
+    });
 }
 
-// calculate the distance between two points
-// https://stackoverflow.com/questions/27928/calculate-distance-between-two-latitude-longitude-points-haversine-formula
+/**
+ * Calculate the distance between two nodes
+ * @param {types.Node} n1
+ * @param {types.Node} n2
+ * @returns {number}
+ */
+function getDistance(n1, n2) {
+  const lonx = parseFloat(n1.valueAt(spLongitudePath).get());
+  const latx = parseFloat(n1.valueAt(spLatitudePath).get());
+  const lony = parseFloat(n2.valueAt(sspLongitudePath).get());
+  const laty = parseFloat(n2.valueAt(sspLatitudePath).get());
+  const d = getDistanceFromLatLonInKm(lonx, latx, lony, laty);
+
+  return Math.round(d * 1000);
+}
+
+/**
+ * Calculate the distance between two points
+ * https://stackoverflow.com/questions/27928/calculate-distance-between-two-latitude-longitude-points-haversine-formula
+ * @param {number} lat1
+ * @param {number} lon1
+ * @param {number} lat2
+ * @param {number} lon2
+ * @returns {number}
+ */
 function getDistanceFromLatLonInKm(lat1,lon1,lat2,lon2) {
   const R = 6371; // radius of the earth in km
   const dLat = deg2rad(lat2-lat1); // deg2rad below
@@ -76,6 +131,10 @@ function getDistanceFromLatLonInKm(lat1,lon1,lat2,lon2) {
   return d;
 }
 
+/**
+ * @param {number} deg
+ * @returns {number}
+ */
 function deg2rad(deg) {
   return deg * (Math.PI/180);
 }

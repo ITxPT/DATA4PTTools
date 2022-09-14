@@ -1,35 +1,52 @@
-// ***************************************************************************
-//  Data4PT NeTEx Validator
-//
-//  Rule        : everyLineIsReferenced
-//  Description : Make sure every Line is referenced from another element
-//
-//  Author      : Concrete IT on behalf of Data4PT
-// ***************************************************************************
-
+/**
+ * @name everyLineIsReferenced
+ * @overview Make sure every Line is referenced from another element
+ * @author Concrete IT
+ */
 const name = "everyLineIsReferenced";
-const description = "Make sure every Line is referenced from another element";
+const errors = require("errors");
+const types = require("types");
 const xpath = require("xpath");
-const framesPath = xpath.join(".", "PublicationDelivery", "dataObjects", "CompositeFrame", "frames")
-const linesPath = xpath.join(framesPath, "ServiceFrame", "lines", "Line");
-
+const linesPath = xpath.join(xpath.path.FRAMES, "ServiceFrame", "lines", "Line");
+const journeyLinePath = xpath.join(
+  xpath.path.FRAMES,
+  "TimetableFrame",
+  "vehicleJourneys",
+  "ServiceJourney",
+);
+/**
+ * Make sure every Line is referenced from another element
+ * @param {types.Context} ctx
+ * @return {errors.ScriptError[]?}
+ */
 function main(ctx) {
-  const errors = [];
-  const lines = ctx.xpath.find(linesPath);
+  return ctx.node.find(linesPath)
+    .map(v => v.reduce((res, node) => {
+      const id = node.valueAt("@id").get();
 
-  lines.forEach(line => {
-    const id = ctx.xpath.findValue("@id", line);
-    const lineRefsPath = xpath.join("./", `LineRef[@ref='${id}']`);
-    const references = ctx.xpath.find(lineRefsPath, ctx.document);
+      if (!id) {
+        res.push(errors.ConsistencyError(
+          `Line missing attribute @id`,
+          { line: node.line() },
+        ));
+        return res;
+      }
 
-    if (references == null || references.length === 0) {
-      errors.push({
-        type: "consistency",
-        message: `Missing reference for Line(@id=${id})`,
-        line: ctx.xpath.line(line),
-      });
-    }
-  });
+      const lineRefsPath = xpath.join(journeyLinePath, `LineRef[@ref='${id}']`);
+      const refs = ctx.document.find(lineRefsPath).get();
 
-  return errors;
+      if (!refs || !refs.length) {
+        res.push(errors.ConsistencyError(
+          `Missing reference for Line(@id=${id})`,
+          { line: node.line() },
+        ));
+      }
+    }, []))
+    .getOrElse(err => {
+      if (err == errors.NODE_NOT_FOUND) {
+        return [];
+      } else if (err) {
+        return [errors.GeneralError(err)];
+      }
+    });
 }
