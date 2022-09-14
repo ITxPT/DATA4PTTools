@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"encoding/json"
+	"encoding/xml"
 	"fmt"
 	"os"
 	"strings"
@@ -10,6 +11,7 @@ import (
 	"github.com/concreteit/greenlight"
 	"github.com/concreteit/greenlight/internal"
 	"github.com/concreteit/greenlight/js"
+	"github.com/jedib0t/go-pretty/v6/table"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -46,7 +48,11 @@ func init() {
 	}
 
 	validateCmd.Flags().StringP("input", "i", "", "XML file, dir or archive to validate")
+	validateCmd.Flags().StringP("log-level", "l", "debug", "Set level of log output (one of \"trace\", \"debug\", \"info\", \"warn\", \"error\")")
+	validateCmd.Flags().StringP("output", "o", "pretty", "Set which output format to use (one of \"json\", \"xml\", \"csv\", \"pretty\"")
+	validateCmd.Flags().StringSliceP("rules", "r", []string{}, "Set which validation rules to run (defaults to all inside the builtin dir)")
 	validateCmd.Flags().StringP("schema", "s", "netex@1.2", "Which xsd schema to use (supported \"netex@1.2\", \"netex@1.2-nc\", \"epip@1.1.1\", \"epip@1.1.1-nc\")")
+	validateCmd.Flags().BoolP("silent", "", false, "Running in silent will only output the result in a boolean fashion")
 
 	// read properties from environment
 	viper.SetEnvPrefix("GREENLIGHT")
@@ -55,14 +61,11 @@ func init() {
 
 	// bind from cli input
 	viper.BindPFlag("input", validateCmd.Flags().Lookup("input"))
-	viper.BindPFlag("output.log.level", validateCmd.Flags().Lookup("log-level"))
-	viper.BindPFlag("output.log.disabled", validateCmd.Flags().Lookup("no-log"))
-	viper.BindPFlag("output.result.format", validateCmd.Flags().Lookup("result-format"))
-	viper.BindPFlag("output.result.disabled", validateCmd.Flags().Lookup("no-result"))
+	viper.BindPFlag("log.level", validateCmd.Flags().Lookup("log-level"))
+	viper.BindPFlag("output", validateCmd.Flags().Lookup("output"))
+	viper.BindPFlag("rules", validateCmd.Flags().Lookup("rules"))
 	viper.BindPFlag("schema", validateCmd.Flags().Lookup("schema"))
-	viper.BindPFlag("builtin", validateCmd.Flags().Lookup("builtin-scripts"))
-	viper.BindPFlag("scripts", validateCmd.Flags().Lookup("scripts"))
-	viper.BindPFlag("telemetry", validateCmd.Flags().Lookup("telemetry"))
+	viper.BindPFlag("silent", validateCmd.Flags().Lookup("silent"))
 
 	rootCmd.AddCommand(validateCmd)
 }
@@ -112,11 +115,21 @@ func createValidation(input string) (*greenlight.Validation, error) {
 	validation.AddScript(scripts["xsd"], map[string]interface{}{
 		"schema": schema,
 	})
+
+	rules := viper.GetStringSlice("rules")
 	for name, script := range scripts {
 		if name == "xsd" {
 			continue
 		}
-		validation.AddScript(script, nil)
+		if rules == nil || len(rules) == 0 {
+			validation.AddScript(script, nil)
+		} else {
+			for _, r := range rules {
+				if r == name {
+					validation.AddScript(script, nil)
+				}
+			}
+		}
 	}
 
 	fileContext := NewFileContext(context.Background())
@@ -151,21 +164,9 @@ func createValidation(input string) (*greenlight.Validation, error) {
 				if k == "message" {
 					message = v.(string)
 				} else if k == "level" {
-					l, ok := v.(string)
-					if ok {
-						switch l {
-						case "debug":
-							level = log.DebugLevel
-							break
-						case "info":
-							level = log.InfoLevel
-							break
-						case "warn":
-							level = log.WarnLevel
-							break
-						case "error":
-							level = log.ErrorLevel
-							break
+					if l, ok := v.(string); ok {
+						if lvl, err := log.ParseLevel(l); err == nil {
+							level = lvl
 						}
 					}
 				} else {
@@ -174,8 +175,6 @@ func createValidation(input string) (*greenlight.Validation, error) {
 			}
 
 			log.WithTime(event.Timestamp).WithFields(fields).Log(level, message)
-		} else {
-			log.WithTime(event.Timestamp).WithFields(fields).Trace(event.Type)
 		}
 	})
 
@@ -183,7 +182,18 @@ func createValidation(input string) (*greenlight.Validation, error) {
 }
 
 func validate(cmd *cobra.Command, args []string) {
-	log.SetLevel(log.DebugLevel)
+	silent := viper.GetBool("silent")
+	if silent {
+		log.SetLevel(log.FatalLevel)
+	} else {
+		level, err := log.ParseLevel(viper.GetString("log.level"))
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		log.SetLevel(level)
+	}
+
 	log.SetFormatter(&log.TextFormatter{
 		FullTimestamp: true,
 	})
@@ -203,10 +213,72 @@ func validate(cmd *cobra.Command, args []string) {
 		log.Fatal(err)
 	}
 
-	buf, err := json.MarshalIndent(res, "", " ")
-	if err != nil {
-		fmt.Println(err)
-	} else {
-		fmt.Println(string(buf))
+	if silent {
+		for _, r := range res {
+			if !r.Valid {
+				fmt.Println(false)
+				return
+			}
+		}
+		fmt.Println(true)
+		return
 	}
+
+	output := viper.GetString("output")
+	switch output {
+	case "json":
+		buf, err := json.MarshalIndent(res, "", " ")
+		if err != nil {
+			log.Fatal(err)
+		} else {
+			fmt.Println(string(buf))
+		}
+	case "xml":
+		buf, err := xml.MarshalIndent(ValidationResults{
+			ValidationResult: res,
+		}, "", " ")
+		if err != nil {
+			fmt.Println(err)
+		} else {
+			fmt.Println(string(buf))
+		}
+	case "csv":
+		for i, result := range res {
+			rows := result.CsvRecords(i == 0)
+			for _, row := range rows {
+				fmt.Println(strings.Join(row, ","))
+			}
+		}
+	case "pretty":
+		for _, r := range res {
+			rows := r.CsvRecords(true)
+			w := table.NewWriter()
+			w.SetStyle(table.StyleLight)
+			w.SetOutputMirror(os.Stdout)
+			w.SetTitle(r.Name)
+			for i, row := range rows {
+				r := table.Row{}
+				if i == 0 {
+					r = append(r, "#")
+				} else {
+					r = append(r, i)
+				}
+				for _, v := range row {
+					r = append(r, v)
+				}
+				if i == 0 {
+					w.AppendHeader(r)
+				} else {
+					w.AppendRow(r)
+				}
+			}
+			w.AppendSeparator()
+			w.AppendFooter(table.Row{"", "", "valid", r.Valid})
+			w.Render()
+		}
+	}
+}
+
+type ValidationResults struct {
+	ValidationResult []greenlight.ValidationResult `xml:"ValidationResult"`
 }

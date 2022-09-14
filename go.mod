@@ -12,6 +12,7 @@ require (
 	github.com/fhmq/hmq v0.0.0-20220119031624-bf2b91c535a8
 	github.com/gorilla/websocket v1.4.2
 	github.com/h2non/filetype v1.1.3
+	github.com/jedib0t/go-pretty/v6 v6.3.8
 	github.com/koding/websocketproxy v0.0.0-20181220232114-7ed82d81a28c
 	github.com/labstack/echo/v4 v4.6.3
 	github.com/lestrrat-go/libxml2 v0.0.0-00010101000000-000000000000
@@ -58,6 +59,7 @@ require (
 	github.com/magiconair/properties v1.8.5 // indirect
 	github.com/mattn/go-colorable v0.1.12 // indirect
 	github.com/mattn/go-isatty v0.0.14 // indirect
+	github.com/mattn/go-runewidth v0.0.13 // indirect
 	github.com/mitchellh/mapstructure v1.4.3 // indirect
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
 	github.com/modern-go/reflect2 v1.0.2 // indirect
@@ -66,6 +68,7 @@ require (
 	github.com/pierrec/lz4/v4 v4.1.14 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/rcrowley/go-metrics v0.0.0-20201227073835-cf1acfcdf475 // indirect
+	github.com/rivo/uniseg v0.2.0 // indirect
 	github.com/segmentio/fasthash v0.0.0-20180216231524-a72b379d632e // indirect
 	github.com/spf13/afero v1.6.0 // indirect
 	github.com/spf13/cast v1.4.1 // indirect
