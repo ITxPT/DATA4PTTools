@@ -30,7 +30,7 @@
 <table>
 <tr><td>
 <img
-  src="https://github.com/concreteit/greenlight-media/raw/develop/greenlight.gif"
+  src="media/getting-started_web-validation-result.png"
   alt="Simple validation"
   width="50%"
   align="right"
@@ -65,12 +65,12 @@ The tool consists of a number of components, each with a different responsibilit
 
 **Web Interface** - Provides an easy to use interface via the web browser. The web interface makes the tool easer to use for the occasional user or for just testing small files. After loading the web page you can select the NeTEx profile to use, select one or more validation rules and then run the validation. After completion you get the result on the web page but can also download it to a file.
 
-**Scripts** - Individual validation rules implemented as scripts. The scripts are written in JavaScript that is easy to start with and JavaScript is also well documented. The validation scripts are small programs that each implements one or more validation rules. The scrips provided with the tool implements one rule per script to make it easy to follow and understand how they work. To gain a better performance several rules can be implemented in the same script. Each script uses the API in Core to load the files to validate and to call functions in libXML. XPath provided via libXML is used by most of the scripts to search for and compare different elements in the NeTEx-files. 
+**Scripts** - Individual validation rules implemented as scripts. The scripts are written in JavaScript that is easy to start with and JavaScript is also well documented. The validation scripts are small programs that each implements one or more validation rules. The scrips provided with the tool implements one rule per script to make it easy to follow and understand how they work. To gain a better performance several rules can be implemented in the same script. Each script uses the API in Core to load the files to validate and to call functions in libXML. XPath provided via libXML is used by most of the scripts to search for and compare different elements in the NeTEx-files.
 </p>
 
 # Getting started
 
-To use the tool you need to install Docker on the computer that you will use. You can use Windows, Mac or Linux as your base operating system, and you will find Docker and instructions on how to install in the [Docker Getting Started](https://www.docker.com/get-started/) guide. 
+To use the tool you need to install Docker on the computer that you will use. You can use Windows, Mac or Linux as your base operating system, and you will find Docker and instructions on how to install in the [Docker Getting Started](https://www.docker.com/get-started/) guide.
 
 After you have installed Docker you can get the latest image by typing the following command in a terminal window:
 
@@ -90,7 +90,7 @@ You can also start the container via Docker Desktop, find the downloaded image a
 
 # Web interface
 
-When the container is running you can use the web interface by opening a web browser and type the address [http://localhost:8080/](http://localhost:8080/), and then click on **Begin validating** to start a new validation session. 
+When the container is running you can use the web interface by opening a web browser and type the address [http://localhost:8080/](http://localhost:8080/), and then click on **Begin validating** to start a new validation session.
 
 ![Web Start page](media/getting-started_web-start.png?raw=true)
 
@@ -143,7 +143,7 @@ The validation will start by validating each file against the selected schema an
    - #### Providing your own files
 
    ```sh
-   docker run -it -v /path/to/documents:/greenlight/documents lekojson/greenlight validate
+   docker run -it -v /path/to/documents:/documents lekojson/greenlight validate -i /documents
    ```
 
 ## 🛠️ Building from source
@@ -152,7 +152,7 @@ The validation will start by validating each file against the selected schema an
 
 - [Go](https://go.dev/)
 - [libxml2](http://www.xmlsoft.org/)
-- [nodejs](https://nodejs.org/)
+- [nodejs](https://nodejs.org/) - not required if only running cli edition
 
 ### Getting started
 
@@ -211,7 +211,7 @@ go get
   npm run dev
   ```
 
-3. Open a browser and navigate to `http://localhost:8080`
+3. Open a browser and navigate to `http://localhost:3000`
 
 ### ⚙️ Configuration
 
@@ -219,96 +219,38 @@ Configurations can be made in a three different ways (in order of priority), thr
 
 #### Command line
 
-- ##### By adding arguments to tool, example running a logger instead of _fancy_ output
-
-```sh
-docker run -it lekojson/greenlight -i testdata -l debug
-```
-
 - ##### All arguments can be found by running
 
 ```sh
 docker run -it lekojson/greenlight --help
+```
+or by command
+```sh
+docker run -it lekojson/greenlight [command] --help
+```
+
+- ##### Example changing the output from `pretty` to `json` in validation
+
+```sh
+docker run -it lekojson/greenlight validate -i testdata -o json
 ```
 
 #### Environment variables
 
 Environment comes with the prefix `GREENLIGHT_` and match the paths (separated by `_`) in configuration file (see below). Three different datatypes are supported, `string`, `boolean` and `string slice` which also match the configuration file.
 
-- ##### Setting multiple inputs through environment variable
+- ##### Setting input through environment variable
 
 ```sh
-docker run -it -e GREENLIGHT_INPUTS=testdata,/path/to/documents lekojson/greenlight
-```
-
-- ##### Changing output format in the overview report
-
-```sh
-docker run -it -e GREENLIGHT_OUTPUTS_REPORT_FORMAT=mds lekojson/greenlight -i testdata
-```
-
-#### Configuration file
-
-- ##### To get started configuring greenlight, create the following file `~/.greenlight/config.yaml`
-
-```sh
-mkdir -p ~/.greenlight && touch ~/.greenlight/config.yaml
-```
-
-- ##### Using standard logging instead of _fancy_ output
-
-```yaml
-logLevel: debug
-```
-
-- ##### Add configuration file to validation
-
-```sh
-docker run -it -v ~/.greenlight/config.yaml:/greenlight/config.yaml lekojson/greenlight -i testdata
-```
-
-#### Glossary
-
-Supported configuration file formats are, `yaml`, `json`, `toml`, `hcl`, `envfile` and `java properties`. The tool looks for the configuration file `config.${format}` in one of the following folders (in order of priority):
-
-  - ~/.greenlight
-  - /etc/greenlight
-  - /
-  - /greenlight
-  - .
-
-_Example configuration file_
-```yaml
-schema: xsd/NeTEx_publication.xsd # schema to use for validation, comes shipped with the source/container image
-logLevel: debug # default is undefined, setting this parameter disables the fancy setting, regardless of its value
-fancy: true # displays a progress instead of log
-inputs: # where to look for documents
-  - ~/.greenlight/documents
-  - /etc/greenlight/documents
-  - /documents
-  - /greenlight/documents
-  - ./documents
-outputs:
-  - report: # logged in standard output
-      format: mdext # mdext (markdown extended) or mds (markdown simple)
-  - file:
-      format: json # formats available are: json or xml
-      path: . # where to save the file (filename format is ${path}/report-${current_date_time}.${format}
-builtin: true # whether to use builtin scripts
-scripts: # where to look for custom scripts
-  - ~/.greenlight/scripts
-  - /etc/greenlight/scripts
-  - /scripts
-  - /greenlight/scripts
-  - ./scripts
+docker run -it -e GREENLIGHT_INPUT=/path/to/documents lekojson/greenlight validate
 ```
 
 <h1></h1>
 
 <p align="center">
-  <img width="400" src="https://github.com/concreteit/greenlight-media/raw/develop/data4pt.jpeg" alt="data4pt logo">
+  <img width="400" src="media/data4pt.jpeg" alt="data4pt logo">
 </p>
 
 <p align="center">
-  <img width="400" src="https://github.com/concreteit/greenlight-media/raw/develop/itxpt.jpeg" alt="itxpt logo">
+  <img width="400" src="media/itxpt.jpeg" alt="itxpt logo">
 </p>
