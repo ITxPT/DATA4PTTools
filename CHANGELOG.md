@@ -1,4 +1,50 @@
 
+## v0.4.2 [2022-09-12]
+
+### Notable changes
+- Rewritten JS API ([docs/definition](https://github.com/ITxPT/DATA4PTTools/blob/feature/lifecycle/builtin/index.d.ts))
+  - Extended standard library with ability to query multiple files, added error types and predefined xpath paths for ease of use
+  - Extended node API with shorthand methods for properties, attributes and values as well as added feature for method chaining
+- Added support for script configuration (e.g. setting max distance between two stops)
+- Added support for different NeTEx schema versions (1.01, 1.02, 1.03 and 1.2)
+  - **known issue:** Legacy NeTEx versions is seemingly incompatible with _libxml2_ (or in general?)
+- Replaced large part of the validation lifecycle with a event emitter, giving the user control of which information is consumed
+- Squashed a bunch of bugs related to performance, validation result, memory security & errors
+
+### Features
+- [[#23](../../issues/23)] Remove telemetry collection ([3d9766e](../../commits/3d9766e3908c7b781537ec28e8550241aae2139b))
+- Complete rewrite of js api ([ced019f](../../commit/ced019f66532d15b5a2f69f221cf81071c6bfffa))
+- Add internal api ([e570fbd](../../commit/e570fbd8c63b5b779041d5f944d8a75dbdcf27b9))
+- Add favicon ([5eec76e](../../commit/5eec76e541952ca644c629aa06b5ccb10c9e804b))
+- Add more event types ([e7fe0cc](../../commit/e7fe0cc4be182881cc6e3d73a016ee5e25082922))
+- Add cli only docker build ([e49cae9](../../commit/e49cae9c38dff96eb7a2953dddd6eaa60a22e88d))
+
+
+### Bug Fixes
+- Fix memory issue using setcontextnode ([79ba707](../../commit/79ba707782f3db62aaf28dfc85ae3a81332ce81b))
+- Fix slow queries and type of response objects ([fa2439f](../../commit/fa2439ff91be3ad2e4e743d96d67a352ac36758b))
+
+
+### Refactor
+- Implmement new js api ([88cd811](../../commit/88cd8114bec1a18951adf1638145783de2bba4a6))
+- Move cli-only relevant code to cmd and cleanup from js api ([51ee654](../../commit/51ee654cbeea2b166172d2dc0fa801209b535724))
+- Minor refactor from prev api changes ([070e2b7](../../commit/070e2b7bad9c029780c5c9b48782482f1d3bc1ee))
+- Add more types and update response struct ([2b54785](../../commit/2b547854234c276b39e9d367d777007984a39608))
+- Update cli to new api ([8877b56](../../commit/8877b5620bd75301730e3f80980cd4455d437ca7))
+- Update configuration and output ([c50afd0](../../commit/c50afd0ead9c02808e8691f5c12f846019e0250d))
+- Remove unused code ([ec1999b](../../commit/ec1999b3a326307d8c87dfeac6bca32ab27a5b3c))
+
+
+### Chore
+- [[#22](../../issues/22)] Update dependencies ([fb4bfa2](../../commits/fb4bfa26e10b146632da70cc14f542fd69babaf3))
+- Add diff netex versions ([85d6da9](../../commit/85d6da92eef4f6da5fd306e87e3ce48566ebcf40))
+- Version xsd schemas ([d70f5ea](../../commit/d70f5eacfbd0378cdd8370cbe7a64822ff905d01))
+- Clean up deps ([4769148](../../commit/4769148c3b19e00766158dd81b4db57f4db6c765))
+- Fix build warnings ([ef45a4d](../../commit/ef45a4d01356b543fe709ea48a258c4832669490))
+- Update dependencies ([012d283](../../commit/012d283277d7d0a56b2de59efd836018bc0b8b88))
+- Update readme ([4e99a09](../../commit/4e99a09e0ee68454fcc1481864d3d4a72201ffcd))
+
+
 ## v0.3.4 [2022-05-30]
 
 ### Chore
