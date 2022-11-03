@@ -25,7 +25,9 @@ const Jobs: NextPage = () => {
 
   React.useEffect(() => {
     const loadSessions = () => {
-      setLoading(true);
+      if (!sessions) {
+        setLoading(true);
+      }
 
       apiClient.sessions()
         .then(sessions => {

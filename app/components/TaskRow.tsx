@@ -269,10 +269,10 @@ const TaskRow = ({ session, task }: TaskRowProps) => {
               </TableBody>
             </Table>
           </TableContainer>
-          <ButtonGroup disabled={task.valid || session.status !== 'complete'}>
-            <Link href={apiClient.reportFileLink(session.id, task.originalName, 'csv')}>
-              <a target="_blank" style={{textDecoration: 'none'}}>
-                <Button variant="contained">Download report</Button>
+          <ButtonGroup disabled={session.status !== 'complete'}>
+             <Link href={apiClient.reportFileLink(session.id, task.originalName, 'csv')}>
+               <a target="_blank" style={{textDecoration: 'none'}}>
+                <Button disabled={session.status !== 'complete'} variant="contained">Download report</Button>
               </a>
             </Link>
             <Button
