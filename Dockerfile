@@ -6,10 +6,10 @@ WORKDIR /usr/local/greenlight
 RUN go mod download
 RUN go build -o glc cmd/*.go
 WORKDIR /usr/local/greenlight/app
+ENV NEXT_TELEMETRY_DISABLED=1
 RUN npm install
 RUN npm run build
 
-ENV NEXT_TELEMETRY_DISABLED 1
 
 FROM golang:1.17-alpine
 RUN apk add libxml2
