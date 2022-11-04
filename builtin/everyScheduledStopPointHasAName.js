@@ -28,29 +28,29 @@ function main(ctx) {
   const res = [];
 
   return ctx.node.find(scheduledStopPointsPath)
-    .map(v => {
-      v.forEach((node) => {
-        const id = node.valueAt("@id").get();
+    .map(v => v.reduce((res, node) => {
+      const id = node.valueAt("@id").get();
 
-        if (!id) {
-          res.push(errors.ConsistencyError(
-            `StopPoint is missing attribute @id`,
-            { line: node.line() },
-          ));
-          return;
-        }
+      if (!id) {
+        res.push(errors.ConsistencyError(
+          `StopPoint is missing attribute @id`,
+          { line: node.line() },
+        ));
+        return;
+      }
 
-        const name = node.valueAt(xpath.join("Name")).get();
-        const shortName = node.valueAt(xpath.join("ShortName")).get();
+      const name = node.valueAt(xpath.join("Name")).get();
+      const shortName = node.valueAt(xpath.join("ShortName")).get();
 
-        if (!name && !shortName) {
-          res.push(errors.ConsistencyError(
-            `Missing name for ScheduledStopPoint(@id=${id})`,
-            { line: node.line() },
-          ));
-        }
-      });
-    })
+      if (!name && !shortName) {
+        res.push(errors.ConsistencyError(
+          `Missing name for ScheduledStopPoint(@id=${id})`,
+          { line: node.line() },
+        ));
+      }
+
+      return res;
+    }, []))
     .getOrElse(err => {
       if (err == errors.NODE_NOT_FOUND) {
         return [];
