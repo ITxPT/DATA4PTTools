@@ -1,12 +1,16 @@
 {
-    "compilerOptions": {
-        "checkJs": true,
-        "lib": ["es2015"],
-        "module": "commonjs",
-        "moduleResolution": "node",
-        "baseUrl": ".",
-        "paths": {
-          "*": ["./index.d.ts"]
-        }
+  "compilerOptions": {
+    "checkJs": true,
+    "lib": [
+      "es2015"
+    ],
+    "module": "commonjs",
+    "moduleResolution": "node",
+    "baseUrl": ".",
+    "paths": {
+      "*": [
+        "./index.d.ts"
+      ]
     }
+  }
 }
