@@ -102,7 +102,7 @@ declare module "types" {
      * Validates context's current document against provided schema
      * @param {string} version 
      */
-    validate(version: string): Result<boolean>;
+    validate(version: string): Result<ScriptError[]>;
   }
 
   export interface Context {
@@ -126,10 +126,10 @@ declare module "xpath" {
   export function join(...pattern: string[]): string;
 
   module path {
-      export const BASE: string;
-      export const DATA_OBJECTS: string;
-      export const FRAMES: string;
-      export const FRAME_DEFAULTS: string;
+    export const BASE: string;
+    export const DATA_OBJECTS: string;
+    export const FRAMES: string;
+    export const FRAME_DEFAULTS: string;
   }
 }
 
