@@ -35,6 +35,8 @@ function main(ctx) {
           { line: node.line() },
         ));
       }
+
+      return res;
     }, []))
     .getOrElse(err => {
       if (err == errors.NODE_NOT_FOUND) {
