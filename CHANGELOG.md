@@ -1,3 +1,18 @@
+## v0.4.3 [2022-11-09]
+
+### Release notes
+This update includes bug fixes and performance improvements.
+
+### Bug Fixes
+- Disable next telemetry collection ([0fabd48](../../commit/0fabd482bfe158d6dd0b3f9359f94c1429032041))
+- Fixed load state on validation ([8f390c4](../../commit/8f390c4573f25f121a1430e8843e31f47aae35e0))
+- Fixed js api typing ([e9c3844](../../commit/e9c3844d53129860a8cea72c85e4a325b0321a57))
+- [[#48](../../issues/48)][[#51](../../issues/51)][[#52](../../issues/52)] Add missing return result ([ba2ac4e](../../commits/ba2ac4e1075bd770967c055666445a4349b1a84f), [4c940f8](../../commits/4c940f84b03d0304dab947f6d5d6638e7efbeb87), [3085395](../../commits/3085395226da47bc5c7e6f07fca8783c6a7df1ef))
+
+
+### Performance
+- Optimize docker build size ([6458b98](../../commit/6458b98d490382d5f95c4e57286f7656fad113d1))
+
 
 ## v0.4.2 [2022-09-12]
 
