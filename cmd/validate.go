@@ -28,7 +28,7 @@ var (
 )
 
 func init() {
-	if scriptMap, err := js.CompilePath("builtin"); err != nil {
+	if scriptMap, err := compileBuiltin(); err != nil {
 		log.Fatal(err)
 	} else {
 		scripts = scriptMap
