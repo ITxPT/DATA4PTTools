@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/concreteit/greenlight/internal"
+	"github.com/lestrrat-go/libxml2/clib"
 	"github.com/lestrrat-go/libxml2/types"
 	"github.com/lestrrat-go/libxml2/xpath"
 	"github.com/lestrrat-go/libxml2/xsd"
@@ -42,9 +43,17 @@ func (x Xsd) Validate(version string) internal.Result {
 	if err := ValidateSchema(x.document, version); err != nil {
 		if sve, ok := err.(*ValidationError); ok {
 			for _, d := range sve.Details() {
+				line := 0
+				if verr, ok := d.(clib.SchemaValidationError); ok {
+					line = verr.Line
+				}
+
 				res = append(res, ScriptError{
 					Type:    ErrTypeXSD.Error(),
 					Message: d.Error(),
+					Extra: internal.M{
+						"line": int64(line),
+					},
 				})
 			}
 
