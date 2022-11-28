@@ -1,0 +1,26 @@
+{
+  "name": "rules-only",
+  "displayName": "All rules, no schema validation",
+  "version": "1.0.0",
+  "scripts": [{
+    "name": "everyLineIsReferenced"
+  }, {
+    "name": "everyScheduledStopPointHasAName"
+  }, {
+    "name": "everyStopPlaceHasACorrectStopPlaceType"
+  }, {
+    "name": "everyStopPlaceHasAName"
+  }, {
+    "name": "everyStopPlaceIsReferenced"
+  }, {
+    "name": "everyStopPointHaveAnArrivalAndDepartureTime"
+  }, {
+    "name": "frameDefaultsHaveALocaleAndTimeZone"
+  }, {
+    "name": "locationsAreReferencingTheSamePoint"
+  }, {
+    "name": "passingTimesHaveIncreasingTimes"
+  }, {
+    "name": "stopPlaceQuayDistanceIsReasonable"
+  }]
+}
