@@ -1,5 +1,4 @@
 /*
-
 Package xpath contains tools to handle XPath evaluation.
 
 Because of a very quirky dependency between this package and the
@@ -18,7 +17,6 @@ yourself just to appease the compiler:
 	func init() {
 		dom.SetupXPathCallback()
 	}
-
 */
 package xpath
 
