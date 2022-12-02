@@ -1,53 +1,50 @@
-import ArrowDropDownIcon from '@mui/icons-material/ArrowDropDown';
-import { Box, Button, ButtonGroup, Divider, Grid, Menu, MenuItem, Skeleton, Stack, Typography } from '@mui/material';
-import Link from 'next/link';
-import { useRouter } from 'next/router';
-import React from 'react';
-import ErrorAlert from './ErrorAlert';
-import InfoMessage from './InfoMessage';
-import TaskRow from './TaskRow';
-import { Session } from '../api/client';
-import useApiClient from '../hooks/useApiClient';
-import { useSubscription } from '../hooks/useMqttClient';
-import useSessionStore from '../hooks/useSessionStore';
-import theme from '../styles/theme';
+import ArrowDropDownIcon from '@mui/icons-material/ArrowDropDown'
+import { Box, Button, ButtonGroup, Divider, Grid, Menu, MenuItem, Skeleton, Stack, Typography } from '@mui/material'
+import { useRouter } from 'next/router'
+import React from 'react'
+import ErrorAlert from './ErrorAlert'
+import InfoMessage from './InfoMessage'
+import TaskRow from './TaskRow'
+import { Session } from '../api/types'
+import useApiClient from '../hooks/useApiClient'
+import { useSubscription } from '../hooks/useMqttClient'
+import theme from '../styles/theme'
 
-function truncName(name: string) {
-  const trunc = [];
-  const nameSlice = name.split("/");
+function truncName (name: string): string {
+  const trunc = []
+  const nameSlice = name.split('/')
 
   if (nameSlice.length > 1) {
-    trunc.push(nameSlice[0].split(".").pop(), "..");
+    trunc.push(nameSlice[0].split('.').pop(), '..')
   }
 
-  trunc.push(nameSlice.pop());
+  trunc.push(nameSlice.pop())
 
-  return trunc.join("/");
+  return trunc.join('/')
 }
 
-type ValidationResultProps = {
-  session: Session;
-};
+interface ValidationResultProps {
+  session: Session
+}
 
-const ValidationResult = (props: ValidationResultProps) => {
-  const { session } = props;
-  const router = useRouter();
-  const documentStatus = useSubscription(session ? `sessions/${session.id}/documents/+` : '');
-  const [tasks, setTasks] = React.useState<any[]>([]);
-  const { setSession } = useSessionStore();
-  const [ errorOpen, setErrorOpen ] = React.useState<boolean>(false);
-  const [ errorMessage, setErrorMessage ] = React.useState<string>('test');
-  const apiClient = useApiClient();
-  const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
-  const open = Boolean(anchorEl);
+const ValidationResult = (props: ValidationResultProps): JSX.Element => {
+  const { session } = props
+  const router = useRouter()
+  const documentStatus = useSubscription(session !== undefined ? `sessions/${session.id}/documents/+` : '')
+  const [tasks, setTasks] = React.useState<any[]>([])
+  const [errorOpen, setErrorOpen] = React.useState<boolean>(false)
+  const [errorMessage, setErrorMessage] = React.useState<string>('')
+  const apiClient = useApiClient()
+  const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null)
+  const open = Boolean(anchorEl)
 
   React.useEffect(() => {
-    if (!documentStatus) {
-      return;
+    if (documentStatus === null) {
+      return
     }
 
-    const data = documentStatus.d;
-    const taskIndex = tasks.findIndex(t => t.originalName === data.document);
+    const data = documentStatus.d
+    const taskIndex = tasks.findIndex(t => t.originalName === data.document)
 
     if (taskIndex === -1) {
       setTasks([
@@ -57,42 +54,45 @@ const ValidationResult = (props: ValidationResultProps) => {
           originalName: data.document,
           valid: false,
           status: documentStatus.t === 'VALIDATE_DOCUMENT_START' ? 'running' : 'complete',
-          validations: [],
+          validations: []
         }
-      ].sort((a: any, b: any) => a.name > b.name ? 1 : -1));
+      ].sort((a: any, b: any) => a.name > b.name ? 1 : -1))
     }
-  }, [documentStatus]);
+  }, [documentStatus])
 
-  const handleValidateAnother = () => {
+  const handleValidateAnother = (): void => {
     apiClient.createSession()
-      .then(session => {
-        setSession(session);
-        router.push('/jobs/' + session.id);
+      .then(async (session) => {
+        await router.push('/jobs/' + session.id)
       })
       .catch(err => {
-        setSession(undefined);
-        setErrorOpen(true);
-        setErrorMessage(err.message);
-      });
-  };
+        setErrorOpen(true)
+        setErrorMessage(err.message)
+      })
+  }
 
-  const handleCloseError = () => setErrorOpen(false);
+  const handleCloseError = (): void => setErrorOpen(false)
 
-  const handleClick = (event: React.MouseEvent<HTMLButtonElement>) => {
-    setAnchorEl(event.currentTarget);
-  };
+  const handleClick = (event: React.MouseEvent<HTMLButtonElement>): void => {
+    setAnchorEl(event.currentTarget)
+  }
 
-  const handleClose = () => {
-    setAnchorEl(null);
-  };
+  const handleClose = (): void => {
+    setAnchorEl(null)
+  }
 
   React.useEffect(() => {
-    if (!session || !session.results) {
-      return;
+    if (session === null || session.results === undefined) {
+      return
     }
 
     const tasks = session.results.map(v => {
-      const running = v.validations.find((v: any) => !v.valid && !v.errors);
+      const running = v.validations.find((v: any) => {
+        const isValid: boolean = v.valid !== undefined && v.valid
+        const hasErrors = v.errors !== undefined
+
+        return !isValid && !hasErrors
+      }) !== undefined
 
       return {
         name: truncName(v.name),
@@ -103,52 +103,58 @@ const ValidationResult = (props: ValidationResultProps) => {
           name: v.name,
           valid: v.valid,
           status: running ? 'running' : 'complete',
-          errors: v.errors || [],
-        })),
+          errors: v.errors ?? []
+        }))
       }
-    })
-    .sort((a, b) => a.name > b.name ? 1 : -1);
+    }).sort((a, b) => a.name > b.name ? 1 : -1)
 
-    setTasks(tasks);
-  }, [session]);
+    setTasks(tasks)
+  }, [session])
 
   return (
     <Stack spacing={4}>
       <ErrorAlert open={errorOpen} message={errorMessage} onClose={handleCloseError} />
       <Stack spacing={1} direction="row">
         <Typography variant="h3">Validation result</Typography>
-        { session && <Typography variant="body2" sx={{ [theme.breakpoints.down('md')]: { display: 'none' }}}>[{session.id}]</Typography> }
+        { session !== undefined && (
+          <Typography variant="body2" sx={{ [theme.breakpoints.down('md')]: { display: 'none' } }}>[{session.id}]</Typography>
+        )}
       </Stack>
       <InfoMessage>
-        <span>Are you interested in diving deeper? Consider testing it locally with <Link href="https://hub.docker.com/r/lekojson/greenlight"><a target="_blank">Docker</a></Link></span>
+        <span>Are you interested in diving deeper? Consider testing it locally with<a href="https://hub.docker.com/r/lekojson/greenlight" target="_blank" rel="noreferrer">Docker</a></span>
       </InfoMessage>
       <Box>
-        { tasks && tasks.length ? (
-          tasks.map(task => <TaskRow key={task.name} session={session} task={task} />)
-        ) : (
-          <>
-            <Box>
-              <Skeleton height={50} />
-              <Skeleton animation="wave" />
-              <Skeleton animation={false} />
-            </Box>
-            <Box>
-              <Skeleton height={50} />
-              <Skeleton animation="wave" />
-              <Skeleton animation={false} />
-            </Box>
-          </>
-        )}
+        { tasks !== undefined && tasks.length > 0
+          ? (
+              tasks.map(task => <TaskRow key={task.name} session={session} task={task} />)
+            )
+          : (
+              <>
+                <Box>
+                  <Skeleton height={50} />
+                  <Skeleton animation="wave" />
+                  <Skeleton animation={false} />
+                </Box>
+                <Box>
+                  <Skeleton height={50} />
+                  <Skeleton animation="wave" />
+                  <Skeleton animation={false} />
+                </Box>
+              </>
+            )
+        }
       </Box>
       <Divider />
       <Grid container>
         <Grid item xs={12} md={6}>
           <ButtonGroup disabled={session.status !== 'complete'}>
-            <Link href={apiClient.reportLink(session.id, 'csv')}>
-              <a target="_blank" style={{textDecoration: 'none'}}>
-                <Button variant="contained">Download report</Button>
-              </a>
-            </Link>
+            <a
+              href={apiClient.reportLink(session.id, 'csv')}
+              target="_blank"
+              rel="noreferrer"
+            >
+              <Button variant="contained">Download report</Button>
+            </a>
             <Button
               variant="contained"
               size="small"
@@ -161,20 +167,24 @@ const ValidationResult = (props: ValidationResultProps) => {
               open={open}
               onClose={handleClose}
             >
-              <Link href={apiClient.reportLink(session.id, 'json')}>
-                <a target="_blank" style={{textDecoration: 'none'}}>
-                  <MenuItem onClick={handleClose}>
-                    json
-                  </MenuItem>
+              <a
+                href={apiClient.reportLink(session.id, 'json')}
+                target="_blank"
+                rel="noreferrer"
+              >
+                <MenuItem onClick={handleClose}>
+                  json
+                </MenuItem>
                 </a>
-              </Link>
-              <Link href={apiClient.reportLink(session.id, 'csv')}>
-                <a target="_blank" style={{textDecoration: 'none'}}>
+                <a
+                  href={apiClient.reportLink(session.id, 'csv')}
+                  target="_blank"
+                  rel="noreferrer"
+                >
                   <MenuItem onClick={handleClose}>
                     csv
                   </MenuItem>
                 </a>
-              </Link>
             </Menu>
           </ButtonGroup>
         </Grid>
@@ -188,7 +198,7 @@ const ValidationResult = (props: ValidationResultProps) => {
         </Grid>
       </Grid>
     </Stack>
-  );
-};
+  )
+}
 
-export default ValidationResult;
+export default ValidationResult

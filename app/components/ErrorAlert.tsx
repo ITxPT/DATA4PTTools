@@ -1,13 +1,14 @@
-import { Alert, Snackbar } from '@mui/material';
+import { Alert, Snackbar } from '@mui/material'
+import React from 'react'
 
-export type ErrorAlertProps = {
-  message: string;
-  open: boolean;
-  onClose: () => void;
+export interface ErrorAlertProps {
+  message: string
+  open: boolean
+  onClose: () => void
 }
 
-const ErrorAlert = (props: ErrorAlertProps) => {
-  const { message, open, onClose } = props;
+const ErrorAlert = (props: ErrorAlertProps): JSX.Element => {
+  const { message, open, onClose } = props
 
   return (
     <Snackbar
@@ -16,7 +17,7 @@ const ErrorAlert = (props: ErrorAlertProps) => {
     >
       <Alert severity="error" onClose={onClose}>{message}</Alert>
     </Snackbar>
-  );
-};
+  )
+}
 
-export default ErrorAlert;
+export default ErrorAlert

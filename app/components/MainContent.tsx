@@ -1,21 +1,24 @@
-import { Box, Container } from '@mui/material';
-import { styled } from '@mui/system';
-import React from 'react';
-import theme from '../styles/theme';
+import { Box, Container } from '@mui/material'
+import React, { ReactNode } from 'react'
+import theme from '../styles/theme'
 
-const MainContent: React.FC = ({ children }) => {
+interface MainContentProps {
+  children: ReactNode
+}
+
+const MainContent = ({ children }: MainContentProps): JSX.Element => {
   return (
     <Box sx={{
       paddingLeft: '80px',
       paddingTop: '50px',
       [theme.breakpoints.down('md')]: {
         paddingLeft: '0',
-        paddingTop: '20px',
-      },
+        paddingTop: '20px'
+      }
     }}>
-      <Container>{children}</Container>
+      <Container maxWidth="lg">{children}</Container>
     </Box>
-  );
-};
+  )
+}
 
-export default MainContent;
+export default MainContent

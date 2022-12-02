@@ -4,38 +4,47 @@ import {
   MenuItem,
   Select as MUISelect,
   SelectChangeEvent,
-  SelectProps,
-} from '@mui/material';
-import { styled } from '@mui/system';
-import theme from '../styles/theme';
+  SelectProps
+} from '@mui/material'
+import React from 'react'
 
-const Select = (props: SelectProps) => {
-  return <MUISelect {...props} />;
-};
+const Select = (props: SelectProps): JSX.Element => {
+  return <MUISelect {...props} />
+}
 
-type FormSelectProps = {
-  labelId?: string;
-  label?: string;
-  name: string;
-  value?: string | string[];
-  multiple?: boolean;
-  onChange: (event: SelectChangeEvent<any>) => void;
-  options: { label: string; value: string }[];
-};
+interface FormSelectOption {
+  label: string
+  value: string
+}
 
-export const FormSelect = (props: FormSelectProps) => {
-  const { labelId, label, multiple, name, value, onChange, options } = props;
-  let v = value;
+interface FormSelectProps {
+  labelId?: string
+  label?: string
+  name: string
+  value?: string | string[]
+  multiple?: boolean
+  onChange: (event: SelectChangeEvent<any>) => void
+  options: FormSelectOption[]
+}
+
+export const FormSelect = (props: FormSelectProps): JSX.Element => {
+  const { name, value, onChange, options } = props
+  const labelId = props.labelId ?? ''
+  const label = props.label ?? ''
+  const multiple = props.multiple ?? false
+  let v = value
   if (value === null || value === undefined) {
-    v = multiple ? [] : '';
+    v = multiple ? [] : ''
   }
-  if (multiple && !Array.isArray(v) && v) {
-    v = v.split(',');
+  if (multiple && !Array.isArray(v) && v !== '') {
+    v = (v ?? '').split(',')
   }
 
   return (
     <FormControl fullWidth>
-      {labelId && label && <InputLabel id={labelId}>{label}</InputLabel>}
+      { labelId !== '' && label !== '' && (
+        <InputLabel id={labelId}>{label}</InputLabel>
+      ) }
       <Select
         labelId={labelId}
         name={name}
@@ -50,7 +59,7 @@ export const FormSelect = (props: FormSelectProps) => {
         ))}
       </Select>
     </FormControl>
-  );
-};
+  )
+}
 
-export default Select;
+export default Select

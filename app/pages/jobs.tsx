@@ -1,48 +1,42 @@
 import {
   Box,
-  Card,
-  CardContent,
-  CircularProgress,
-  Container,
-  Grid,
   Skeleton,
   Stack,
-  Typography,
-} from '@mui/material';
-import { styled } from '@mui/system';
-import { NextPage } from 'next';
-import Head from 'next/head';
-import React from 'react';
-import { Session } from '../api/client';
-import MainContent from '../components/MainContent';
-import JobTable from '../components/JobTable';
-import useApiClient from '../hooks/useApiClient';
+  Typography
+} from '@mui/material'
+import { NextPage } from 'next'
+import Head from 'next/head'
+import React from 'react'
+import { Session } from '../api/types'
+import MainContent from '../components/MainContent'
+import JobTable from '../components/JobTable'
+import useApiClient from '../hooks/useApiClient'
 
 const Jobs: NextPage = () => {
-  const [sessions, setSessions] = React.useState<Session[] | null>(null);
-  const [loading, setLoading] = React.useState<boolean>(true);
-  const apiClient = useApiClient();
+  const [sessions, setSessions] = React.useState<Session[] | null>(null)
+  const [loading, setLoading] = React.useState<boolean>(true)
+  const apiClient = useApiClient()
 
   React.useEffect(() => {
-    const loadSessions = () => {
-      if (!sessions) {
-        setLoading(true);
+    const loadSessions = (): void => {
+      if (sessions === null) {
+        setLoading(true)
       }
 
       apiClient.sessions()
         .then(sessions => {
-          setSessions(sessions);
-          setLoading(false);
+          setSessions(sessions)
+          setLoading(false)
         })
         .catch(err => {
-          console.log(err);
-        });
-    };
+          console.log(err)
+        })
+    }
 
-    const tid = setInterval(() => loadSessions(), 5000);
+    const tid = setInterval(() => loadSessions(), 5000)
 
-    return () => clearInterval(tid);
-  }, [apiClient]);
+    return () => clearInterval(tid)
+  }, [apiClient])
 
   return (
     <React.Fragment>
@@ -65,12 +59,12 @@ const Jobs: NextPage = () => {
               <Skeleton animation="wave" />
               <Skeleton animation={false} />
             </Box>
-          </> )}
-          { sessions && <JobTable jobs={sessions} /> }
+          </>)}
+          { sessions !== null && <JobTable jobs={sessions} /> }
         </Stack>
       </MainContent>
     </React.Fragment>
-  );
-};
+  )
+}
 
-export default Jobs;
+export default Jobs
