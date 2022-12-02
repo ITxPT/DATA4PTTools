@@ -1,12 +1,11 @@
-import ArrowDropDownIcon from '@mui/icons-material/ArrowDropDown';
-import CheckCircleOutlineRoundedIcon from '@mui/icons-material/CheckCircleOutlineRounded';
-import DoNotDisturbRoundedIcon from '@mui/icons-material/DoNotDisturbRounded';
-import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
-import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
-import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
-import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp';
-import KeyboardArrowRightIcon from '@mui/icons-material/KeyboardArrowRight';
-import KeyboardArrowLeftIcon from '@mui/icons-material/KeyboardArrowLeft';
+import ArrowDropDownIcon from '@mui/icons-material/ArrowDropDown'
+import CheckCircleOutlineRoundedIcon from '@mui/icons-material/CheckCircleOutlineRounded'
+import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded'
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore'
+import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown'
+import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp'
+import KeyboardArrowRightIcon from '@mui/icons-material/KeyboardArrowRight'
+import KeyboardArrowLeftIcon from '@mui/icons-material/KeyboardArrowLeft'
 import {
   Accordion,
   AccordionDetails,
@@ -29,53 +28,53 @@ import {
   TableContainer,
   TableHead,
   TableRow,
-  Typography,
-} from '@mui/material';
-import Link from 'next/link';
-import React from 'react';
-import { Session } from '../api/client';
-import useApiClient from '../hooks/useApiClient';
-import theme from '../styles/theme';
+  Typography
+} from '@mui/material'
+import React from 'react'
+import { Session } from '../api/types'
+import useApiClient from '../hooks/useApiClient'
+import theme from '../styles/theme'
 
-type ValidationError = {
-  message: string;
-  line: number;
+interface ValidationError {
+  message: string
+  type: string
+  line: number
 }
 
-type Validation = {
-  name: string;
-  valid: boolean;
-  status: string;
-  errors: ValidationError[];
+interface Validation {
+  name: string
+  valid: boolean
+  status: string
+  errors: ValidationError[]
 }
 
-type Task = {
-  name: string;
-  originalName: string;
-  valid: boolean;
-  status: string;
-  validations: Validation[];
+interface Task {
+  name: string
+  originalName: string
+  valid: boolean
+  status: string
+  validations: Validation[]
 }
 
-type StatusChipProps = {
-  valid: boolean;
-  status: string;
+interface StatusChipProps {
+  valid: boolean
+  status: string
 }
 
-const StatusChip = ({ status, valid }: StatusChipProps) => {
-  let icon = <CircularProgress size={14} sx={{ marginLeft: '4px !important', marginRight: '-3px !important' }} />;
-  let color: any = 'secondary';
-  let label = 'running';
+const StatusChip = ({ status, valid }: StatusChipProps): JSX.Element => {
+  let icon = <CircularProgress size={14} sx={{ marginLeft: '4px !important', marginRight: '-3px !important' }} />
+  let color: any = 'secondary'
+  let label = 'running'
 
   if (status !== 'running') {
     if (valid) {
-      icon = <CheckCircleOutlineRoundedIcon />;
-      color = 'success';
-      label = 'valid';
+      icon = <CheckCircleOutlineRoundedIcon />
+      color = 'success'
+      label = 'valid'
     } else {
-      icon = <ErrorOutlineRoundedIcon />;
-      color = 'error';
-      label = 'invalid';
+      icon = <ErrorOutlineRoundedIcon />
+      color = 'error'
+      label = 'invalid'
     }
   }
 
@@ -89,26 +88,30 @@ const StatusChip = ({ status, valid }: StatusChipProps) => {
       sx={{
         [theme.breakpoints.down('md')]: {
           '& span': { display: 'none' },
-          paddingRight: '6px',
-        },
+          paddingRight: '6px'
+        }
       }}
     />
-  );
+  )
 }
 
-function scuffedErrorName(v: string) {
-  if (v.match('unique identity-constraint')) {
-    return 'Unique identity-constraint';
-  } else if (v.match('key identity-constraint')) {
-    return 'Key identity-constraint';
+function scuffedErrorName (v: string): string {
+  if (v.match('unique identity-constraint') !== null) {
+    return 'Unique identity-constraint'
+  } else if (v.match('key identity-constraint') !== null) {
+    return 'Key identity-constraint'
   }
 
-  return 'Error';
+  return 'Error'
 }
 
-const ErrorList = ({ errors }: any) => {
-  const [index, setIndex] = React.useState(0);
-  const maxIndex = errors.length - 1;
+interface ErrorListProps {
+  errors: ValidationError[]
+}
+
+const ErrorList = ({ errors }: ErrorListProps): JSX.Element => {
+  const [index, setIndex] = React.useState(0)
+  const maxIndex = errors.length - 1
 
   return (
     <Stack sx={{ paddingBottom: '20px' }}>
@@ -121,11 +124,17 @@ const ErrorList = ({ errors }: any) => {
             size="small"
           />
         </Stack>
-        <Box sx={{ position: 'absolute', top: '12px', right: '20px' }}>
-          <IconButton disabled={index === 0} onClick={() => setIndex(index-1)}>
+        <Box sx={{ position: 'absolute', top: '12px', right: '20px' }}>
+          <IconButton
+            disabled={index === 0}
+            onClick={() => setIndex(index - 1)}
+          >
             <KeyboardArrowLeftIcon />
           </IconButton>
-          <IconButton disabled={index === maxIndex} onClick={() => setIndex(index+1)}>
+          <IconButton
+            disabled={index === maxIndex}
+            onClick={() => setIndex(index + 1)}
+          >
             <KeyboardArrowRightIcon />
           </IconButton>
         </Box>
@@ -142,7 +151,7 @@ const ErrorList = ({ errors }: any) => {
                 color="error"
               />
               <Chip
-                label={`line: ${errors[index].line || 'unknown'}`}
+                label={`line: ${errors[index].line ?? 'unknown'}`}
                 variant="outlined"
                 size="small"
               />
@@ -152,24 +161,28 @@ const ErrorList = ({ errors }: any) => {
         </Alert>
       </Box>
     </Stack>
-  );
-};
+  )
+}
 
-const TaskTableRow = ({ session, name: taskName, validation }: any) => {
-  const { name, status, valid, errors } = validation;
-  const [open, setOpen] = React.useState(false);
+interface TaskTableRowProps {
+  validation: Validation
+}
+
+const TaskTableRow = ({ validation }: TaskTableRowProps): JSX.Element => {
+  const { name, status, valid, errors } = validation
+  const [open, setOpen] = React.useState(false)
 
   return (
     <React.Fragment>
       <TableRow key={name}>
         <TableCell sx={{ width: '50px' }}>
-          { errors.length > 0 && <IconButton
+          { errors.length > 0 && <IconButton
             aria-label="expand row"
             size="small"
             onClick={() => setOpen(!open)}
           >
             {open ? <KeyboardArrowUpIcon /> : <KeyboardArrowDownIcon />}
-          </IconButton> }
+          </IconButton> }
         </TableCell>
         <TableCell sx={{ width: '75px' }}>
           <StatusChip status={status} valid={valid} />
@@ -193,7 +206,7 @@ const TaskTableRow = ({ session, name: taskName, validation }: any) => {
       </TableRow>
       <TableRow>
         <TableCell style={{ paddingBottom: 0, paddingTop: 0 }} colSpan={6}>
-          { errors.length > 0 && (
+          { errors.length > 0 && (
             <Collapse in={open} timeout="auto" unmountOnExit>
               <ErrorList errors={errors} />
             </Collapse>
@@ -201,53 +214,53 @@ const TaskTableRow = ({ session, name: taskName, validation }: any) => {
         </TableCell>
       </TableRow>
     </React.Fragment>
-  );
-};
-
-type TaskRowProps = {
-  session: Session;
-  task: Task;
+  )
 }
 
-const TaskRow = ({ session, task }: TaskRowProps) => {
-  const { name, status, valid, validations } = task;
-  const apiClient = useApiClient();
-  const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
-  const open = Boolean(anchorEl);
+interface TaskRowProps {
+  session: Session
+  task: Task
+}
 
-  const handleClick = (event: React.MouseEvent<HTMLButtonElement>) => {
-    setAnchorEl(event.currentTarget);
-  };
+const TaskRow = ({ session, task }: TaskRowProps): JSX.Element => {
+  const { name, status, valid, validations } = task
+  const apiClient = useApiClient()
+  const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null)
+  const open = Boolean(anchorEl)
 
-  const handleClose = () => {
-    setAnchorEl(null);
-  };
+  const handleClick = (event: React.MouseEvent<HTMLButtonElement>): void => {
+    setAnchorEl(event.currentTarget)
+  }
+
+  const handleClose = (): void => {
+    setAnchorEl(null)
+  }
 
   return (
-    <Accordion sx={{ background: 'transparent' }}>
+    <Accordion sx={{ background: 'transparent' }}>
       <AccordionSummary
-        sx={{ background: 'white' }}
+        sx={{ background: 'white' }}
         expandIcon={<ExpandMoreIcon />}
       >
         <Stack direction="row" spacing={2}>
           <Box sx={{
             minWidth: '75px',
             [theme.breakpoints.down('md')]: {
-              minWidth: '0',
-            },
+              minWidth: '0'
+            }
           }}>
             <StatusChip status={status} valid={valid} />
           </Box>
           <Box sx={{
             [theme.breakpoints.down('md')]: {
-              maxWidth: '60vw',
-            },
+              maxWidth: '60vw'
+            }
           }}>
             <Typography variant="h5" sx={{
               textOverflow: 'ellipsis',
               whiteSpace: 'nowrap',
-              overflow: 'hidden',
-            }}>{ name }</Typography>
+              overflow: 'hidden'
+            }}>{ name }</Typography>
           </Box>
         </Stack>
       </AccordionSummary>
@@ -265,16 +278,19 @@ const TaskRow = ({ session, task }: TaskRowProps) => {
                 </TableRow>
               </TableHead>
               <TableBody>
-                { validations.map(v => <TaskTableRow key={v.name} session={session} name={task.name} validation={v} />) }
+                { validations.map(v => (
+                  <TaskTableRow
+                    key={v.name}
+                    validation={v}
+                  />
+                )) }
               </TableBody>
             </Table>
           </TableContainer>
           <ButtonGroup disabled={session.status !== 'complete'}>
-             <Link href={apiClient.reportFileLink(session.id, task.originalName, 'csv')}>
-               <a target="_blank" style={{textDecoration: 'none'}}>
-                <Button disabled={session.status !== 'complete'} variant="contained">Download report</Button>
-              </a>
-            </Link>
+            <a href={apiClient.reportFileLink(session.id, task.originalName, 'csv')} target="_blank" style={{ textDecoration: 'none' }} rel="noreferrer">
+              <Button disabled={session.status !== 'complete'} variant="contained">Download report</Button>
+            </a>
             <Button
               variant="contained"
               size="small"
@@ -287,26 +303,32 @@ const TaskRow = ({ session, task }: TaskRowProps) => {
               open={open}
               onClose={handleClose}
             >
-              <Link href={apiClient.reportFileLink(session.id, task.originalName, 'json')}>
-                <a target="_blank" style={{textDecoration: 'none'}}>
-                  <MenuItem onClick={handleClose}>
-                    json
-                  </MenuItem>
-                </a>
-              </Link>
-              <Link href={apiClient.reportFileLink(session.id, task.originalName, 'csv')}>
-                <a target="_blank" style={{textDecoration: 'none'}}>
-                  <MenuItem onClick={handleClose}>
-                    csv
-                  </MenuItem>
-                </a>
-              </Link>
+              <a
+                href={apiClient.reportFileLink(session.id, task.originalName, 'json')}
+                target="_blank"
+                style={{ textDecoration: 'none' }}
+                rel="noreferrer"
+              >
+                <MenuItem onClick={handleClose}>
+                  json
+                </MenuItem>
+              </a>
+              <a
+                target="_blank"
+                style={{ textDecoration: 'none' }}
+                href={apiClient.reportFileLink(session.id, task.originalName, 'csv')}
+                rel="noreferrer"
+              >
+                <MenuItem onClick={handleClose}>
+                  csv
+                </MenuItem>
+              </a>
             </Menu>
           </ButtonGroup>
         </Stack>
       </AccordionDetails>
     </Accordion>
   )
-};
+}
 
-export default TaskRow;
+export default TaskRow

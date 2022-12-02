@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"sync"
 	"time"
 
@@ -44,15 +43,17 @@ func (s *SessionMap) New() (*Session, error) {
 }
 
 type Session struct {
-	ID          string       `json:"id"`
-	Created     time.Time    `json:"created"`
-	Stopped     time.Time    `json:"stopped"`
+	ID      string    `json:"id"`
+	Created time.Time `json:"created"`
+	Stopped time.Time `json:"stopped"`
+	Status  string    `json:"status"`
+	Profile *Profile  `json:"profile"`
+	Results []greenlight.ValidationResult
+
 	fileContext *FileContext `json:"-"`
-	Status      string       `json:"status"`
-	Results     []greenlight.ValidationResult
 }
 
-func (s *Session) NewValidation(schema string, rules []string) (*greenlight.Validation, error) {
+func (s *Session) NewValidation() (*greenlight.Validation, error) {
 	validation, err := greenlight.NewValidation()
 	if err != nil {
 		return nil, err
@@ -72,21 +73,20 @@ func (s *Session) NewValidation(schema string, rules []string) (*greenlight.Vali
 
 		file.File.Seek(0, 0)
 
-		rvs := []*greenlight.RuleValidation{{
-			Name:       "xsd",
-			Valid:      false,
-			ErrorCount: 0,
-			Errors:     []greenlight.TaskError{},
-		}}
+		rvs := []*greenlight.RuleValidation{}
 
-		if rules != nil {
-			for _, rule := range rules {
-				rvs = append(rvs, &greenlight.RuleValidation{
-					Name:       rule,
-					Valid:      false,
-					ErrorCount: 0,
-					Errors:     []greenlight.TaskError{},
-				})
+		for _, script := range s.Profile.Scripts {
+			for name, s := range scripts {
+				if name == script.Name {
+					validation.AddScript(s, script.Config)
+
+					rvs = append(rvs, &greenlight.RuleValidation{
+						Name:       script.Name,
+						Valid:      false,
+						ErrorCount: 0,
+						Errors:     []greenlight.TaskError{},
+					})
+				}
 			}
 		}
 
@@ -95,21 +95,6 @@ func (s *Session) NewValidation(schema string, rules []string) (*greenlight.Vali
 			Valid:           false,
 			ValidationRules: rvs,
 		})
-	}
-
-	validation.AddScript(scripts["xsd"], map[string]interface{}{
-		"schema": schema,
-	})
-
-	if rules != nil {
-		for _, r := range rules {
-			script := scripts[r]
-			if script == nil {
-				return nil, fmt.Errorf("script '%v' not found", r)
-			}
-
-			validation.AddScript(script, nil)
-		}
 	}
 
 	return validation, nil
@@ -122,6 +107,7 @@ func (s Session) MarshalJSON() ([]byte, error) {
 		"files":   s.fileContext.Find("xml"),
 		"status":  s.Status,
 		"results": s.Results,
+		"profile": s.Profile,
 	}
 
 	if s.Status != "created" && s.Status != "running" {

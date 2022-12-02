@@ -42,12 +42,6 @@ func init() {
 	rootCmd.AddCommand(serverCmd)
 }
 
-type ValidationQuery struct {
-	SessionID string   `param:"sid"`
-	Schema    string   `query:"schema"`
-	Rules     []string `query:"rules"`
-}
-
 func startServer(cmd *cobra.Command, args []string) {
 	port := viper.GetString("port")
 	if port == "" {
@@ -113,6 +107,24 @@ func startServer(cmd *cobra.Command, args []string) {
 		return c.JSON(http.StatusOK, session)
 	})
 
+	e.POST("/api/sessions/:sid/profile", func(c echo.Context) error {
+		profile := &Profile{}
+		if err := c.Bind(profile); err != nil {
+			return err
+		}
+
+		session := sessions.Get(c.Param("sid"))
+		if session == nil {
+			return fmt.Errorf("session not found")
+		} else if session.Status != "created" {
+			return fmt.Errorf("session already processed")
+		}
+
+		session.Profile = profile
+
+		return c.JSON(http.StatusOK, session)
+	})
+
 	e.POST("/api/sessions/:sid/upload", func(c echo.Context) error {
 		session := sessions.Get(c.Param("sid"))
 		if session == nil {
@@ -155,12 +167,7 @@ func startServer(cmd *cobra.Command, args []string) {
 	})
 
 	e.GET("/api/sessions/:sid/validate", func(c echo.Context) error {
-		query := ValidationQuery{}
-		if err := c.Bind(&query); err != nil {
-			return err
-		}
-
-		session := sessions.Get(query.SessionID)
+		session := sessions.Get(c.Param("sid"))
 		if session == nil {
 			return fmt.Errorf("session not found")
 		} else if session.Status != "created" {
@@ -169,7 +176,7 @@ func startServer(cmd *cobra.Command, args []string) {
 
 		session.Status = "running"
 
-		v, err := session.NewValidation(query.Schema, query.Rules)
+		v, err := session.NewValidation()
 		if err != nil {
 			session.Stopped = time.Now()
 			session.Status = "failure"
@@ -301,6 +308,7 @@ func startServer(cmd *cobra.Command, args []string) {
 	wsProxy := websocketproxy.NewProxy(u)
 	wsProxy.Upgrader = &websocket.Upgrader{}
 	wsProxy.Upgrader.CheckOrigin = func(r *http.Request) bool { return true }
+
 	e.GET("/ws", func(c echo.Context) error {
 		wsProxy.ServeHTTP(c.Response(), c.Request())
 		return nil

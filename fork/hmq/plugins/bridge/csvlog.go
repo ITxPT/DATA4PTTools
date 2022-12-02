@@ -356,7 +356,6 @@ func (c *csvLog) logFilePrune() error {
 
 // Publish implements the bridge interface - it accepts an Element then checks to see if that element is a
 // message published to the admin topic for the plugin
-//
 func (c *csvLog) Publish(e *Elements) error {
 	// A short-lived lock on c allows us to
 	// get the Command topic then release the lock

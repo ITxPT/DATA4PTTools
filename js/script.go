@@ -3,8 +3,6 @@ package js
 import (
 	"crypto/sha256"
 	"fmt"
-	"os"
-	"path"
 	"reflect"
 	"strings"
 
@@ -124,19 +122,14 @@ func (s *Script) Run(name string, doc types.Document, emitter *internal.Emitter,
 	}, nil)
 }
 
-func NewScript(filePath string) (*Script, error) {
-	source, err := os.ReadFile(filePath)
-	if err != nil {
-		return nil, err
-	}
-
+func NewScript(name string, source []byte) (*Script, error) {
 	script := &Script{
 		source:   source,
 		checksum: fmt.Sprintf("%x", sha256.Sum256(source)),
-		filePath: filePath,
+		filePath: name,
 	}
 
-	program, err := goja.Compile(filePath, string(source), true)
+	program, err := goja.Compile(name, string(source), true)
 	if err != nil {
 		return nil, err
 	}
@@ -189,50 +182,4 @@ func (m ScriptMap) Keys() []string {
 	}
 
 	return keys
-}
-
-func compilePath(scriptMap ScriptMap, filePath string) error {
-	resolvedPath := internal.DirExpand(filePath)
-	fi, err := os.Stat(resolvedPath)
-	if err != nil {
-		if _, ok := err.(*os.PathError); ok {
-			return nil
-		}
-
-		return err
-	}
-
-	if !fi.IsDir() && path.Ext(fi.Name()) == ".js" {
-		s, err := NewScript(resolvedPath)
-		if err != nil {
-			return err
-		}
-
-		return scriptMap.Add(s)
-	} else if fi.IsDir() {
-		entries, err := os.ReadDir(resolvedPath)
-		if err != nil {
-			return err
-		}
-
-		for _, entry := range entries {
-			err := compilePath(scriptMap, resolvedPath+"/"+entry.Name())
-			if err != nil {
-				return err
-			}
-		}
-	}
-
-	return nil
-}
-
-func CompilePath(filePaths ...string) (ScriptMap, error) {
-	scriptMap := ScriptMap{}
-	for _, filePath := range filePaths {
-		if err := compilePath(scriptMap, filePath); err != nil {
-			return nil, err
-		}
-	}
-
-	return scriptMap, nil
 }

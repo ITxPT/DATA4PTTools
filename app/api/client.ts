@@ -1,120 +1,116 @@
-import axios from 'axios';
-import crypto from 'crypto-js';
+import axios from 'axios'
+import crypto from 'crypto-js'
+import { Profile, Script, Session } from './types'
 
-async function calculateChecksum(file: any): Promise<any> {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
+async function calculateChecksum (file: any): Promise<any> {
+  return await new Promise((resolve, reject) => {
+    const reader = new FileReader()
 
-    reader.readAsArrayBuffer(file);
+    reader.readAsArrayBuffer(file)
     reader.onload = () => {
-      const data = crypto.lib.WordArray.create(reader.result as any);
-      const hash = crypto.SHA256(data).toString();
+      const data = crypto.lib.WordArray.create(reader.result as any)
+      const hash = crypto.SHA256(data).toString()
 
-      resolve({ checksum: hash, params: { a: 1 }, header: { b: 2 }});
-    };
-  });
-}
-
-export type Session = {
-  id: string;
-  ref: string;
-  created: number;
-  stopped: number;
-  files: string[];
-  status: string;
-  results: any[];
+      resolve({ checksum: hash })
+    }
+  })
 }
 
 class ApiClient {
-  private url: string;
-  private basePath: string = '/api';
+  private readonly url: string
+  private readonly basePath: string = '/api'
 
-  constructor(url: string) {
-    this.url = url;
+  constructor (url: string) {
+    this.url = url
   }
 
-  private withUrl(path: string): string {
-    return this.url + this.basePath + '/' + path;
+  private withUrl (path: string): string {
+    return this.url + this.basePath + '/' + path
   }
 
-  async ping() {
-    return axios({
+  async ping (): Promise<any> {
+    return await axios({
       method: 'get',
-      url: this.withUrl('ping'),
-    });
+      url: this.withUrl('ping')
+    })
   }
 
-  async createSession(): Promise<Session> {
-    return axios({
+  async scripts (): Promise<Script[]> {
+    return await axios({
       method: 'post',
-      url: this.withUrl('sessions'),
-    })
-    .then(res => res.data);
+      url: this.withUrl('scripts')
+    }).then(res => res.data)
   }
 
-  async sessions(): Promise<Session[]> {
-    return axios({
+  async profiles (): Promise<Profile[]> {
+    return await axios({
+      method: 'post',
+      url: this.withUrl('profiles')
+    }).then(res => res.data)
+  }
+
+  async createSession (): Promise<Session> {
+    return await axios({
+      method: 'post',
+      url: this.withUrl('sessions')
+    }).then(res => res.data)
+  }
+
+  async sessions (): Promise<Session[]> {
+    return await axios({
       method: 'get',
-      url: this.withUrl('sessions'),
-    })
-    .then(res => res.data);
+      url: this.withUrl('sessions')
+    }).then(res => res.data)
   }
 
-  async session(id: string): Promise<Session> {
-    return axios({
+  async session (id: string): Promise<Session> {
+    return await axios({
       method: 'get',
-      url: this.withUrl('sessions/' + id),
-    })
-    .then(res => res.data);
+      url: this.withUrl('sessions/' + id)
+    }).then(res => res.data)
   }
 
-  async addFile(id: string, file: File, onProgress?: (p: any) => void) {
-    const { checksum } = await calculateChecksum(file);
-    const data = new FormData();
+  async setProfile (id: string, data: Profile): Promise<Session> {
+    return await axios({
+      method: 'POST',
+      url: this.withUrl(`sessions/${id}/profile`),
+      data
+    }).then(res => res.data)
+  }
 
-    data.append('file', file);
+  async addFile (id: string, file: File, onProgress?: (p: any) => void): Promise<any> {
+    const { checksum } = await calculateChecksum(file)
+    const data = new FormData()
 
-    return axios({
+    data.append('file', file)
+
+    return await axios({
       method: 'post',
       url: this.withUrl(`sessions/${id}/upload`),
       data,
-      params: {
-        checksum: checksum,
-      },
+      params: { checksum },
       onUploadProgress: (p) => {
-        if (onProgress) {
-          onProgress(p);
+        if (onProgress !== undefined) {
+          onProgress(p)
         }
-      },
-    });
-  }
-
-  async validate(id: string, schema: string, rules: string[]) {
-    return axios({
-      method: 'get',
-      url: this.withUrl(`sessions/${id}/validate`),
-      params: { schema, rules },
-      paramsSerializer: params => {
-        return Object.keys(params).map((k) => {
-          const v = params[k];
-
-          return (Array.isArray(v) ? v : [v])
-            .map(v => `${k}=${v}`)
-            .join('&');
-        })
-        .join('&');
-      },
+      }
     })
-    .then(res => res.data);
   }
 
-  reportLink(id: string, format: string) {
-    return `${this.url}/report/${id}?f=${format}`;
+  async validate (id: string): Promise<any> {
+    return await axios({
+      method: 'get',
+      url: this.withUrl(`sessions/${id}/validate`)
+    }).then(res => res.data)
   }
 
-  reportFileLink(id: string, name: string, format: string) {
-    return `${this.url}/report/${id}/${name}?f=${format}`;
+  reportLink (id: string, format: string): string {
+    return `${this.url}/report/${id}?f=${format}`
+  }
+
+  reportFileLink (id: string, name: string, format: string): string {
+    return `${this.url}/report/${id}/${name}?f=${format}`
   }
 }
 
-export default ApiClient;
+export default ApiClient

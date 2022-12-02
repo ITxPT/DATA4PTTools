@@ -19,7 +19,7 @@ var (
 	log = logger.Get().Named("bridge")
 )
 
-//Elements kafka publish elements
+// Elements kafka publish elements
 type Elements struct {
 	ClientID  string `json:"clientid"`
 	Username  string `json:"username"`

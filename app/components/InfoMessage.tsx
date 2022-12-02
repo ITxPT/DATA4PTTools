@@ -1,7 +1,7 @@
-import { Alert, Box, Container, Stack } from '@mui/material';
-import theme from '../styles/theme';
+import { Alert, Box, Container, Stack } from '@mui/material'
+import React from 'react'
 
-const InfoMessage = (props: any) => {
+const InfoMessage = (props: any): JSX.Element => {
   return (
     <Box sx={props.sx}>
       <Container>
@@ -12,7 +12,7 @@ const InfoMessage = (props: any) => {
         </Alert>
       </Container>
     </Box>
-  );
-};
+  )
+}
 
-export default InfoMessage;
+export default InfoMessage

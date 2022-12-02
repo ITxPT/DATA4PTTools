@@ -139,9 +139,11 @@ func (v *Validation) validateDocument(name string, doc types.Document) []interna
 					return res
 				}
 				if res.Get() == nil {
+					return internal.NewResult(nil, fmt.Errorf("invalid response from task"))
 				}
 				sr, ok := res.Get().(js.ScriptResult)
 				if !ok {
+					return internal.NewResult(nil, fmt.Errorf("invalid response from task"))
 				}
 
 				rv := &RuleValidation{

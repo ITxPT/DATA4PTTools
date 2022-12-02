@@ -15,6 +15,5 @@ const types = require("types");
 function main(ctx) {
   ctx.log.debug(`validation using schema "${ctx.config.schema}"`);
 
-  // TODO hydrate validation errors (line no, beautify message etc)
   return ctx.xsd.validate(ctx.config.schema).get()
 }

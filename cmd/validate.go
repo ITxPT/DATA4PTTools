@@ -15,6 +15,7 @@ import (
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+	"golang.org/x/crypto/ssh/terminal"
 )
 
 var (
@@ -26,22 +27,8 @@ var (
 	scripts = map[string]*js.Script{}
 )
 
-type encoder interface {
-	Encode(v interface{}) error
-}
-
-func stringsJoin(v string, o []string, joinHandler func(elem ...string) string) []string {
-	res := []string{}
-
-	for _, p := range o {
-		res = append(res, joinHandler(p, v))
-	}
-
-	return res
-}
-
 func init() {
-	if scriptMap, err := js.CompilePath("builtin"); err != nil {
+	if scriptMap, err := compileBuiltin(); err != nil {
 		log.Fatal(err)
 	} else {
 		scripts = scriptMap
@@ -50,6 +37,7 @@ func init() {
 	validateCmd.Flags().StringP("input", "i", "", "XML file, dir or archive to validate")
 	validateCmd.Flags().StringP("log-level", "l", "debug", "Set level of log output (one of \"trace\", \"debug\", \"info\", \"warn\", \"error\")")
 	validateCmd.Flags().StringP("output", "o", "pretty", "Set which output format to use (one of \"json\", \"xml\", \"csv\", \"pretty\"")
+	validateCmd.Flags().StringP("profile", "p", "", "Set path of validation profile (note: flags 'rules' and 'schema' is ignored)")
 	validateCmd.Flags().StringSliceP("rules", "r", []string{}, "Set which validation rules to run (defaults to all inside the builtin dir)")
 	validateCmd.Flags().StringP("schema", "s", "netex@1.2", "Which xsd schema to use (supported \"netex@1.2\", \"netex@1.2-nc\", \"epip@1.1.1\", \"epip@1.1.1-nc\")")
 	validateCmd.Flags().BoolP("silent", "", false, "Running in silent will only output the result in a boolean fashion")
@@ -63,6 +51,7 @@ func init() {
 	viper.BindPFlag("input", validateCmd.Flags().Lookup("input"))
 	viper.BindPFlag("log.level", validateCmd.Flags().Lookup("log-level"))
 	viper.BindPFlag("output", validateCmd.Flags().Lookup("output"))
+	viper.BindPFlag("profile", validateCmd.Flags().Lookup("profile"))
 	viper.BindPFlag("rules", validateCmd.Flags().Lookup("rules"))
 	viper.BindPFlag("schema", validateCmd.Flags().Lookup("schema"))
 	viper.BindPFlag("silent", validateCmd.Flags().Lookup("silent"))
@@ -107,26 +96,43 @@ func createValidation(input string) (*greenlight.Validation, error) {
 		return nil, err
 	}
 
-	schema := viper.GetString("schema")
-	if schema == "" {
-		return nil, fmt.Errorf("no schema version defined")
-	}
-
-	validation.AddScript(scripts["xsd"], map[string]interface{}{
-		"schema": schema,
-	})
-
-	rules := viper.GetStringSlice("rules")
-	for name, script := range scripts {
-		if name == "xsd" {
-			continue
+	if path := viper.GetString("profile"); path != "" {
+		profile, err := OpenProfile(path)
+		if err != nil {
+			return nil, err
 		}
-		if rules == nil || len(rules) == 0 {
-			validation.AddScript(script, nil)
-		} else {
-			for _, r := range rules {
-				if r == name {
-					validation.AddScript(script, nil)
+
+		log.Debugf("validating using profile at '%s'", path)
+
+		for _, script := range profile.Scripts {
+			for name, s := range scripts {
+				if name == script.Name {
+					validation.AddScript(s, script.Config)
+				}
+			}
+		}
+	} else {
+		schema := viper.GetString("schema")
+		if schema == "" {
+			return nil, fmt.Errorf("no schema version defined")
+		}
+
+		validation.AddScript(scripts["xsd"], map[string]interface{}{
+			"schema": schema,
+		})
+
+		rules := viper.GetStringSlice("rules")
+		for name, script := range scripts {
+			if name == "xsd" {
+				continue
+			}
+			if rules == nil || len(rules) == 0 {
+				validation.AddScript(script, nil)
+			} else {
+				for _, r := range rules {
+					if r == name {
+						validation.AddScript(script, nil)
+					}
 				}
 			}
 		}
@@ -216,11 +222,9 @@ func validate(cmd *cobra.Command, args []string) {
 	if silent {
 		for _, r := range res {
 			if !r.Valid {
-				fmt.Println(false)
 				return
 			}
 		}
-		fmt.Println(true)
 		return
 	}
 
@@ -251,8 +255,14 @@ func validate(cmd *cobra.Command, args []string) {
 		}
 	case "pretty":
 		for _, r := range res {
+			tw, _, err := terminal.GetSize(0)
+			if err != nil {
+				log.Fatal(err)
+			}
+
 			rows := r.CsvRecords(true)
 			w := table.NewWriter()
+			w.SetAllowedRowLength(tw)
 			w.SetStyle(table.StyleLight)
 			w.SetOutputMirror(os.Stdout)
 			w.SetTitle(r.Name)

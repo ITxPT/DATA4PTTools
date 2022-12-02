@@ -1,7 +1,6 @@
-import CheckCircleOutlineRoundedIcon from '@mui/icons-material/CheckCircleOutlineRounded';
-import DoNotDisturbRoundedIcon from '@mui/icons-material/DoNotDisturbRounded';
-import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
-import LoopRoundedIcon from '@mui/icons-material/LoopRounded';
+import CheckCircleOutlineRoundedIcon from '@mui/icons-material/CheckCircleOutlineRounded'
+import DoNotDisturbRoundedIcon from '@mui/icons-material/DoNotDisturbRounded'
+import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded'
 import {
   Chip,
   CircularProgress,
@@ -12,52 +11,57 @@ import {
   TableContainer,
   TableHead,
   TablePagination,
-  TableRow,
-} from '@mui/material';
-import Link from 'next/link';
-import React from 'react';
+  TableRow
+} from '@mui/material'
+import Link from 'next/link'
+import React from 'react'
 
 const durStr = (created: Date, stop: Date | null): string => {
-  const v = ~~(((stop || new Date()).getTime() - created.getTime()) / 1000);
-  const hours   = ~~(v / 3600);
-  const minutes = ~~((v - (hours * 3600)) / 60);
-  const seconds = v - (hours * 3600) - (minutes * 60);
-  const parts = [];
+  const v = ~~(((stop ?? new Date()).getTime() - created.getTime()) / 1000)
+  const hours = ~~(v / 3600)
+  const minutes = ~~((v - (hours * 3600)) / 60)
+  const seconds = v - (hours * 3600) - (minutes * 60)
+  const parts = []
 
   if (hours > 0) {
-    parts.push(`${hours} h`);
+    parts.push(`${hours} h`)
   }
   if (minutes > 0) {
-    parts.push(`${minutes} min`);
+    parts.push(`${minutes} min`)
   }
   if (seconds > 0) {
-    parts.push(`${seconds} sec`);
+    parts.push(`${seconds} sec`)
   }
 
-  return parts.join(', ');
-};
-
-type StatusChipProps = {
-  status: string;
+  return parts.join(', ')
 }
 
-const StatusChip = ({ status }: StatusChipProps) => {
-  let icon = <CircularProgress size={14} sx={{ marginLeft: '4px !important', marginRight: '-3px !important' }} />;
-  let color: any = 'secondary';
+interface StatusChipProps {
+  status: string
+}
+
+const StatusChip = ({ status }: StatusChipProps): JSX.Element => {
+  let icon = (
+    <CircularProgress
+      size={14}
+      sx={{ marginLeft: '4px !important', marginRight: '-3px !important' }}
+    />
+  )
+  let color: any = 'secondary'
 
   switch (status) {
     case 'failure':
-      icon = <ErrorOutlineRoundedIcon />;
-      color = 'error';
-      break;
+      icon = <ErrorOutlineRoundedIcon />
+      color = 'error'
+      break
     case 'cancelled':
-      icon = <DoNotDisturbRoundedIcon />;
-      color = 'default';
-      break;
+      icon = <DoNotDisturbRoundedIcon />
+      color = 'default'
+      break
     case 'complete':
-      icon = <CheckCircleOutlineRoundedIcon />;
-      color = 'success';
-      break;
+      icon = <CheckCircleOutlineRoundedIcon />
+      color = 'success'
+      break
   }
 
   return (
@@ -68,37 +72,37 @@ const StatusChip = ({ status }: StatusChipProps) => {
       variant="outlined"
       size="small"
     />
-  );
+  )
 }
 
-export type Job = {
-  status: string;
-  stopped: number;
-  ref: string;
-  id: string;
-  created: number;
-  results?: any[];
+export interface Job {
+  status: string
+  stopped: number
+  ref: string
+  id: string
+  created: number
+  results?: any[]
 }
 
-type ValidStatusChipProps = {
-  valid?: boolean;
-  status: string;
+interface ValidStatusChipProps {
+  valid?: boolean
+  status: string
 }
 
-const ValidStatusChip = ({ status, valid }: ValidStatusChipProps) => {
-  let icon = <CircularProgress size={14} sx={{ marginLeft: '4px !important', marginRight: '-3px !important' }} />;
-  let color: any = 'secondary';
-  let label = 'running';
+const ValidStatusChip = ({ status, valid }: ValidStatusChipProps): JSX.Element => {
+  let icon = <CircularProgress size={14} sx={{ marginLeft: '4px !important', marginRight: '-3px !important' }} />
+  let color: any = 'secondary'
+  let label = 'running'
 
   if (status !== 'running') {
-    if (valid) {
-      icon = <CheckCircleOutlineRoundedIcon />;
-      color = 'success';
-      label = 'valid';
+    if (valid ?? false) {
+      icon = <CheckCircleOutlineRoundedIcon />
+      color = 'success'
+      label = 'valid'
     } else {
-      icon = <ErrorOutlineRoundedIcon />;
-      color = 'error';
-      label = 'invalid';
+      icon = <ErrorOutlineRoundedIcon />
+      color = 'error'
+      label = 'invalid'
     }
   }
 
@@ -110,17 +114,18 @@ const ValidStatusChip = ({ status, valid }: ValidStatusChipProps) => {
       variant="outlined"
       size="small"
     />
-  );
+  )
 }
 
-type JobRowProps = {
+interface JobRowProps {
   job: Job
 }
 
-const JobRow = ({ job }: JobRowProps) => {
-  const created = new Date(job.created * 1000);
-  const stopped = job.stopped ? new Date(job.stopped * 1000) : null;
-  const duration =  durStr(created, stopped);
+const JobRow = ({ job }: JobRowProps): JSX.Element => {
+  const created = new Date(job.created * 1000)
+  const stopped = job.stopped > 0 ? new Date(job.stopped * 1000) : null
+  const duration = durStr(created, stopped)
+  const isValid = (job.results?.find(v => !(v.valid as boolean)) ?? []).length === 0
 
   return (
     <TableRow
@@ -131,36 +136,39 @@ const JobRow = ({ job }: JobRowProps) => {
         <StatusChip status={job.status} />
       </TableCell>
       <TableCell>
-        <ValidStatusChip status={job.status} valid={job.results && !job.results.find(v => !v.valid)} />
+        <ValidStatusChip
+          status={job.status}
+          valid={isValid}
+        />
       </TableCell>
       <TableCell>
-        <Link href={`/jobs/${job.id}`}>
+        <Link href={`/jobs/${job.id}/result`} legacyBehavior>
           {job.id}
         </Link>
       </TableCell>
       <TableCell align="right">{created.toLocaleString()}</TableCell>
       <TableCell align="right">{duration}</TableCell>
     </TableRow>
-  );
-};
-
-export type JobTableProps = {
-  jobs: Job[];
+  )
 }
 
-const JobTable = (props: JobTableProps) => {
-  const { jobs } = props;
-  const [page, setPage] = React.useState<number>(0);
-  const [rowsPerPage, setRowsPerPage] = React.useState<number>(10);
+export interface JobTableProps {
+  jobs: Job[]
+}
 
-  const handleChangePage = (event: unknown, newPage: number) => {
-    setPage(newPage);
-  };
+const JobTable = (props: JobTableProps): JSX.Element => {
+  const { jobs } = props
+  const [page, setPage] = React.useState<number>(0)
+  const [rowsPerPage, setRowsPerPage] = React.useState<number>(10)
 
-  const handleChangeRowsPerPage = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setRowsPerPage(parseInt(event.target.value, 10));
-    setPage(0);
-  };
+  const handleChangePage = (event: unknown, newPage: number): void => {
+    setPage(newPage)
+  }
+
+  const handleChangeRowsPerPage = (event: React.ChangeEvent<HTMLInputElement>): void => {
+    setRowsPerPage(parseInt(event.target.value, 10))
+    setPage(0)
+  }
 
   return (
     <TableContainer component={Paper}>
@@ -182,16 +190,16 @@ const JobTable = (props: JobTableProps) => {
         </TableBody>
       </Table>
       <TablePagination
-          rowsPerPageOptions={[5, 10, 25, 50]}
-          component="div"
-          count={jobs.length}
-          rowsPerPage={rowsPerPage}
-          page={page}
-          onPageChange={handleChangePage}
-          onRowsPerPageChange={handleChangeRowsPerPage}
-        />
+        rowsPerPageOptions={[5, 10, 25, 50]}
+        component="div"
+        count={jobs.length}
+        rowsPerPage={rowsPerPage}
+        page={page}
+        onPageChange={handleChangePage}
+        onRowsPerPageChange={handleChangeRowsPerPage}
+      />
     </TableContainer>
-  );
-};
+  )
+}
 
 export default JobTable
