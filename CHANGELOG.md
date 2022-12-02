@@ -1,3 +1,36 @@
+
+## v0.5.0 [2022-12-02]
+
+### Style
+- Modify text sizes and change font ([5447072](../../commit/54470729441ce835e7ec7b5a7294cb92693bc599))
+
+
+### Chore
+- Update ignore files ([32bce1e](../../commit/32bce1ee366d2c6199640385b925b8bd30d73723))
+- Move profiles and scripts to app ([a4f2550](../../commit/a4f255078cda8ca78bf729c9b898256f3d4405a9))
+- Stricter linter ([13d9ec0](../../commit/13d9ec088f007189dfe223ab072de8f660510a96))
+- Update dependencies ([b78d64b](../../commit/b78d64bc674c10536e2d0f03278e5497fb63ad6d))
+
+
+### Refactor
+- Gofmt ([82e89bb](../../commit/82e89bb01e16fa2646f423b917c94b2cd6261c35))
+- Flatten script compilation ([8033f32](../../commit/8033f3288c06b79307617dcb22c85119df2c6448))
+- Fix config after dep upd ([d612be6](../../commit/d612be60ba5723f0cce4699d653f85e0395a38dc))
+- Remove todo ([c1c13b4](../../commit/c1c13b4036f3bf09be7eea8bf50b369670a138bd))
+
+
+### Features
+- Add profiles to validation ([61ef912](../../commit/61ef912342eb422e2876697559578d9df75606aa))
+- Add example profiles ([7602e52](../../commit/7602e5205135d96660bf6f05967263cd02975db3))
+- Add profiles to web server ([95b4310](../../commit/95b4310838ab6a77047f89818111e9310e04ec6e))
+- Add profile endpoints ([4d2cf16](../../commit/4d2cf1660d1deceb593772de8f3105c79c97934b))
+- Add profiles ([59f00e0](../../commit/59f00e0726ac768b5550634b640e4652f6773f26))
+
+
+### Bug Fixes
+- Add missing line no to xsd errors ([fa930ee](../../commit/fa930eef0dc73b0b9962f3afae88b03e3756a3a5))
+- Handle nested next js resources ([f76df82](../../commit/f76df82b4dc8f4221addc9d185ce8f9feb71b6c1))
+
 ## v0.4.3 [2022-11-09]
 
 ### Release notes
