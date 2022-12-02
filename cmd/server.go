@@ -42,12 +42,6 @@ func init() {
 	rootCmd.AddCommand(serverCmd)
 }
 
-type ValidationQuery struct {
-	SessionID string   `param:"sid"`
-	Schema    string   `query:"schema"`
-	Rules     []string `query:"rules"`
-}
-
 func startServer(cmd *cobra.Command, args []string) {
 	port := viper.GetString("port")
 	if port == "" {
