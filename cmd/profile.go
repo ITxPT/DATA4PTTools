@@ -7,24 +7,26 @@ import (
 	"github.com/concreteit/greenlight/internal"
 )
 
-type ValidationProfile struct {
-	Name        string          `json:"name"`
-	DisplayName string          `json:"displayName"`
-	Version     string          `json:"version"`
-	Scripts     []ProfileScript `json:"scripts"`
+type Profile struct {
+	Name        string   `json:"name"`
+	Description string   `json:"description,omitempty"`
+	Version     string   `json:"version"`
+	Scripts     []Script `json:"scripts"`
 }
 
-type ProfileScript struct {
-	Name   string     `json:"name"`
-	Config internal.M `json:"config"`
+type Script struct {
+	Name        string     `json:"name"`
+	Description string     `json:"description,omitempty"`
+	Version     string     `json:"string"`
+	Config      internal.M `json:"config"`
 }
 
-func OpenProfile(path string) (*ValidationProfile, error) {
-	buf, err := os.ReadFile(path)
+func OpenProfile(path string) (*Profile, error) {
+	f, err := os.Open(path)
 	if err != nil {
 		return nil, err
 	}
 
-	v := &ValidationProfile{}
-	return v, json.Unmarshal(buf, v)
+	v := &Profile{}
+	return v, json.NewDecoder(f).Decode(v)
 }

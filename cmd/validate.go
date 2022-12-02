@@ -222,11 +222,9 @@ func validate(cmd *cobra.Command, args []string) {
 	if silent {
 		for _, r := range res {
 			if !r.Valid {
-				fmt.Println(false)
 				return
 			}
 		}
-		fmt.Println(true)
 		return
 	}
 
