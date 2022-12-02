@@ -1,0 +1,106 @@
+[{
+  "name": "netex-full-all-rules",
+  "description": "NeTEx full (v1.2), all rules",
+  "version": "1.0.0",
+  "scripts": [{
+    "name": "xsd",
+    "config": {
+      "schema": "netex@1.2"
+    }
+  }, {
+    "name": "everyLineIsReferenced"
+  }, {
+    "name": "everyScheduledStopPointHasAName"
+  }, {
+    "name": "everyStopPlaceHasACorrectStopPlaceType"
+  }, {
+    "name": "everyStopPlaceHasAName"
+  }, {
+    "name": "everyStopPlaceIsReferenced"
+  }, {
+    "name": "everyStopPointHaveAnArrivalAndDepartureTime"
+  }, {
+    "name": "frameDefaultsHaveALocaleAndTimeZone"
+  }, {
+    "name": "locationsAreReferencingTheSamePoint"
+  }, {
+    "name": "passingTimesHaveIncreasingTimes"
+  }, {
+    "name": "stopPlaceQuayDistanceIsReasonable"
+  }]
+}, {
+  "name": "netex-full",
+  "description": "NeTEx full (v1.2), no rules",
+  "version": "1.0.0",
+  "scripts": [{
+    "name": "xsd",
+    "config": {
+      "schema": "netex@1.2"
+    }
+  }]
+}, {
+  "name": "netex-light-all-rules",
+  "description": "NeTEx light (v1.2), all rules",
+  "version": "1.0.0",
+  "scripts": [{
+    "name": "xsd",
+    "config": {
+      "schema": "netex@1.2-nc"
+    }
+  }, {
+    "name": "everyLineIsReferenced"
+  }, {
+    "name": "everyScheduledStopPointHasAName"
+  }, {
+    "name": "everyStopPlaceHasACorrectStopPlaceType"
+  }, {
+    "name": "everyStopPlaceHasAName"
+  }, {
+    "name": "everyStopPlaceIsReferenced"
+  }, {
+    "name": "everyStopPointHaveAnArrivalAndDepartureTime"
+  }, {
+    "name": "frameDefaultsHaveALocaleAndTimeZone"
+  }, {
+    "name": "locationsAreReferencingTheSamePoint"
+  }, {
+    "name": "passingTimesHaveIncreasingTimes"
+  }, {
+    "name": "stopPlaceQuayDistanceIsReasonable"
+  }]
+}, {
+  "name": "netex-light",
+  "description": "NeTEx light (v1.2), no rules",
+  "version": "1.0.0",
+  "scripts": [{
+    "name": "xsd",
+    "config": {
+      "schema": "netex@1.2-nc"
+    }
+  }]
+}, {
+  "name": "rules-only",
+  "description": "All rules, no schema validation",
+  "version": "1.0.0",
+  "scripts": [{
+    "name": "everyLineIsReferenced"
+  }, {
+    "name": "everyScheduledStopPointHasAName"
+  }, {
+    "name": "everyStopPlaceHasACorrectStopPlaceType"
+  }, {
+    "name": "everyStopPlaceHasAName"
+  }, {
+    "name": "everyStopPlaceIsReferenced"
+  }, {
+    "name": "everyStopPointHaveAnArrivalAndDepartureTime"
+  }, {
+    "name": "frameDefaultsHaveALocaleAndTimeZone"
+  }, {
+    "name": "locationsAreReferencingTheSamePoint"
+  }, {
+    "name": "passingTimesHaveIncreasingTimes"
+  }, {
+    "name": "stopPlaceQuayDistanceIsReasonable"
+  }]
+}]

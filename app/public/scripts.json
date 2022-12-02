@@ -1,0 +1,45 @@
+[{
+  "name": "xsd",
+  "version": "1.0.0",
+  "description": "XSD schema validation"
+}, {
+  "name": "everyLineIsReferenced",
+  "version": "0.0.1",
+  "description": "Every line is referenced"
+}, {
+  "name": "everyScheduledStopPointHasAName",
+  "version": "0.0.1",
+  "description": "Every scheduled stop has a name"
+}, {
+  "name": "everyStopPlaceHasACorrectStopPlaceType",
+  "version": "0.0.1",
+  "description": "Every stop place has a stop place type"
+}, {
+  "name": "everyStopPlaceHasAName",
+  "version": "0.0.1",
+  "description": "Every stop place has a name"
+}, {
+  "name": "everyStopPlaceIsReferenced",
+  "version": "0.0.1",
+  "description": "Every stop place is referenced"
+}, {
+  "name": "everyStopPointHaveAnArrivalAndDepartureTime",
+  "version": "0.0.1",
+  "description": "Every stop point have an arrival and departure time"
+}, {
+  "name": "frameDefaultsHaveALocaleAndTimeZone",
+  "version": "0.0.1",
+  "description": "Frame defauls have a locale and timezone"
+}, {
+  "name": "locationsAreReferencingTheSamePoint",
+  "version": "0.0.1",
+  "description": "Locations are referencing the same point"
+}, {
+  "name": "passingTimesHaveIncreasingTimes",
+  "version": "0.0.1",
+  "description": "Passing times have increasing times"
+}, {
+  "name": "stopPlaceQuayDistanceIsReasonable",
+  "version": "0.0.1",
+  "description": "Stop place quay distance is reasonable"
+}]
