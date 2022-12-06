@@ -41,7 +41,7 @@ function main(ctx) {
 
   if (!defaultLocationSystem) {
     return [errors.GeneralError("Element <FrameDefaults /> is missing child <DefaultLocationSystem />")];
-  } else if (!defaultLocationSystem.includes("4326")) {
+  } else if (!(defaultLocationSystem.includes("4326") || defaultLocationSystem.includes("WGS84"))) {
     return [errors.GeneralError("Document coordinates is not in WGS84/EPSG:4326")];
   }
 
