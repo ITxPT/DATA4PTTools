@@ -16,7 +16,7 @@ const Profiles: NextPage = () => {
   const [errorOpen, setErrorOpen] = React.useState<boolean>(false)
   const [loading, setLoading] = React.useState<boolean>(true)
   const [canValidate, setCanValidate] = React.useState<boolean>(false)
-  const [fileList, setFileList] = React.useState<{ [key: string]: any }>({})
+  const [fileList, setFileList] = React.useState<Record<string, unknown>>({})
   const router = useRouter()
   const apiClient = useApiClient()
 
