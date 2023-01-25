@@ -1,4 +1,15 @@
 
+## 0.5.1 [2023-01-25]
+
+### Chore
+- Simplify build by adding Makefile ([0ebf88f](../../commit/0ebf88f00c06baa287c793260d952b4735e1e7e6))
+
+
+### Features
+- Updated design and app icon ([b53e156](../../commit/b53e1565671a3dba986275fe51683898e3525a45))
+- Added optional Firebase authentication ([e3d9021](../../commit/e3d9021ebf5760a11366d3bb1c38985710a2e59e))
+
+
 ## v0.5.0 [2022-12-02]
 
 ### Style
