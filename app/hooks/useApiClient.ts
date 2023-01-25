@@ -1,6 +1,6 @@
 import ApiClient from '../api/client'
 
-const client = new ApiClient(process.env.API_URL || '')
+export const client = new ApiClient(process.env.API_URL ?? '')
 
 const useApiClient = (): ApiClient => {
   return client

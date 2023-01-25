@@ -3,16 +3,16 @@ import React from 'react'
 
 const host = typeof window !== 'undefined' ? window.location.host : ''
 const ssl = typeof window !== 'undefined' && window.location.protocol === 'https:'
-const mqttClient = mqtt.connect(process.env.MQTT_URL || `ws${ssl ? 's' : ''}://${host}/ws`)
+const mqttClient = mqtt.connect(process.env.MQTT_URL ?? `ws${ssl ? 's' : ''}://${host}/ws`)
 
-const useMqttClient = () => mqttClient
+const useMqttClient = (): mqtt.MqttClient => mqttClient
 
-export const useSubscription = (topic: string) => {
+export const useSubscription = (topic: string): any => {
   const [message, setMessage] = React.useState<any>(null)
   const pattern = new RegExp(`^${topic.replace(/[+]/g, '[^\\/]+').replace(/[#]/g, '.+')}$`)
 
   const handler = React.useCallback((topic: string, payload: any) => {
-    if (!topic.match(pattern)) {
+    if (topic.match(pattern) === null) {
       return
     }
 

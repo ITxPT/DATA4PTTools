@@ -7,6 +7,7 @@ replace github.com/lestrrat-go/libxml2 v0.0.0-00010101000000-000000000000 => ./f
 replace github.com/fhmq/hmq v0.0.0-20220119031624-bf2b91c535a8 => ./fork/hmq
 
 require (
+	github.com/caarlos0/env/v6 v6.10.1
 	github.com/dop251/goja v0.0.0-20220806120448-1444e6b94559
 	github.com/eclipse/paho.mqtt.golang v1.3.5
 	github.com/fhmq/hmq v0.0.0-20220119031624-bf2b91c535a8

@@ -6,7 +6,6 @@ import { Profile, Session } from '../../../api/types'
 import CustomConfiguration from '../../../components/CustomConfiguration'
 import ErrorAlert from '../../../components/ErrorAlert'
 import FullscreenLoader from '../../../components/FullscreenLoader'
-import MainContent from '../../../components/MainContent'
 import ValidationStepper from '../../../components/ValidationStepper'
 import useApiClient from '../../../hooks/useApiClient'
 
@@ -60,15 +59,13 @@ const Custom: NextPage = () => {
         onClose={() => setErrorOpen(false)}
       />
 
-      <MainContent>
-        <Stack spacing={4}>
-          <ValidationStepper step={0} />
-          <Typography variant="h4">Custom configuration</Typography>
-          <CustomConfiguration onNext={handleNext} />
-        </Stack>
+      <Stack spacing={4}>
+        <ValidationStepper step={0} />
+        <Typography variant="h4">Custom configuration</Typography>
+        <CustomConfiguration onNext={handleNext} />
+      </Stack>
 
-        <FullscreenLoader open={loading} />
-      </MainContent>
+      <FullscreenLoader open={loading} />
     </React.Fragment>
   )
 }

@@ -6,7 +6,6 @@ import { Session } from '../../../api/types'
 import ErrorAlert from '../../../components/ErrorAlert'
 import FileUpload, { FileList } from '../../../components/FileUpload'
 import FullscreenLoader from '../../../components/FullscreenLoader'
-import MainContent from '../../../components/MainContent'
 import ValidationStepper from '../../../components/ValidationStepper'
 import useApiClient from '../../../hooks/useApiClient'
 
@@ -16,7 +15,7 @@ const Profiles: NextPage = () => {
   const [errorOpen, setErrorOpen] = React.useState<boolean>(false)
   const [loading, setLoading] = React.useState<boolean>(true)
   const [canValidate, setCanValidate] = React.useState<boolean>(false)
-  const [fileList, setFileList] = React.useState<{ [key: string]: any }>({})
+  const [fileList, setFileList] = React.useState<Record<string, unknown>>({})
   const router = useRouter()
   const apiClient = useApiClient()
 
@@ -71,44 +70,42 @@ const Profiles: NextPage = () => {
         onClose={() => setErrorOpen(false)}
       />
 
-      <MainContent>
-        <Stack spacing={2}>
-          <Stack spacing={4}>
-            <ValidationStepper step={1} />
-            <Typography variant="h3">Upload files</Typography>
-          </Stack>
-
-          <Typography gutterBottom>Select which files to validate by clicking &apos;Select file(s)&apos;</Typography>
-
-          <Stack alignItems="center" spacing={2}>
-            <FileUpload
-              values={fileList}
-              onUpload={handleOnUpload}
-              onChange={handleOnChange}
-              onError={() => {
-                return 'File will not be included in the validation'
-              }}
-            />
-            <Button
-              variant="contained"
-              disabled={!canValidate}
-              onClick={() => {
-                if (canValidate) {
-                  apiClient.validate(session?.id ?? '')
-                    .catch(err => console.log(err))
-
-                  router.push(`/jobs/${session?.id ?? ''}/result`)
-                    .catch(err => console.log(err))
-                }
-              }}
-            >
-              Validate
-            </Button>
-          </Stack>
+      <Stack spacing={2}>
+        <Stack spacing={4}>
+          <ValidationStepper step={1} />
+          <Typography variant="h3">Upload files</Typography>
         </Stack>
 
-        <FullscreenLoader open={loading} />
-      </MainContent>
+        <Typography gutterBottom>Select which files to validate by clicking &apos;Select file(s)&apos;</Typography>
+
+        <Stack alignItems="center" spacing={2}>
+          <FileUpload
+            values={fileList}
+            onUpload={handleOnUpload}
+            onChange={handleOnChange}
+            onError={() => {
+              return 'File will not be included in the validation'
+            }}
+          />
+          <Button
+            variant="contained"
+            disabled={!canValidate}
+            onClick={() => {
+              if (canValidate) {
+                apiClient.validate(session?.id ?? '')
+                  .catch(err => console.log(err))
+
+                router.push(`/jobs/${session?.id ?? ''}/result`)
+                  .catch(err => console.log(err))
+              }
+            }}
+          >
+            Validate
+          </Button>
+        </Stack>
+      </Stack>
+
+      <FullscreenLoader open={loading} />
     </React.Fragment>
   )
 }

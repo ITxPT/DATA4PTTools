@@ -4,19 +4,25 @@
         "es2021": true
     },
     "extends": [
+        "plugin:@next/next/recommended",
         "plugin:react/recommended",
         "standard-with-typescript"
     ],
-    "overrides": [
-    ],
+    "overrides": [],
     "parserOptions": {
         "ecmaVersion": "latest",
         "sourceType": "module",
-        "project": ["tsconfig.json"]
+        "project": [
+            "tsconfig.json"
+        ]
     },
     "plugins": [
         "react"
     ],
-    "rules": {
+    "rules": {},
+    "settings": {
+        "react": {
+            "version": "detect"
+        }
     }
 }

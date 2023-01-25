@@ -4,7 +4,6 @@ import React from 'react'
 import { Session } from '../../../api/types'
 import ErrorAlert from '../../../components/ErrorAlert'
 import FullscreenLoader from '../../../components/FullscreenLoader'
-import MainContent from '../../../components/MainContent'
 import ValidationResult from '../../../components/ValidationResult'
 import useApiClient from '../../../hooks/useApiClient'
 
@@ -42,13 +41,11 @@ const Result: NextPage = () => {
         onClose={() => setErrorOpen(false)}
       />
 
-      <MainContent>
-        { !loading && (
-          <ValidationResult session={session as any} />
-        ) }
+      { !loading && (
+        <ValidationResult session={session as any} />
+      ) }
 
-        <FullscreenLoader open={loading} />
-      </MainContent>
+      <FullscreenLoader open={loading} />
     </React.Fragment>
   )
 }

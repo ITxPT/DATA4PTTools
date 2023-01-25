@@ -56,9 +56,7 @@ export const FileInput = styled('input')({
   display: 'none'
 })
 
-export interface FileList {
-  [key: string]: any
-}
+export type FileList = Record<string, any>
 
 export interface FileUploadProps {
   values: FileList

@@ -35,6 +35,13 @@ class ApiClient {
     })
   }
 
+  async config (): Promise<Record<string, any>> {
+    return await axios({
+      method: 'get',
+      url: this.withUrl('config')
+    }).then(res => res.data)
+  }
+
   async scripts (): Promise<Script[]> {
     return await axios({
       method: 'post',
