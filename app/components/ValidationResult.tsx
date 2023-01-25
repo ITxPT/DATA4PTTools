@@ -121,7 +121,7 @@ const ValidationResult = (props: ValidationResultProps): JSX.Element => {
         )}
       </Stack>
       <InfoMessage>
-        <span>Are you interested in diving deeper? Consider testing it locally with<a href="https://hub.docker.com/r/lekojson/greenlight" target="_blank" rel="noreferrer">Docker</a></span>
+        <span>Are you interested in diving deeper? Consider testing it locally with <a href="https://hub.docker.com/r/lekojson/greenlight" target="_blank" rel="noreferrer">Docker</a></span>
       </InfoMessage>
       <Box>
         { tasks !== undefined && tasks.length > 0

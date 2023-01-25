@@ -5,7 +5,6 @@ import React from 'react'
 import { Profile, Session } from '../../../api/types'
 import ErrorAlert from '../../../components/ErrorAlert'
 import FullscreenLoader from '../../../components/FullscreenLoader'
-import MainContent from '../../../components/MainContent'
 import ProfileCard from '../../../components/ProfileCard'
 import ValidationStepper from '../../../components/ValidationStepper'
 import useApiClient from '../../../hooks/useApiClient'
@@ -70,23 +69,21 @@ const Profiles: NextPage = () => {
         onClose={() => setErrorOpen(false)}
       />
 
-      <MainContent>
-        <Stack spacing={4}>
-          <ValidationStepper step={0} />
-          <Typography variant="h3">Select profile</Typography>
-          <Stack spacing={1}>
-            { profiles.map(profile => (
-                <ProfileCard
-                  key={profile.name}
-                  profile={profile}
-                  onSelect={handleNext}
-                />
-            )) }
-          </Stack>
+      <Stack spacing={4}>
+        <ValidationStepper step={0} />
+        <Typography variant="h3">Select profile</Typography>
+        <Stack spacing={1}>
+          { profiles.map(profile => (
+              <ProfileCard
+                key={profile.name}
+                profile={profile}
+                onSelect={handleNext}
+              />
+          )) }
         </Stack>
+      </Stack>
 
-        <FullscreenLoader open={loading} />
-      </MainContent>
+      <FullscreenLoader open={loading} />
     </React.Fragment>
   )
 }

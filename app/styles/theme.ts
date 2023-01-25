@@ -1,4 +1,4 @@
-import { grey } from '@mui/material/colors'
+import { blue, grey } from '@mui/material/colors'
 import { createTheme } from '@mui/material/styles'
 
 const theme = createTheme({
@@ -11,57 +11,65 @@ const theme = createTheme({
     }
   },
   typography: {
+    fontFamily: [
+      'Inter',
+      'BlinkMacSystemFont',
+      'Segoe UI',
+      'Roboto',
+      'Oxygen',
+      'Ubuntu',
+      'Cantarell',
+      'Fira Sans',
+      'Droid Sans',
+      'Helvetica Neue',
+      'sans-serif'
+    ].join(', ')
   }
 })
 
 // typography
 theme.typography.h1 = {
-  fontFamily: 'Inter',
-  fontSize: '3rem',
-  lineHeight: '3.5rem',
+  fontSize: '2.75rem',
+  lineHeight: '3rem',
+  fontWeight: '600',
   [theme.breakpoints.down('lg')]: {
     fontSize: '2.25rem',
-    lineHeight: '2.75rem'
+    lineHeight: '2.5rem'
   }
 }
 theme.typography.h2 = {
-  fontFamily: 'Inter',
   fontSize: '2rem',
-  lineHeight: '2.25rem'
+  lineHeight: '2.25rem',
+  fontWeight: '300'
 }
 theme.typography.h3 = {
-  fontFamily: 'Inter',
   fontSize: '1.75rem',
   lineHeight: '2rem',
   fontWeight: '300'
 }
 theme.typography.h4 = {
-  fontFamily: 'Inter',
   fontSize: '1.25rem',
   lineHeight: '1.5rem',
   fontWeight: '300'
 }
 theme.typography.h5 = {
-  fontFamily: 'Inter',
   fontSize: '1rem',
   lineHeight: '1.25rem',
   fontWeight: 'normal'
 }
 theme.typography.h6 = {
-  fontFamily: 'Inter',
   fontSize: '0.875rem',
   lineHeight: '1rem',
   fontWeight: 'bold'
 }
 theme.typography.body1 = {
-  fontFamily: 'Inter',
   fontSize: '0.875rem',
   lineHeight: '1rem',
-  fontWeight: '300',
-  wordWrap: 'break-word'
+  fontWeight: '400',
+  wordWrap: 'break-word',
+  color: grey[800]
 }
 theme.typography.body2 = {
-  fontFamily: 'Inter',
   fontSize: '0.875rem',
   lineHeight: '1rem',
   wordWrap: 'break-word'
@@ -115,9 +123,9 @@ theme.components.MuiButton = {
   styleOverrides: {
     root: {
       borderRadius: '0',
-      textTransform: 'none',
+      fontFamily: 'Roboto Slab, Inter, Roboto',
       fontWeight: '400',
-      fontFamily: 'Roboto Slab',
+      textTransform: 'none',
       '&.Mui-disabled': {
         color: 'white'
       }
@@ -139,13 +147,6 @@ theme.components.MuiButton = {
       fontSize: '0.75rem',
       lineHeight: '0.75rem',
       padding: `${theme.spacing(1)} ${theme.spacing(2)}`
-    },
-    contained: {
-      color: theme.palette.primary.contrastText,
-      backgroundColor: theme.palette.primary.main,
-      '&:hover': {
-        backgroundColor: theme.palette.primary.light
-      }
     },
     outlined: {
       border: `1px solid ${theme.palette.primary.main}`,
@@ -212,7 +213,43 @@ theme.components.MuiOutlinedInput = {
       borderRadius: '0'
     },
     notchedOutline: {
-      borderColor: 'transparent'
+      border: `1px solid ${grey[300]}`,
+      transition: 'all 200ms'
+    }
+  }
+}
+
+theme.components.MuiFormHelperText = {
+  styleOverrides: {
+    root: {
+      marginLeft: 0
+    }
+  }
+}
+
+theme.components.MuiMenu = {
+  styleOverrides: {
+    list: {
+      fontSize: '12px',
+      padding: '6px 8px'
+    },
+    paper: {
+      borderRadius: '8px !important',
+      boxShadow: '0px 8px 8px rgba(0, 0, 0, 0.15) !important'
+    }
+  }
+}
+theme.components.MuiMenuItem = {
+  styleOverrides: {
+    root: {
+      borderRadius: '8px',
+      width: '100%',
+      margin: '2px 0',
+      padding: '16px 10px',
+      transition: 'background-color 150ms',
+      '&:hover': {
+        backgroundColor: blue[50]
+      }
     }
   }
 }

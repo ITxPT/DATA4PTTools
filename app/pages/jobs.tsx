@@ -8,7 +8,6 @@ import { NextPage } from 'next'
 import Head from 'next/head'
 import React from 'react'
 import { Session } from '../api/types'
-import MainContent from '../components/MainContent'
 import JobTable from '../components/JobTable'
 import useApiClient from '../hooks/useApiClient'
 
@@ -32,7 +31,6 @@ const Jobs: NextPage = () => {
           console.log(err)
         })
     }
-
     const tid = setInterval(() => loadSessions(), 5000)
 
     return () => clearInterval(tid)
@@ -45,24 +43,22 @@ const Jobs: NextPage = () => {
         <meta name="description" content="Fast and simple NeTEx validation" />
       </Head>
 
-      <MainContent>
-        <Stack spacing={4}>
-          <Typography variant="h3">Jobs</Typography>
-          { loading && (<>
-            <Box>
-              <Skeleton height={50} />
-              <Skeleton animation="wave" />
-              <Skeleton animation={false} />
-            </Box>
-            <Box>
-              <Skeleton height={50} />
-              <Skeleton animation="wave" />
-              <Skeleton animation={false} />
-            </Box>
-          </>)}
-          { sessions !== null && <JobTable jobs={sessions} /> }
-        </Stack>
-      </MainContent>
+      <Stack spacing={4}>
+        <Typography variant="h3">Jobs</Typography>
+        { loading && (<>
+          <Box>
+            <Skeleton height={50} />
+            <Skeleton animation="wave" />
+            <Skeleton animation={false} />
+          </Box>
+          <Box>
+            <Skeleton height={50} />
+            <Skeleton animation="wave" />
+            <Skeleton animation={false} />
+          </Box>
+        </>)}
+        { sessions !== null && <JobTable jobs={sessions} /> }
+      </Stack>
     </React.Fragment>
   )
 }

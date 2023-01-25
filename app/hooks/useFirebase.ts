@@ -11,6 +11,7 @@ import {
   onAuthStateChanged,
   sendSignInLinkToEmail,
   signInWithEmailLink,
+  signOut,
   User,
   UserCredential
 } from 'firebase/auth'
@@ -31,6 +32,7 @@ interface AuthState {
   sendSignInLinkToEmail: (email: string, url: string) => Promise<void>
   isSignInWithEmailLink: (url: string) => boolean
   signInWithEmailLink: (email: string, url: string) => Promise<UserCredential>
+  signOut: () => Promise<void>
 }
 
 export const useAuth = (app: FirebaseApp): AuthState => {
@@ -53,6 +55,10 @@ export const useAuth = (app: FirebaseApp): AuthState => {
     return await signInWithEmailLink(auth, email, url)
   }
 
+  const signOutUser = async (): Promise<void> => {
+    return await signOut(auth)
+  }
+
   useEffect(() => {
     return onAuthStateChanged(auth, user => {
       setUser(user)
@@ -68,6 +74,7 @@ export const useAuth = (app: FirebaseApp): AuthState => {
     loading,
     sendSignInLinkToEmail: sendSignInLink,
     isSignInWithEmailLink: isSignInLink,
-    signInWithEmailLink: signInWithLink
+    signInWithEmailLink: signInWithLink,
+    signOut: signOutUser
   }
 }
