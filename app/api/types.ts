@@ -9,7 +9,7 @@ export interface Script {
   name: string
   description?: string
   version: string
-  config?: { [key: string]: any }
+  config?: Record<string, any>
 }
 
 export interface Session {

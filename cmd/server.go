@@ -12,6 +12,7 @@ import (
 	"sort"
 	"time"
 
+	"github.com/caarlos0/env/v6"
 	"github.com/concreteit/greenlight/internal"
 	"github.com/gorilla/websocket"
 	"github.com/koding/websocketproxy"
@@ -30,7 +31,27 @@ var (
 	sessions = SessionMap{
 		sessions: map[string]*Session{},
 	}
+	webConfig = WebConfig{}
 )
+
+type FirebaseConfig struct {
+	APIKey            string `env:"API_KEY" json:"apiKey"`
+	AuthDomain        string `env:"AUTH_DOMAIN" json:"authDomain"`
+	ProjectID         string `env:"projectId" json:"projectId"`
+	StorageBucket     string `env:"storageBucket" json:"storageBucket"`
+	MessagingSenderID string `env:"messagingSenderId" json:"messagingSenderId"`
+	AppID             string `env:"APP_ID" json:"appId"`
+	MeasurementID     string `env:"MEASUREMENT_ID" json:"measurementId"`
+}
+
+type FeatureConfig struct {
+	Firebase bool `env:"FIREBASE" json:"firebase"`
+}
+
+type WebConfig struct {
+	Firebase FirebaseConfig `envPrefix:"FIREBASE_" json:"firebase"`
+	Features FeatureConfig  `envPrefix:"FEATURE_" json:"features"`
+}
 
 func init() {
 	serverCmd.Flags().StringP("port", "p", "8080", "Which port to listen http server on")
@@ -40,6 +61,10 @@ func init() {
 	viper.BindPFlag("mqtt-port", serverCmd.Flags().Lookup("mqtt-port"))
 
 	rootCmd.AddCommand(serverCmd)
+
+	if err := env.Parse(&webConfig); err != nil {
+		log.Fatalln(err)
+	}
 }
 
 func startServer(cmd *cobra.Command, args []string) {
@@ -71,6 +96,10 @@ func startServer(cmd *cobra.Command, args []string) {
 
 	e.GET("/api/ping", func(c echo.Context) error {
 		return c.String(http.StatusOK, "pong")
+	})
+
+	e.GET("/api/config", func(c echo.Context) error {
+		return c.JSON(http.StatusOK, webConfig)
 	})
 
 	e.POST("/api/sessions", func(c echo.Context) error {
