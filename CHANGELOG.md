@@ -1,4 +1,18 @@
 
+## v0.5.2 [2023-02-06]
+
+### Ci
+- Add build arm platform ([9459824](../../commit/9459824e45bc6be1c24f7de006df819c00712da4))
+
+
+### Chore
+- Add legal documents ([f94be4d](../../commit/f94be4deea4e575c9bbb7467d7edfc9ceefae327))
+
+
+### Bug Fixes
+- Handle config state change ([569fec6](../../commit/569fec634e5ef19fa83ec52cda71f7f70c41afed))
+
+
 ## 0.5.1 [2023-01-25]
 
 ### Chore
