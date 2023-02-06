@@ -21,6 +21,7 @@ const imageLoader = ({ src }: ImageLoaderProps): string => src
 const CustomLink = styled(Typography)({
   '&>a': {
     color: grey[700],
+    fontWeight: 400,
     transition: 'color 150ms',
     '&:hover': {
       color: 'black'
@@ -207,14 +208,14 @@ const Footer = (): JSX.Element => {
               title="Legal"
               links={[{
                 text: 'License',
-                href: '',
+                href: 'https://github.com/ITxPT/DATA4PTTools/blob/develop/LICENSE',
                 external: true
               }, {
                 text: 'Privacy Policy',
-                href: ''
+                href: '/privacy'
               }, {
-                text: 'Terms of Service',
-                href: ''
+                text: 'Terms of use',
+                href: '/terms'
               }]}
             />
           </Stack>

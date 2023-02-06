@@ -1,13 +1,9 @@
-import {
-  Box,
-  Skeleton,
-  Stack,
-  Typography
-} from '@mui/material'
+import { Box, Skeleton, Stack, Typography } from '@mui/material'
 import { NextPage } from 'next'
 import Head from 'next/head'
 import React from 'react'
 import { Session } from '../api/types'
+import App from '../components/App'
 import JobTable from '../components/JobTable'
 import useApiClient from '../hooks/useApiClient'
 
@@ -37,7 +33,7 @@ const Jobs: NextPage = () => {
   }, [apiClient])
 
   return (
-    <React.Fragment>
+    <App authRequired>
       <Head>
         <title>Greenlight | NeTEx validation</title>
         <meta name="description" content="Fast and simple NeTEx validation" />
@@ -59,7 +55,7 @@ const Jobs: NextPage = () => {
         </>)}
         { sessions !== null && <JobTable jobs={sessions} /> }
       </Stack>
-    </React.Fragment>
+    </App>
   )
 }
 

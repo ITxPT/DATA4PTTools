@@ -51,7 +51,6 @@ const Auth = (props: AuthProps): JSX.Element => {
       hasError = true
       setValidationErr(true)
     }
-
     if (!hasError) {
       setFormSubmitted(true)
       props.onSubmit(email)
@@ -89,10 +88,6 @@ const Auth = (props: AuthProps): JSX.Element => {
         </Box>
         <Stack spacing={2} alignItems='center'>
           <Typography variant='h1'>{getGreeting(new Date())}</Typography>
-          <Typography>
-            {/* TODO fix copy */}
-            Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
-          </Typography>
         </Stack>
         <Stack spacing={2} sx={{ width: '100%' }}>
           <TextField
@@ -120,7 +115,7 @@ const Auth = (props: AuthProps): JSX.Element => {
                 )}
                 label={(
                   <Typography>
-                    I agree to the <Link href="/TODO" target="_blank">Terms of Service</Link> and <Link href="/TODO" target="_blank">Privacy Policy</Link>
+                    I agree to the <Link href="/terms" target="_blank">Terms of Use</Link> and <Link href="/policy" target="_blank">Privacy Policy</Link>
                   </Typography>
                 )}
               />
