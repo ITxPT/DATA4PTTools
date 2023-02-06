@@ -2,6 +2,7 @@ import { NextPage } from 'next'
 import { useRouter } from 'next/router'
 import React from 'react'
 import { Session } from '../../../api/types'
+import App from '../../../components/App'
 import ErrorAlert from '../../../components/ErrorAlert'
 import FullscreenLoader from '../../../components/FullscreenLoader'
 import ValidationResult from '../../../components/ValidationResult'
@@ -34,19 +35,19 @@ const Result: NextPage = () => {
   }, [apiClient, router.query])
 
   return (
-    <React.Fragment>
+    <App authRequired>
       <ErrorAlert
         open={errorOpen}
         message={errorMessage}
         onClose={() => setErrorOpen(false)}
       />
 
-      { !loading && (
-        <ValidationResult session={session as any} />
-      ) }
+      { loading
+        ? <FullscreenLoader open={loading} />
+        : <ValidationResult session={session as any} />
+      }
 
-      <FullscreenLoader open={loading} />
-    </React.Fragment>
+    </App>
   )
 }
 

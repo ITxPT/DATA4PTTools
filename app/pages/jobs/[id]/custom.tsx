@@ -3,6 +3,7 @@ import { NextPage } from 'next'
 import { useRouter } from 'next/router'
 import React from 'react'
 import { Profile, Session } from '../../../api/types'
+import App from '../../../components/App'
 import CustomConfiguration from '../../../components/CustomConfiguration'
 import ErrorAlert from '../../../components/ErrorAlert'
 import FullscreenLoader from '../../../components/FullscreenLoader'
@@ -52,7 +53,7 @@ const Custom: NextPage = () => {
   }, [apiClient, router.query])
 
   return (
-    <React.Fragment>
+    <App authRequired>
       <ErrorAlert
         open={errorOpen}
         message={errorMessage}
@@ -66,7 +67,7 @@ const Custom: NextPage = () => {
       </Stack>
 
       <FullscreenLoader open={loading} />
-    </React.Fragment>
+    </App>
   )
 }
 

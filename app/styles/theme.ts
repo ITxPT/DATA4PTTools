@@ -29,50 +29,71 @@ const theme = createTheme({
 
 // typography
 theme.typography.h1 = {
-  fontSize: '2.75rem',
-  lineHeight: '3rem',
-  fontWeight: '600',
-  [theme.breakpoints.down('lg')]: {
-    fontSize: '2.25rem',
-    lineHeight: '2.5rem'
+  fontSize: '2rem',
+  lineHeight: '120%',
+  fontWeight: '300',
+  [theme.breakpoints.down('md')]: {
+    fontSize: '1.5rem'
   }
 }
 theme.typography.h2 = {
-  fontSize: '2rem',
-  lineHeight: '2.25rem',
-  fontWeight: '300'
+  fontSize: '1.625em',
+  textTransform: 'uppercase',
+  lineHeight: '120%',
+  fontWeight: '300',
+  [theme.breakpoints.down('md')]: {
+    fontSize: '1.218rem'
+  }
 }
 theme.typography.h3 = {
-  fontSize: '1.75rem',
-  lineHeight: '2rem',
-  fontWeight: '300'
+  fontSize: '1.625rem',
+  lineHeight: '120%',
+  fontWeight: '300',
+  [theme.breakpoints.down('md')]: {
+    fontSize: '1.218em'
+  }
 }
 theme.typography.h4 = {
-  fontSize: '1.25rem',
-  lineHeight: '1.5rem',
-  fontWeight: '300'
+  fontSize: '1.375rem',
+  lineHeight: '120%',
+  fontWeight: '300',
+  [theme.breakpoints.down('md')]: {
+    fontSize: '1rem'
+  }
 }
 theme.typography.h5 = {
   fontSize: '1rem',
-  lineHeight: '1.25rem',
-  fontWeight: 'normal'
+  lineHeight: '120%',
+  fontWeight: '500',
+  [theme.breakpoints.down('md')]: {
+    fontSize: '0.75rem'
+  }
 }
 theme.typography.h6 = {
-  fontSize: '0.875rem',
-  lineHeight: '1rem',
-  fontWeight: 'bold'
+  fontSize: '0.75rem',
+  lineHeight: '120%',
+  fontWeight: '600',
+  [theme.breakpoints.down('md')]: {
+    fontSize: '0.5625rem'
+  }
 }
 theme.typography.body1 = {
-  fontSize: '0.875rem',
-  lineHeight: '1rem',
+  fontSize: '1rem',
+  lineHeight: '120%',
   fontWeight: '400',
   wordWrap: 'break-word',
-  color: grey[800]
+  color: grey[800],
+  [theme.breakpoints.down('md')]: {
+    fontSize: '0.75rem'
+  }
 }
 theme.typography.body2 = {
   fontSize: '0.875rem',
   lineHeight: '1rem',
-  wordWrap: 'break-word'
+  wordWrap: 'break-word',
+  [theme.breakpoints.down('md')]: {
+    fontSize: '0.65rem'
+  }
 }
 
 theme.components = {}

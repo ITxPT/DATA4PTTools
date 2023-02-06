@@ -7,6 +7,12 @@ export interface WebConfig {
   features: Features
 }
 
+export interface WebConfigState {
+  config: WebConfig
+  loading: boolean
+  error: Error | null
+}
+
 export class Features {
   private readonly features: Record<string, boolean>
 
@@ -27,22 +33,80 @@ export class Features {
   }
 }
 
-const useConfig = (): WebConfig => {
-  const [webConfig, setWebConfig] = React.useState<WebConfig>({
-    firebase: {} as any,
+interface Observer<T> {
+  resolve: (v: T | PromiseLike<T>) => void
+  reject: (err: Error) => void
+}
+
+class RemoteValue<T> {
+  private waiting: boolean = false
+  private value: T | null = null
+  private error: Error | null = null
+  private readonly observers: Array<Observer<T | null>> = []
+
+  constructor (value: Promise<T>) {
+    value.then(v => {
+      this.value = v
+    }).catch(err => {
+      this.error = err
+    }).finally(() => {
+      this.waiting = false
+
+      while (this.observers.length > 0) {
+        this.resolve(this.observers.shift() as Observer<T | null>)
+      }
+    })
+  }
+
+  private resolve (o: Observer<T | null>): void {
+    return this.error !== null ? o.reject(this.error) : o.resolve(this.value)
+  }
+
+  async observe (): Promise<T | null> {
+    // eslint-disable-next-line @typescript-eslint/return-await
+    return new Promise<T | null>((resolve, reject) => {
+      const o = { resolve, reject }
+
+      this.observers.push(o)
+
+      if (!this.waiting) {
+        this.resolve(o)
+      }
+    })
+  }
+}
+
+const configObserver = new RemoteValue<WebConfig>(
+  client.config().then(config => ({
+    firebase: config.firebase,
+    features: new Features(config.features)
+  }))
+)
+
+const useConfig = (): WebConfigState => {
+  const [config, setConfig] = React.useState<WebConfig>({
+    firebase: {},
     features: new Features({})
   })
+  const [loading, setLoading] = React.useState<boolean>(true)
+  const [error, setError] = React.useState<Error | null>(null)
 
   React.useEffect(() => {
-    client.config().then(config => {
-      setWebConfig({
-        ...config,
-        features: new Features(config.features)
-      } as any)
-    }).catch(err => console.log(err))
-  }, [setWebConfig, client])
+    configObserver.observe()
+      .then(v => {
+        if (v !== null) {
+          setConfig(v)
+        }
+      })
+      .catch(setError)
+      .finally(() => setLoading(false))
+  }, [configObserver, setConfig, setLoading, setError])
 
-  return webConfig
+  return {
+    config,
+    loading,
+    error
+  }
 }
 
 export default useConfig

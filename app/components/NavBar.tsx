@@ -6,7 +6,6 @@ import { useRouter } from 'next/router'
 import React from 'react'
 import LogoSquareIcon from './icons/LogoSquareIcon'
 import theme from '../styles/theme'
-import useConfig from '../hooks/useWebConfig'
 
 export interface NavBarItem {
   href: string
@@ -35,13 +34,6 @@ interface NavBarProps {
 
 const NavBar = ({ items, onSignOut }: NavBarProps): JSX.Element => {
   const { pathname } = useRouter()
-  const config = useConfig()
-
-  const handleLogout = (): void => {
-    if (onSignOut !== undefined) {
-      onSignOut()
-    }
-  }
 
   return (
     <Stack
@@ -88,7 +80,7 @@ const NavBar = ({ items, onSignOut }: NavBarProps): JSX.Element => {
             </LinkElement>
           )
         })}
-        { config.features.isEnabled('firebase') && (
+        { onSignOut !== undefined && (
             <Button
               variant="text"
               disableElevation
@@ -98,7 +90,7 @@ const NavBar = ({ items, onSignOut }: NavBarProps): JSX.Element => {
                 borderRadius: '32px'
               }}
               endIcon={<LogoutIcon fontSize="small" />}
-              onClick={handleLogout}
+              onClick={onSignOut}
             >
               Logout
             </Button>

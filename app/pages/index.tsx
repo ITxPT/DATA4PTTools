@@ -4,6 +4,7 @@ import { Alert, Button, Link, Stack, Typography } from '@mui/material'
 import { NextPage } from 'next'
 import { useRouter } from 'next/router'
 import React from 'react'
+import App from '../components/App'
 import ErrorAlert from '../components/ErrorAlert'
 import FullscreenLoader from '../components/FullscreenLoader'
 import useApiClient from '../hooks/useApiClient'
@@ -27,7 +28,7 @@ const Home: NextPage = () => {
   }
 
   return (
-    <React.Fragment>
+    <App authRequired>
       <ErrorAlert
         open={errorOpen}
         message={errorMessage}
@@ -61,7 +62,7 @@ The DATA4PT project aims to advance data-sharing practices in the public transpo
       </Stack>
 
       <FullscreenLoader open={loading} />
-    </React.Fragment>
+    </App>
   )
 }
 
