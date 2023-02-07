@@ -1,6 +1,16 @@
 import { blue, grey } from '@mui/material/colors'
 import { createTheme } from '@mui/material/styles'
 
+declare module '@mui/material/styles' {
+  interface Palette {
+    accent: Palette['primary']
+  }
+
+  interface PaletteOptions {
+    accent: PaletteOptions['primary']
+  }
+}
+
 const theme = createTheme({
   palette: {
     primary: {
@@ -8,6 +18,9 @@ const theme = createTheme({
     },
     background: {
       default: '#e6e6e6'
+    },
+    accent: {
+      main: '#4FB09A'
     }
   },
   typography: {
@@ -75,6 +88,15 @@ theme.typography.h6 = {
   fontWeight: '600',
   [theme.breakpoints.down('md')]: {
     fontSize: '0.5625rem'
+  }
+}
+theme.typography.subtitle1 = {
+  fontSize: '1rem',
+  fontWeight: 400,
+  lineHeight: '120%',
+  textTransform: 'uppercase',
+  [theme.breakpoints.down('md')]: {
+    fontSize: '0.75rem'
   }
 }
 theme.typography.body1 = {
