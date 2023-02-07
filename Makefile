@@ -4,8 +4,14 @@ DOCKER_TAG ?= $(shell git log --format="%h" -n 1)
 run-web:
 	cd app && npm run dev
 
+build-web:
+	cd app && npm run build
+
 run-server:
 	go run cmd/*.go server
+
+build-cli:
+	go build cmd*.go -o greenlight
 
 docker-build:
 	docker build -t ${DOCKER_USERNAME}/${APP_NAME}:${DOCKER_TAG} .
