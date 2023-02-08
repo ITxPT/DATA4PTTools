@@ -104,12 +104,10 @@ func ValidateSchema(document types.Document, version string) error {
 		return NewValidationError(ErrXSDSchemaNotFound, nil)
 	}
 	if xsdSchemas[version] == nil {
-		schema, err := xsd.ParseFromFile(xsdPath)
+		_, err := CompileSchemaVersion(version)
 		if err != nil {
 			return NewValidationError(err, nil)
 		}
-
-		xsdSchemas[version] = schema
 	}
 
 	_, errors := xsdSchemas[version].Validate(document)
@@ -118,6 +116,22 @@ func ValidateSchema(document types.Document, version string) error {
 	}
 
 	return nil
+}
+
+func CompileSchemaVersion(version string) (*xsd.Schema, error) {
+	xsdPath := xsdPaths[version]
+	if xsdPath == "" {
+		return nil, ErrXSDSchemaNotFound
+	}
+
+	schema, err := xsd.ParseFromFile(xsdPath)
+	if err != nil {
+		return nil, err
+	}
+
+	xsdSchemas[version] = schema
+
+	return schema, nil
 }
 
 func JoinXPath(values ...string) string {
