@@ -1,4 +1,23 @@
 
+## v0.5.3 [2023-02-08]
+
+### Style
+- Add typography style ([ea3fdd5](../../commit/ea3fdd5855149401dc703754606cf0d2dd8f6c49))
+
+
+### Chore
+- Add build commands ([035ab56](../../commit/035ab569dba0154cfee8aa99e11b78b105af5dfe))
+
+
+### Testing
+- Add xsd benchmark ([c54fc35](../../commit/c54fc35f79d9e2c989fbe3b4c786528c5b7559be))
+
+
+### Bug Fixes
+- Update privacy policy ([061a372](../../commit/061a37292845bed77d6376b26b867c28f6052299))
+- Fix env key ([863d8a8](../../commit/863d8a8c0bf698698156e0eaf38c4c040be27aea))
+
+
 ## v0.5.2 [2023-02-06]
 
 ### Ci
@@ -13,7 +32,7 @@
 - Handle config state change ([569fec6](../../commit/569fec634e5ef19fa83ec52cda71f7f70c41afed))
 
 
-## 0.5.1 [2023-01-25]
+## v0.5.1 [2023-01-25]
 
 ### Chore
 - Simplify build by adding Makefile ([0ebf88f](../../commit/0ebf88f00c06baa287c793260d952b4735e1e7e6))
