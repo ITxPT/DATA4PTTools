@@ -37,9 +37,9 @@ var (
 type FirebaseConfig struct {
 	APIKey            string `env:"API_KEY" json:"apiKey"`
 	AuthDomain        string `env:"AUTH_DOMAIN" json:"authDomain"`
-	ProjectID         string `env:"projectId" json:"projectId"`
-	StorageBucket     string `env:"storageBucket" json:"storageBucket"`
-	MessagingSenderID string `env:"messagingSenderId" json:"messagingSenderId"`
+	ProjectID         string `env:"PROJECT_ID" json:"projectId"`
+	StorageBucket     string `env:"STORAGE_BUCKET" json:"storageBucket"`
+	MessagingSenderID string `env:"MESSAGING_SENDER_ID" json:"messagingSenderId"`
 	AppID             string `env:"APP_ID" json:"appId"`
 	MeasurementID     string `env:"MEASUREMENT_ID" json:"measurementId"`
 }
