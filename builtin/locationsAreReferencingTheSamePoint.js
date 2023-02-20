@@ -41,18 +41,18 @@ function main(ctx) {
 
   return ctx.node.find(passengerStopAssignmentsPath)
     .map(v => v.reduce((res, node) => {
-      const id = node.valueAt("@id").get();
+      const id = node.attr("id").get();
       const scheduledStopPoint = node.first(scheduledStopPointRefPath)
         .map(n => xpath.join(
           scheduledStopPointsPath,
-          `ScheduledStopPoint[@id='${n.value()}']`,
+          `ScheduledStopPoint[@id='${n.text()}']`,
         ))
         .map(p => ctx.document.first(p).get())
         .get();
       const stopPlace = node.first(stopPlaceRefPath)
         .map(n => xpath.join(
           stopPlacesPath,
-          `StopPlace[@id='${n.value()}']`),
+          `StopPlace[@id='${n.text()}']`),
         )
         .map(p => ctx.document.first(p).get())
         .get();
@@ -99,10 +99,10 @@ function main(ctx) {
  * @returns {number}
  */
 function getDistance(n1, n2) {
-  const lonx = parseFloat(n1.valueAt(spLongitudePath).get());
-  const latx = parseFloat(n1.valueAt(spLatitudePath).get());
-  const lony = parseFloat(n2.valueAt(sspLongitudePath).get());
-  const laty = parseFloat(n2.valueAt(sspLatitudePath).get());
+  const lonx = parseFloat(n1.textAt(spLongitudePath).get());
+  const latx = parseFloat(n1.textAt(spLatitudePath).get());
+  const lony = parseFloat(n2.textAt(sspLongitudePath).get());
+  const laty = parseFloat(n2.textAt(sspLatitudePath).get());
   const d = getDistanceFromLatLonInKm(lonx, latx, lony, laty);
 
   return Math.round(d * 1000);

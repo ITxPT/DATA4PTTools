@@ -17,7 +17,7 @@ const stopPlacesPath = xpath.join(xpath.path.FRAMES, "SiteFrame", "stopPlaces", 
 function main(ctx) {
   return ctx.node.find(stopPlacesPath)
     .map(v => v.reduce((res, node) => {
-      const id = node.valueAt("@id").get();
+      const id = node.attr("id").get();
       if (!id) {
         res.push(errors.ConsistencyError(
           `StopPlace is missing attribute @id`,

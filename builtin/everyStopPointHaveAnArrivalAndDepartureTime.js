@@ -11,13 +11,14 @@ const journeyPatternsPath = xpath.join(
   xpath.path.FRAMES,
   "ServiceFrame",
   "journeyPatterns",
-  "*[contains(name(),'JourneyPattern')]",
+  "JourneyPattern",
+  // TODO issue with this query for some reason
+  // "*[contains(name(),'JourneyPattern')]", TODO
 );
 const stopPointRefPath = xpath.join(
   "pointsInSequence",
   "StopPointInJourneyPattern",
   "ScheduledStopPointRef",
-  "@ref",
 );
 const scheduledStopPointsPath = xpath.join(
   xpath.path.FRAMES,
@@ -35,7 +36,6 @@ const timetablePath = xpath.join(
 const stopPointIDPath = xpath.join(
   "pointsInSequence",
   "StopPointInJourneyPattern",
-  "@id",
 );
 const departureTimePath = xpath.join("DepartureTime");
 const arrivalTimePath = xpath.join("ArrivalTime");
@@ -61,7 +61,8 @@ function main(ctx) {
 function worker(ctx) {
   return [
     ...validateStopPointReferences(ctx),
-    ...validatePassingTimes(ctx),
+    // TODO issue with .parent api
+    // ...validatePassingTimes(ctx),
   ];
 }
 
@@ -74,8 +75,9 @@ function validateStopPointReferences(ctx) {
   ctx.node.find(stopPointRefPath)
     .getOrElse(() => [])
     .forEach((/** @type {types.Node} */ node) => {
-      const line = node.parent().get().line();
-      const ref = `ScheduledStopPoint[@id = '${node.value()}']`;
+      const line = node.line();
+      const refID = node.attr("ref").get();
+      const ref = `ScheduledStopPoint[@id = '${refID}']`;
       const stopPath = xpath.join(scheduledStopPointsPath, ref);
 
       if (!ctx.collection.first(stopPath).get()) {
@@ -98,8 +100,8 @@ function validatePassingTimes(ctx) {
   ctx.node.find(stopPointIDPath)
     .getOrElse(() => [])
     .forEach((/** @type {types.Node} */ node, i, nodes) => {
-      const line = node.parent().get().line();
-      const id = node.value();
+      const line = node.line();
+      const id = node.attr("id").get();
       const ref = `StopPointInJourneyPatternRef[@ref = '${id}']`;
       const passingTimesPath = xpath.join(timetablePath, ref);
       const errorMessageBase = `for <StopPointInJourneyPattern id='${id}' />`;
@@ -114,7 +116,7 @@ function validatePassingTimes(ctx) {
 
       passingTimes.forEach((n) => {
         const node = n.parent().get();
-        const tid = node.valueAt("@id").get();
+        const tid = node.attr("id").get();
 
         if (!tid) {
           res.push(errors.ConsistencyError(
