@@ -4,11 +4,12 @@ import (
 	"fmt"
 
 	"github.com/concreteit/greenlight/internal"
+	"github.com/concreteit/greenlight/xml"
 )
 
 type Task struct {
 	Handler string
-	Node    *Node
+	Node    xml.Node
 }
 
 type Worker struct {
@@ -24,7 +25,7 @@ func NewWorker(ctx *Context) *Worker {
 	}
 }
 
-func (w *Worker) Queue(handler string, node *Node) {
+func (w *Worker) Queue(handler string, node xml.Node) {
 	w.tasks = append(w.tasks, Task{
 		Handler: handler,
 		Node:    node,

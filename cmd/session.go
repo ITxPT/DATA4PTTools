@@ -62,12 +62,7 @@ func (s *Session) NewValidation() (*greenlight.Validation, error) {
 	s.Results = []greenlight.ValidationResult{}
 
 	for _, file := range s.fileContext.Find("xml") {
-		f, err := file.Open()
-		if err != nil {
-			return nil, err
-		}
-
-		if err := validation.AddReader(file.Name, f); err != nil {
+		if err := validation.AddFile(file.Name, file.FilePath); err != nil {
 			return nil, err
 		}
 

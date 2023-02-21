@@ -139,18 +139,12 @@ func createValidation(input string) (*greenlight.Validation, error) {
 	}
 
 	fileContext := NewFileContext(context.Background())
-	defer fileContext.Close()
 	if err := openWithContext(fileContext, input); err != nil {
 		return nil, err
 	}
 
 	for _, file := range fileContext.Find("xml") {
-		f, err := file.Open()
-		if err != nil {
-			return nil, err
-		}
-
-		if err := validation.AddReader(file.Name, f); err != nil {
+		if err := validation.AddFile(file.Name, file.FilePath); err != nil {
 			return nil, err
 		}
 	}
@@ -181,6 +175,8 @@ func createValidation(input string) (*greenlight.Validation, error) {
 			}
 
 			log.WithTime(event.Timestamp).WithFields(fields).Log(level, message)
+		} else if event.Type == internal.EventTypeValidationStop {
+			fileContext.Close()
 		}
 	})
 

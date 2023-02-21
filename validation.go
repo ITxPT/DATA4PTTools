@@ -3,12 +3,10 @@ package greenlight
 import (
 	"context"
 	"fmt"
-	"io"
 
 	"github.com/concreteit/greenlight/internal"
 	"github.com/concreteit/greenlight/js"
-	"github.com/lestrrat-go/libxml2"
-	"github.com/lestrrat-go/libxml2/types"
+	"github.com/concreteit/greenlight/xml"
 	"github.com/matoous/go-nanoid/v2"
 )
 
@@ -20,8 +18,8 @@ type ScriptEnv struct {
 type Validation struct {
 	id           string
 	emitter      *internal.Emitter
-	documentMap  map[string]types.Document
-	documentColl *js.Collection
+	documentMap  map[string]*xml.Document
+	documentColl *xml.Collection
 	scripts      map[string]ScriptEnv
 }
 
@@ -37,25 +35,20 @@ func (v *Validation) Unsubscribe(id int) {
 	v.emitter.Unsubscribe(id)
 }
 
-func (v *Validation) AddDocument(name string, doc types.Document) error {
-	node, err := js.NewNode(doc)
-	if err != nil {
-		return err
-	}
-
-	v.documentMap[name] = doc
-	v.documentColl.Add(node)
+func (v *Validation) AddDocument(doc *xml.Document) error {
+	v.documentMap[doc.Name] = doc
+	v.documentColl.Add(doc)
 
 	return nil
 }
 
-func (v *Validation) AddReader(name string, reader io.Reader) error {
-	doc, err := libxml2.ParseReader(reader)
+func (v *Validation) AddFile(name, filePath string) error {
+	doc, err := xml.NewDocument(name, filePath)
 	if err != nil {
 		return err
 	}
 
-	return v.AddDocument(name, doc)
+	return v.AddDocument(doc)
 }
 
 func (v *Validation) AddScript(script *js.Script, cfg map[string]interface{}) {
@@ -71,14 +64,13 @@ func (v *Validation) Validate(ctx context.Context) ([]ValidationResult, error) {
 		"scriptCount":   len(v.scripts),
 	}
 	v.Emit(internal.EventTypeValidationStart, emitData)
-	defer v.documentColl.Free()
 	defer v.emitter.Close()
 	defer v.Emit(internal.EventTypeValidationStop, emitData)
 
 	n := len(v.documentMap)
 	queue := internal.NewQueue(0, n)
 	for name, doc := range v.documentMap {
-		queue.Add(func(name string, doc types.Document) internal.Task {
+		queue.Add(func(name string, doc *xml.Document) internal.Task {
 			return func(id int) internal.Result {
 				emitData := internal.M{
 					"document":    name,
@@ -128,7 +120,7 @@ func (v *Validation) Validate(ctx context.Context) ([]ValidationResult, error) {
 	return res, nil
 }
 
-func (v *Validation) validateDocument(name string, doc types.Document) []internal.Result {
+func (v *Validation) validateDocument(name string, doc *xml.Document) []internal.Result {
 	n := len(v.scripts)
 	queue := internal.NewQueue(0, n)
 	for _, script := range v.scripts {
@@ -160,7 +152,7 @@ func (v *Validation) validateDocument(name string, doc types.Document) []interna
 						}
 
 						if err.Extra != nil && err.Extra["line"] != nil {
-							te.Line = int(err.Extra["line"].(int64))
+							te.Line = mustInt(err.Extra["line"])
 						}
 
 						rv.AddError(te)
@@ -184,12 +176,27 @@ func NewValidation() (*Validation, error) {
 	ctx := &Validation{
 		id:           id,
 		emitter:      internal.NewEmitter(id),
-		documentMap:  map[string]types.Document{},
-		documentColl: js.NewCollection(),
+		documentMap:  map[string]*xml.Document{},
+		documentColl: xml.NewCollection(),
 		scripts:      map[string]ScriptEnv{},
 	}
 
 	go ctx.emitter.Start()
 
 	return ctx, nil
+}
+
+func mustInt(v interface{}) int {
+	i := 0
+	switch t := v.(type) {
+	case int:
+		i = t
+	case int8:
+	case int16:
+	case int32:
+	case int64:
+		i = int(t)
+	}
+
+	return i
 }

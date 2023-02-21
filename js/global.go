@@ -2,9 +2,11 @@ package js
 
 import (
 	"errors"
+	"strings"
 	"time"
 
 	"github.com/concreteit/greenlight/internal"
+	"github.com/concreteit/greenlight/xml"
 )
 
 var (
@@ -15,11 +17,15 @@ var (
 	ErrTypeXSD         = errors.New("xsd")
 )
 
+func join(values ...string) string {
+	return strings.Join(values, "/")
+}
+
 var (
-	pathBase          = JoinXPath(".", "PublicationDelivery")
-	pathDataObjects   = JoinXPath(pathBase, "dataObjects")
-	pathFrameDefaults = JoinXPath(pathDataObjects, "CompositeFrame", "FrameDefaults")
-	pathFrames        = JoinXPath(pathDataObjects, "CompositeFrame", "frames")
+	pathBase          = join(".")
+	pathDataObjects   = join(pathBase, "dataObjects")
+	pathFrameDefaults = join(pathDataObjects, "CompositeFrame", "FrameDefaults")
+	pathFrames        = join(pathDataObjects, "CompositeFrame", "frames")
 	std               = internal.M{
 		"time": internal.M{
 			"validLocation": func(name string) internal.Result {
@@ -31,7 +37,7 @@ var (
 			},
 		},
 		"xpath": internal.M{
-			"join": JoinXPath,
+			"join": join,
 			"path": internal.M{
 				"BASE":           pathBase,
 				"DATA_OBJECTS":   pathDataObjects,
@@ -53,13 +59,13 @@ var (
 			"QualityError": func(msg string, extra internal.M) ScriptError {
 				return newScriptError(ErrTypeQuality.Error(), msg, extra)
 			},
-			"NODE_NOT_FOUND":         ErrNodeNotFound.Error(),
-			"SCHEMA_NOT_FOUND":       ErrXSDSchemaNotFound.Error(),
-			"TYPE_CONSISTENCY":       ErrTypeConsistency.Error(),
-			"TYPE_GENERAL":           ErrTypeGeneral.Error(),
-			"TYPE_NOT_FOUND":         ErrTypeNotFound.Error(),
-			"TYPE_QUALITY":           ErrTypeQuality.Error(),
-			"XSD_VALIDATION_INVALID": ErrXSDValidationInvalid.Error(),
+			"NODE_NOT_FOUND":   xml.ErrNodeNotFound.Error(),
+			"SCHEMA_NOT_FOUND": ErrXSDSchemaNotFound.Error(),
+			"TYPE_CONSISTENCY": ErrTypeConsistency.Error(),
+			"TYPE_GENERAL":     ErrTypeGeneral.Error(),
+			"TYPE_NOT_FOUND":   ErrTypeNotFound.Error(),
+			"TYPE_QUALITY":     ErrTypeQuality.Error(),
+			/* "XSD_VALIDATION_INVALID": ErrXSDValidationInvalid.Error(), */
 		},
 		"types": internal.M{},
 	}
