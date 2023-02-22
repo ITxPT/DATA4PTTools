@@ -72,6 +72,7 @@ func (v *Validation) Validate(ctx context.Context) ([]ValidationResult, error) {
 	for name, doc := range v.documentMap {
 		queue.Add(func(name string, doc *xml.Document) internal.Task {
 			return func(id int) internal.Result {
+				defer doc.Close()
 				emitData := internal.M{
 					"document":    name,
 					"scriptCount": len(v.scripts),

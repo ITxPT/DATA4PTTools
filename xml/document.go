@@ -32,6 +32,7 @@ func (d *Document) Close() {
 	d.Lock()
 	defer d.Unlock()
 
+	d.el = nil
 	if d.file != nil {
 		d.file.Close()
 	}
