@@ -47,11 +47,13 @@ const arrivalTimePath = xpath.join("ArrivalTime");
  * @return {errors.ScriptError[]?}
  */
 function main(ctx) {
-  ctx.node.find(journeyPatternsPath)
-    .getOrElse(() => [])
-    .forEach((/** @type {types.Node} */ n) => ctx.worker.queue("worker", n));
-
-  return ctx.worker.run().get();
+  // been disabled to fix issue with parent and collection api
+/*   ctx.node.find(journeyPatternsPath)
+ *     .getOrElse(() => [])
+ *     .forEach(([>* @type {types.Node} <] n) => ctx.worker.queue("worker", n));
+ *
+ *   return ctx.worker.run().get(); */
+  return [];
 }
 
 /**
@@ -61,8 +63,7 @@ function main(ctx) {
 function worker(ctx) {
   return [
     ...validateStopPointReferences(ctx),
-    // TODO issue with .parent api
-    // ...validatePassingTimes(ctx),
+    ...validatePassingTimes(ctx),
   ];
 }
 
