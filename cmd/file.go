@@ -6,7 +6,6 @@ import (
 	"compress/bzip2"
 	"compress/gzip"
 	"context"
-	"crypto/sha256"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -19,8 +18,9 @@ import (
 type processFileHandler func(*FileInfo) error
 
 type FileInfo struct {
+	temporary bool
+
 	Name     string
-	Checksum string
 	Size     int64
 	File     *os.File
 	FilePath string
@@ -34,13 +34,11 @@ func (fi FileInfo) Open() (*os.File, error) {
 func (fi FileInfo) MarshalJSON() ([]byte, error) {
 	return json.Marshal(map[string]interface{}{
 		"name":     fi.Name,
-		"checksum": fi.Checksum,
 		"mimeType": fi.FileType.MIME.Value,
 		"ext":      fi.FileType.Extension,
 	})
 }
 
-// TODO add support for different storage solutions; s3, gs, mem
 type FileContext struct {
 	context.Context
 
@@ -92,34 +90,32 @@ func (c *FileContext) Add(name string, r io.Reader) (*FileInfo, error) {
 		return nil, err
 	}
 
-	hasher := sha256.New()
-	if _, err := io.Copy(hasher, tempFile); err != nil {
-		return nil, err
-	}
+	return c.addFile(name, tempFile, true)
+}
 
-	if _, err := tempFile.Seek(0, 0); err != nil {
-		return nil, err
-	}
+func (c *FileContext) AddFile(name string, f *os.File) (*FileInfo, error) {
+	return c.addFile(name, f, false)
+}
 
-	fileType, err := filetype.MatchReader(tempFile)
+func (c *FileContext) addFile(name string, f *os.File, temp bool) (*FileInfo, error) {
+	defer f.Close()
+	fileType, err := filetype.MatchReader(f)
 	if err != nil {
 		return nil, err
 	}
 
-	fileStat, err := tempFile.Stat()
+	fileStat, err := f.Stat()
 	if err != nil {
 		return nil, err
 	}
-
-	tempFile.Close()
 
 	fi := &FileInfo{
-		Name:     name,
-		Checksum: fmt.Sprintf("%x", hasher.Sum(nil)),
-		Size:     fileStat.Size(),
-		File:     tempFile,
-		FilePath: tempFile.Name(),
-		FileType: fileType,
+		Name:      name,
+		Size:      fileStat.Size(),
+		File:      f,
+		FilePath:  f.Name(),
+		FileType:  fileType,
+		temporary: temp,
 	}
 
 	c.files = append(c.files, fi)
@@ -141,7 +137,10 @@ func (c *FileContext) Close() {
 	for _, f := range c.files {
 		if f.File != nil {
 			f.File.Close()
-			os.Remove(f.File.Name())
+
+			if f.temporary {
+				os.Remove(f.File.Name())
+			}
 		}
 	}
 }
