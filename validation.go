@@ -3,6 +3,7 @@ package greenlight
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/concreteit/greenlight/internal"
 	"github.com/concreteit/greenlight/js"
@@ -58,7 +59,7 @@ func (v *Validation) AddScript(script *js.Script, cfg map[string]interface{}) {
 	}
 }
 
-func (v *Validation) Validate(ctx context.Context) ([]ValidationResult, error) {
+func (v *Validation) Validate(ctx context.Context) ([]*ValidationResult, error) {
 	emitData := internal.M{
 		"documentCount": len(v.documentMap),
 		"scriptCount":   len(v.scripts),
@@ -80,7 +81,7 @@ func (v *Validation) Validate(ctx context.Context) ([]ValidationResult, error) {
 				v.Emit(internal.EventTypeValidateDocumentStart, emitData)
 				defer v.Emit(internal.EventTypeValidateDocumentStop, emitData)
 
-				res := ValidationResult{
+				res := &ValidationResult{
 					Name:            name,
 					Valid:           true,
 					ValidationRules: []*RuleValidation{},
@@ -106,12 +107,12 @@ func (v *Validation) Validate(ctx context.Context) ([]ValidationResult, error) {
 		}(name, doc))
 	}
 
-	res := []ValidationResult{}
+	res := []*ValidationResult{}
 	for _, r := range queue.Run() {
 		if r.IsErr() {
 			return nil, r.Message()
 		}
-		if vr, ok := r.Get().(ValidationResult); !ok {
+		if vr, ok := r.Get().(*ValidationResult); !ok {
 			return nil, fmt.Errorf("expected '%+v' to be of type 'ValidationResult'", r.Get())
 		} else {
 			res = append(res, vr)
@@ -127,6 +128,12 @@ func (v *Validation) validateDocument(name string, doc *xml.Document) []internal
 	for _, script := range v.scripts {
 		queue.Add(func(env ScriptEnv) internal.Task {
 			return func(id int) internal.Result {
+				rv := &RuleValidation{
+					Start:  time.Now(),
+					Name:   env.script.Name(),
+					Valid:  true,
+					Errors: []TaskError{},
+				}
 				res := env.script.Run(name, doc, v.emitter, v.documentColl, env.cfg)
 				if res.IsErr() {
 					return res
@@ -137,12 +144,6 @@ func (v *Validation) validateDocument(name string, doc *xml.Document) []internal
 				sr, ok := res.Get().(js.ScriptResult)
 				if !ok {
 					return internal.NewResult(nil, fmt.Errorf("invalid response from task"))
-				}
-
-				rv := &RuleValidation{
-					Name:   env.script.Name(),
-					Valid:  true,
-					Errors: []TaskError{},
 				}
 
 				if sr.Errors != nil {
@@ -159,6 +160,9 @@ func (v *Validation) validateDocument(name string, doc *xml.Document) []internal
 						rv.AddError(te)
 					}
 				}
+
+				rv.Stop = time.Now()
+				rv.Duration = rv.Stop.Sub(rv.Start)
 
 				return internal.NewResult(rv, nil)
 			}

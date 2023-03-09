@@ -81,25 +81,43 @@ func openWithContext(ctx *FileContext, input string) error {
 		if err != nil {
 			return err
 		}
-		if err := ctx.Open(input, file); err != nil {
+		fi, err := ctx.AddFile(input, file)
+		if err != nil {
 			return err
 		}
-		defer file.Close()
+		switch fi.FileType.Extension {
+		case "zip":
+			if err := ctx.processFile(fi, ctx.unzip); err != nil {
+				return err
+			}
+		case "gz":
+			if err := ctx.processFile(fi, ctx.gunzip); err != nil {
+				return err
+			}
+		case "tar":
+			if err := ctx.processFile(fi, ctx.untar); err != nil {
+				return err
+			}
+		case "bz2":
+			if err := ctx.processFile(fi, ctx.bunzip); err != nil {
+				return err
+			}
+		}
 	}
 
 	return nil
 }
 
-func createValidation(input string) (*greenlight.Validation, error) {
+func createValidation(input string) (*greenlight.Validation, *FileContext, error) {
 	validation, err := greenlight.NewValidation()
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	if path := viper.GetString("profile"); path != "" {
 		profile, err := OpenProfile(path)
 		if err != nil {
-			return nil, err
+			return nil, nil, err
 		}
 
 		log.Debugf("validating using profile at '%s'", path)
@@ -114,7 +132,11 @@ func createValidation(input string) (*greenlight.Validation, error) {
 	} else {
 		schema := viper.GetString("schema")
 		if schema == "" {
-			return nil, fmt.Errorf("no schema version defined")
+			return nil, nil, fmt.Errorf("no schema version defined")
+		}
+
+		if _, err := js.CompileSchemaVersion(schema); err != nil {
+			log.Fatal(err)
 		}
 
 		validation.AddScript(scripts["xsd"], map[string]interface{}{
@@ -140,12 +162,12 @@ func createValidation(input string) (*greenlight.Validation, error) {
 
 	fileContext := NewFileContext(context.Background())
 	if err := openWithContext(fileContext, input); err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	for _, file := range fileContext.Find("xml") {
 		if err := validation.AddFile(file.Name, file.FilePath); err != nil {
-			return nil, err
+			return nil, nil, err
 		}
 	}
 
@@ -175,12 +197,10 @@ func createValidation(input string) (*greenlight.Validation, error) {
 			}
 
 			log.WithTime(event.Timestamp).WithFields(fields).Log(level, message)
-		} else if event.Type == internal.EventTypeValidationStop {
-			fileContext.Close()
 		}
 	})
 
-	return validation, nil
+	return validation, fileContext, nil
 }
 
 func validate(cmd *cobra.Command, args []string) {
@@ -205,10 +225,11 @@ func validate(cmd *cobra.Command, args []string) {
 		log.Fatal("no input provided")
 	}
 
-	validation, err := createValidation(internal.DirExpand(input))
+	validation, fileContext, err := createValidation(internal.DirExpand(input))
 	if err != nil {
 		log.Fatal(err)
 	}
+	defer fileContext.Close()
 
 	res, err := validation.Validate(context.Background())
 	if err != nil {
@@ -250,12 +271,12 @@ func validate(cmd *cobra.Command, args []string) {
 			}
 		}
 	case "pretty":
-		for _, r := range res {
-			tw, _, err := terminal.GetSize(0)
-			if err != nil {
-				log.Fatal(err)
-			}
+		tw, _, err := terminal.GetSize(0)
+		if err != nil {
+			log.Fatal(err)
+		}
 
+		for _, r := range res {
 			rows := r.CsvRecords(true)
 			w := table.NewWriter()
 			w.SetAllowedRowLength(tw)
@@ -286,5 +307,5 @@ func validate(cmd *cobra.Command, args []string) {
 }
 
 type ValidationResults struct {
-	ValidationResult []greenlight.ValidationResult `xml:"ValidationResult"`
+	ValidationResult []*greenlight.ValidationResult `xml:"ValidationResult"`
 }

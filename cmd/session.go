@@ -48,7 +48,7 @@ type Session struct {
 	Stopped time.Time `json:"stopped"`
 	Status  string    `json:"status"`
 	Profile *Profile  `json:"profile"`
-	Results []greenlight.ValidationResult
+	Results []*greenlight.ValidationResult
 
 	fileContext *FileContext `json:"-"`
 }
@@ -59,7 +59,7 @@ func (s *Session) NewValidation() (*greenlight.Validation, error) {
 		return nil, err
 	}
 
-	s.Results = []greenlight.ValidationResult{}
+	s.Results = []*greenlight.ValidationResult{}
 
 	for _, file := range s.fileContext.Find("xml") {
 		if err := validation.AddFile(file.Name, file.FilePath); err != nil {
@@ -85,7 +85,7 @@ func (s *Session) NewValidation() (*greenlight.Validation, error) {
 			}
 		}
 
-		s.Results = append(s.Results, greenlight.ValidationResult{
+		s.Results = append(s.Results, &greenlight.ValidationResult{
 			Name:            file.Name,
 			Valid:           false,
 			ValidationRules: rvs,
