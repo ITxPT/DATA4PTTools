@@ -58,35 +58,35 @@ function main(ctx) {
 
       if (!validTimeZoneOffset(node.textAt(tzOffsetPath).get())) {
         res.push(errors.ConsistencyError(
-          "Invalid <TimeZoneOffset />",
+          "Invalid <TimeZoneOffset /> in <FrameDefaults />",
           { line: node.line() },
         ));
       }
 
       if (!validTimeZone(node.textAt(tzPath).get())) {
         res.push(errors.ConsistencyError(
-          "Invalid <TimeZone />",
+          "Invalid <TimeZone /> in <FrameDefaults />",
           { line: node.line() },
         ));
       }
 
       if (!validTimeZoneOffset(node.textAt(stzOffsetPath).get())) {
         res.push(errors.ConsistencyError(
-          "Invalid <SummerTimeZoneOffset />",
+          "Invalid <SummerTimeZoneOffset /> in <FrameDefaults />",
           { line: node.line() },
         ));
       }
 
       if (!validTimeZone(node.textAt(stzPath).get())) {
         res.push(errors.ConsistencyError(
-          "Invalid <SummerTimeZone />",
+          "Invalid <SummerTimeZone /> in <FrameDefaults />",
           { line: node.line() },
         ));
       }
 
       if (!validLanguage(node.textAt(defaultLangPath).get())) {
         res.push(errors.ConsistencyError(
-          "Invalid <DefaultLanguage />",
+          "Invalid <DefaultLanguage /> in <FrameDefaults />",
           { line: node.line() },
         ));
       }

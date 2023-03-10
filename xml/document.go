@@ -50,10 +50,10 @@ func (d *Document) newElement() (*Element, error) {
 		defer f.Close()
 
 		br := bufio.NewReaderSize(f, math.MaxUint16)
-		// TODO fix first element "PublicationDelivery"
-		parser := xmlparser.NewXMLParser(br, "PublicationDelivery").EnableXpath()
-		el := <-parser.Stream()
-		if el == nil {
+		el, err := xmlparser.Parse(br)
+		if err != nil {
+			return nil, err
+		} else if el == nil {
 			return nil, ErrNodeNotFound
 		}
 
@@ -85,14 +85,13 @@ func (d *Document) Find(q string) internal.Result { return internal.NewResult(d.
 
 func (d *Document) First(q string) internal.Result { return internal.NewResult(d.first(q)) }
 
-// TODO
 func (d *Document) Line() int {
-	_, err := d.newElement()
+	el, err := d.newElement()
 	if err != nil {
 		return 0
 	}
 
-	return 0
+	return el.Line()
 }
 
 func (d *Document) Parent() internal.Result {

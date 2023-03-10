@@ -36,6 +36,7 @@ func (w *Worker) Run() internal.Result { // TODO type response object
 	n := len(w.tasks)
 	queue := internal.NewQueue(0, n)
 	for _, t := range w.tasks {
+		t := t
 		queue.Add(func() internal.Task {
 			return func(id int) internal.Result {
 				var handler ContextHandler
@@ -57,13 +58,6 @@ func (w *Worker) Run() internal.Result { // TODO type response object
 						fields[k] = v
 					}
 				}
-
-				// TODO sigsev issue running this in a worker
-				/* callstack := c.runtime.CaptureCallStack(2, nil)
-				 * if len(callstack) == 2 {
-				 *   frame := callstack[1]
-				 *   fields["position"] = frame.Position()
-				 * } */
 
 				ctx := &Context{
 					emitter: w.ctx.emitter,

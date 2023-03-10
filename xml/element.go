@@ -46,11 +46,9 @@ func (o *Element) Find(q string) internal.Result { return internal.NewResult(o.f
 
 func (o *Element) First(q string) internal.Result { return internal.NewResult(o.first(q)) }
 
-// TODO
-func (o *Element) Line() int { return 0 }
+func (o *Element) Line() int { return o.el.Line }
 
-// TODO https://github.com/tamerh/xml-stream-parser/blob/v1.4.0/element.go#L3
-func (o *Element) Parent() internal.Result { return internal.NewResult(nil, nil) }
+func (o *Element) Parent() internal.Result { return internal.NewResult(o.first("..")) }
 
 func (o *Element) Text() string { return o.el.InnerText }
 

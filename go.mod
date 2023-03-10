@@ -2,6 +2,8 @@ module github.com/concreteit/greenlight
 
 go 1.19
 
+replace github.com/tamerh/xml-stream-parser v0.0.0-00010101000000-000000000000 => ./fork/xml-stream-parser
+
 replace github.com/fhmq/hmq v0.0.0-20220119031624-bf2b91c535a8 => ./fork/hmq
 
 require (
@@ -79,6 +81,7 @@ require (
 	github.com/spf13/pflag v1.0.5 // indirect
 	github.com/stretchr/testify v1.8.1 // indirect
 	github.com/subosito/gotenv v1.2.0 // indirect
+	github.com/tamerh/xml-stream-parser v0.0.0-00010101000000-000000000000 // indirect
 	github.com/tidwall/gjson v1.13.0 // indirect
 	github.com/tidwall/match v1.1.1 // indirect
 	github.com/tidwall/pretty v1.2.0 // indirect
@@ -100,9 +103,8 @@ require (
 )
 
 require (
-	github.com/antchfx/xpath v1.2.3 // indirect
-	github.com/tamerh/xml-stream-parser v1.4.0
-	github.com/tamerh/xpath v1.0.0 // indirect
+	github.com/antchfx/xpath v1.2.4 // indirect
+	github.com/tamerh/xpath v1.0.0
 	go.mongodb.org/mongo-driver v1.11.2
 	golang.org/x/net v0.5.0 // indirect
 	golang.org/x/sys v0.5.0 // indirect
