@@ -10,7 +10,7 @@ run-web:
 	cd app && npm run dev
 
 build-web:
-	cd app && npm run build
+	cd app && npm i && npm run build
 
 run-server:
 	go run cmd/*.go server
