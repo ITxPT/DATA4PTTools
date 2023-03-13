@@ -23,8 +23,8 @@ const scheduledStopPointsPath = xpath.join(
   "ServiceFrame",
   "scheduledStopPoints",
 );
-const scheduledStopPointRefPath = xpath.join("ScheduledStopPointRef/@ref");
-const stopPlaceRefPath = xpath.join("StopPlaceRef/@ref");
+const scheduledStopPointRefPath = xpath.join("ScheduledStopPointRef");
+const stopPlaceRefPath = xpath.join("StopPlaceRef");
 const spLongitudePath = xpath.join("Centroid", "Location", "Longitude");
 const spLatitudePath = xpath.join("Centroid", "Location", "Latitude");
 const sspLongitudePath = xpath.join("Location", "Longitude");
@@ -39,57 +39,51 @@ const sspLatitudePath = xpath.join("Location", "Latitude");
 function main(ctx) {
   const config = { distance: 100, ...ctx.config };
 
-  return ctx.node.find(passengerStopAssignmentsPath)
-    .map(v => v.reduce((res, node) => {
-      const id = node.attr("id").get();
-      const scheduledStopPoint = node.first(scheduledStopPointRefPath)
-        .map(n => xpath.join(
-          scheduledStopPointsPath,
-          `ScheduledStopPoint[@id='${n.text()}']`,
-        ))
-        .map(p => ctx.document.first(p).get())
-        .get();
-      const stopPlace = node.first(stopPlaceRefPath)
-        .map(n => xpath.join(
-          stopPlacesPath,
-          `StopPlace[@id='${n.text()}']`),
-        )
-        .map(p => ctx.document.first(p).get())
-        .get();
+  ctx.node.find(passengerStopAssignmentsPath)
+    .getOrElse(() => [])
+    .forEach(n => ctx.worker.queue("worker", n));
 
-      if (!scheduledStopPoint) {
-        res.push(errors.ConsistencyError(
-          `Missing ScheduledStopPoint (PassengerStopAssignment @id=${id})`,
-          { line: node.line() },
-        ));
-      }
-      if (!stopPlace) {
-        res.push(errors.ConsistencyError(
-          `Missing StopPoint (PassengerStopAssignment @id=${id})`,
-          { line: node.line() },
-        ));
-      }
-      if (!scheduledStopPoint || !stopPlace) {
-        return res;
-      }
+  return ctx.worker.run().get();
+}
 
-      const distance = getDistance(stopPlace, scheduledStopPoint); // argument order is important!
-      if (distance > config.distance) {
-        res.push(errors.ConsistencyError(
-          `ScheduledStopPoint and StopPlace is too far apart (PassengerStopAssignment @id=${id})`,
-          { line: node.line() },
-        ));
-      }
+function worker(ctx) {
+  const { node } = ctx;
+  const id = node.attr("id").get();
+  const scheduledStopPoint = node.first(scheduledStopPointRefPath)
+    .map(n => n.attr("ref").get())
+    .map(n => xpath.join(scheduledStopPointsPath, `ScheduledStopPoint[@id='${n}']`))
+    .map(p => ctx.document.first(p))
+    .get();
 
-      return res;
-    }, []))
-    .getOrElse(err => {
-      if (err == errors.NODE_NOT_FOUND) {
-        return [];
-      } else if (err) {
-        return [errors.GeneralError(err)];
-      }
-    });
+  if (!scheduledStopPoint) {
+    return [errors.ConsistencyError(
+      `Missing ScheduledStopPoint (PassengerStopAssignment @id=${id})`,
+      { line: node.line() },
+    )];
+  }
+
+  const stopPlace = node.first(stopPlaceRefPath)
+    .map(n => n.attr("ref").get())
+    .map(n => xpath.join(stopPlacesPath, `StopPlace[@id='${n}']`))
+    .map(p => ctx.document.first(p))
+    .get();
+
+  if (!stopPlace) {
+    return [errors.ConsistencyError(
+      `Missing StopPoint (PassengerStopAssignment @id=${id})`,
+      { line: node.line() },
+    )];
+  }
+
+  const distance = getDistance(stopPlace, scheduledStopPoint); // argument order is important!
+  if (distance > config.distance) {
+    return [errors.ConsistencyError(
+      `ScheduledStopPoint and StopPlace is too far apart (PassengerStopAssignment @id=${id})`,
+      { line: node.line() },
+    )];
+  }
+
+  return [];
 }
 
 /**
