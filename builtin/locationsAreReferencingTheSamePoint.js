@@ -37,8 +37,6 @@ const sspLatitudePath = xpath.join("Location", "Latitude");
  * @return {errors.ScriptError[]?}
  */
 function main(ctx) {
-  const config = { distance: 100, ...ctx.config };
-
   ctx.node.find(passengerStopAssignmentsPath)
     .getOrElse(() => [])
     .forEach(n => ctx.worker.queue("worker", n));
@@ -48,11 +46,12 @@ function main(ctx) {
 
 function worker(ctx) {
   const { node } = ctx;
+  const config = { distance: 100, ...ctx.config };
   const id = node.attr("id").get();
   const scheduledStopPoint = node.first(scheduledStopPointRefPath)
     .map(n => n.attr("ref").get())
     .map(n => xpath.join(scheduledStopPointsPath, `ScheduledStopPoint[@id='${n}']`))
-    .map(p => ctx.document.first(p))
+    .map(p => ctx.document.first(p).get())
     .get();
 
   if (!scheduledStopPoint) {
@@ -65,7 +64,7 @@ function worker(ctx) {
   const stopPlace = node.first(stopPlaceRefPath)
     .map(n => n.attr("ref").get())
     .map(n => xpath.join(stopPlacesPath, `StopPlace[@id='${n}']`))
-    .map(p => ctx.document.first(p))
+    .map(p => ctx.document.first(p).get())
     .get();
 
   if (!stopPlace) {
