@@ -79,6 +79,12 @@ func (w *Worker) Run() internal.Result { // TODO type response object
 
 	res := []ScriptError{}
 	for _, r := range queue.Run() {
+		if r.IsErr() {
+			return r
+		}
+		if r.Get() == nil {
+			return internal.NewResult(nil, fmt.Errorf("unexpected result (nil) returned from task '%v'", r))
+		}
 		if v, ok := r.Get().([]interface{}); !ok {
 			return internal.NewResult(nil, fmt.Errorf("expected '%v' to be of type []interface{}", r))
 		} else {
