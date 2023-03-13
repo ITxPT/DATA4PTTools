@@ -7,7 +7,8 @@ const name = "passingTimesHaveIncreasingTimes";
 const errors = require("errors");
 const types = require("types");
 const xpath = require("xpath");
-const timetablePath = xpath.join(xpath.path.FRAMES, "TimetableFrame", "vehicleJourneys", "ServiceJourney", "passingTimes");
+const serviceJourneyPath = xpath.join(xpath.path.FRAMES, "TimetableFrame", "vehicleJourneys", "ServiceJourney");
+const timetablePath = xpath.join("passingTimes", "TimetabledPassingTime");
 const stopPointPath = xpath.join(xpath.path.FRAMES, "ServiceFrame", "journeyPatterns", "*[contains(name(), 'JourneyPattern')]", "pointsInSequence");
 const stopPointRefPath = xpath.join("StopPointInJourneyPatternRef/@ref");
 const arrivalTimePath = xpath.join("ArrivalTime");
@@ -21,33 +22,28 @@ const departureOffsetPath = xpath.join("DepartureDayOffset");
  * @return {errors.ScriptError[]?}
  */
 function main(ctx) {
-  ctx.node.find(timetablePath)
+  ctx.node.find(serviceJourneyPath)
     .getOrElse(() => [])
-    .forEach(n => ctx.worker.queue("worker", n));
+    .forEach((n) => ctx.worker.queue("worker", n));
 
   return ctx.worker.run().get();
 }
 
-/**
- * @param {types.Context} ctx
- * @return {errors.ScriptError[]?}
- */
 function worker(ctx) {
   const res = [];
-  const serviceJourney = ctx.node.first("parent::netex:ServiceJourney").get();
-  const passingTimes = ctx.node.find(xpath.join("TimetabledPassingTime")).get();
-  const id = serviceJourney.valueAt("@id").get();
+  const passingTimes = ctx.node.find(timetablePath).get();
+  const id = ctx.node.attr("id").get();
   let prevArrivalDayOffset;
   let prevDepartureTime;
   let prevDepartureDayOffset;
 
   passingTimes.forEach((node, i) => {
-    const tid = node.valueAt("@id").get();
-    const stopPointID = node.valueAt(stopPointRefPath).get();
-    const arrivalTime = node.valueAt(arrivalTimePath).get();
-    const arrivalDayOffset = node.valueAt(arrivalOffsetPath).get();
-    const departureTime = node.valueAt(departureTimePath).get();
-    const departureDayOffset = node.valueAt(departureOffsetPath).get();
+    const tid = node.attr("id").get();
+    const stopPointID = node.textAt(stopPointRefPath).get();
+    const arrivalTime = node.textAt(arrivalTimePath).get();
+    const arrivalDayOffset = node.textAt(arrivalOffsetPath).get();
+    const departureTime = node.textAt(departureTimePath).get();
+    const departureDayOffset = node.textAt(departureOffsetPath).get();
 
     if (i !== 0) {
       if (prevDepartureTime >= arrivalTime && arrivalDayOffset === prevArrivalDayOffset) {

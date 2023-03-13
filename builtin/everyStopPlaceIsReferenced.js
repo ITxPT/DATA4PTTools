@@ -15,34 +15,34 @@ const stopPlacesPath = xpath.join(xpath.path.FRAMES, "SiteFrame", "stopPlaces", 
  * @return {errors.ScriptError[]?}
  */
 function main(ctx) {
-  return ctx.node.find(stopPlacesPath)
-    .map(v => v.reduce((res, node) => {
-      const id = node.valueAt("@id").get();
-      if (!id) {
-        res.push(errors.ConsistencyError(
-          `StopPlace is missing attribute @id`,
-          { line: node.line() },
-        ));
-        return res;
-      }
+  ctx.node.find(stopPlacesPath)
+    .getOrElse(() => [])
+    .forEach((n) => ctx.worker.queue("worker", n));
 
-      const stopPlaceRefs = xpath.join("./", `StopPlaceRef[@ref='${id}']`);
-      const refs = ctx.document.find(stopPlaceRefs).get();
+  return ctx.worker.run().get();
+}
 
-      if (!refs || refs.length === 0) {
-        res.push(errors.ConsistencyError(
-          `Missing reference for StopPlace(@id=${id})`,
-          { line: node.line() },
-        ));
-      }
+function worker(ctx) {
+  const res = [];
+  const id = ctx.node.attr("id").get();
 
-      return res;
-    }, []))
-    .getOrElse(err => {
-      if (err == errors.NODE_NOT_FOUND) {
-        return [];
-      } else if (err) {
-        return [errors.GeneralError(err)];
-      }
-    });
+  if (!id) {
+    res.push(errors.ConsistencyError(
+      `StopPlace is missing attribute @id`,
+      { line: ctx.node.line() },
+    ));
+    return res;
+  }
+
+  const stopPlaceRefs = xpath.join("./", `StopPlaceRef[@ref='${id}']`);
+  const refs = ctx.document.find(stopPlaceRefs).get();
+
+  if (!refs || refs.length === 0) {
+    res.push(errors.ConsistencyError(
+      `Missing reference for StopPlace(@id=${id})`,
+      { line: ctx.node.line() },
+    ));
+  }
+
+  return res;
 }

@@ -2,7 +2,7 @@ package js
 
 import (
 	"github.com/concreteit/greenlight/internal"
-	"github.com/lestrrat-go/libxml2/types"
+	"github.com/concreteit/greenlight/xml"
 )
 
 type ContextOption = func(c *Context) error
@@ -30,35 +30,24 @@ func WithConfig(cfg internal.M) ContextOption {
 	}
 }
 
-func WithNode(n types.Node) ContextOption {
+func WithNode(n xml.Node) ContextOption {
 	return func(c *Context) error {
-		node, err := NewNode(n)
-		if err != nil {
-			return err
-		}
-
-		c.Node = node
+		c.Node = n
 		return nil
 	}
 }
 
-func WithDocument(doc types.Document) ContextOption {
+func WithDocument(doc *xml.Document) ContextOption {
 	return func(c *Context) error {
 		c.Xsd = Xsd{
 			document: doc,
 		}
-
-		node, err := NewNode(doc)
-		if err != nil {
-			return err
-		}
-
-		c.Document = node
+		c.Document = doc
 		return nil
 	}
 }
 
-func WithCollection(coll *Collection) ContextOption {
+func WithCollection(coll *xml.Collection) ContextOption {
 	return func(c *Context) error {
 		c.Collection = coll
 		return nil
@@ -72,10 +61,10 @@ type Context struct {
 
 	// export to js runtime
 	Config     internal.M
-	Document   *Node
-	Collection *Collection
+	Document   xml.Node
+	Collection *xml.Collection
 	Log        Logger
-	Node       *Node
+	Node       xml.Node
 	Worker     *Worker
 	Xsd        Xsd
 }

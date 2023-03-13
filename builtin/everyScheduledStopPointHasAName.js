@@ -29,7 +29,7 @@ function main(ctx) {
 
   return ctx.node.find(scheduledStopPointsPath)
     .map(v => v.reduce((res, node) => {
-      const id = node.valueAt("@id").get();
+      const id = node.attr("id").get();
 
       if (!id) {
         res.push(errors.ConsistencyError(
@@ -39,8 +39,8 @@ function main(ctx) {
         return;
       }
 
-      const name = node.valueAt(xpath.join("Name")).get();
-      const shortName = node.valueAt(xpath.join("ShortName")).get();
+      const name = node.textAt(xpath.join("Name")).get();
+      const shortName = node.textAt(xpath.join("ShortName")).get();
 
       if (!name && !shortName) {
         res.push(errors.ConsistencyError(

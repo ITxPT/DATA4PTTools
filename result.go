@@ -2,6 +2,7 @@ package greenlight
 
 import (
 	"fmt"
+	"time"
 )
 
 const maxErrorCount = 1000
@@ -14,7 +15,15 @@ type ValidationResult struct {
 
 func (r ValidationResult) CsvRecords(includeHeader bool) [][]string {
 	res := [][]string{}
-	header := []string{"file_name", "validation_name", "valid", "error_line_no", "error_message"}
+	header := []string{
+		"file_name",
+		"validation_name",
+		"start",
+		"stop",
+		"valid",
+		"error_line_no",
+		"error_message",
+	}
 
 	if includeHeader {
 		res = append(res, header)
@@ -22,10 +31,26 @@ func (r ValidationResult) CsvRecords(includeHeader bool) [][]string {
 
 	for _, v := range r.ValidationRules {
 		if v.Valid {
-			res = append(res, []string{r.Name, v.Name, "true", "", ""})
+			res = append(res, []string{
+				r.Name,
+				v.Name,
+				v.Start.Format(time.RFC3339),
+				v.Stop.Format(time.RFC3339),
+				"true",
+				"",
+				"",
+			})
 		} else {
 			for _, err := range v.Errors {
-				res = append(res, []string{r.Name, v.Name, "false", fmt.Sprintf("%d", err.Line), err.Message})
+				res = append(res, []string{
+					r.Name,
+					v.Name,
+					v.Start.Format(time.RFC3339),
+					v.Stop.Format(time.RFC3339),
+					"false",
+					fmt.Sprintf("%d", err.Line),
+					err.Message,
+				})
 			}
 		}
 	}
@@ -40,11 +65,14 @@ type TaskError struct {
 }
 
 type RuleValidation struct {
-	Name        string      `json:"name" xml:"name,attr"`
-	Description string      `json:"description,omitempty" xml:"description,attr,omitempty"`
-	Valid       bool        `json:"valid" xml:"valid,attr"`
-	ErrorCount  int         `json:"error_count,omitempty" xml:"errorCount,attr,omitempty"`
-	Errors      []TaskError `json:"errors,omitempty" xml:"Errors,omitempty"`
+	Start       time.Time     `json:"-" xml:"-"`
+	Stop        time.Time     `json:"-" xml:"-"`
+	Duration    time.Duration `json:"-" xml:"-"`
+	Name        string        `json:"name" xml:"name,attr"`
+	Description string        `json:"description,omitempty" xml:"description,attr,omitempty"`
+	Valid       bool          `json:"valid" xml:"valid,attr"`
+	ErrorCount  int           `json:"error_count,omitempty" xml:"errorCount,attr,omitempty"`
+	Errors      []TaskError   `json:"errors,omitempty" xml:"Errors,omitempty"`
 }
 
 func (v *RuleValidation) AddError(err TaskError) {

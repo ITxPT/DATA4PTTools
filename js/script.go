@@ -7,31 +7,9 @@ import (
 	"strings"
 
 	"github.com/concreteit/greenlight/internal"
+	"github.com/concreteit/greenlight/xml"
 	"github.com/dop251/goja"
-	"github.com/lestrrat-go/libxml2/types"
 )
-
-var (
-	ErrVariableNotFound = fmt.Errorf("variable not found")
-)
-
-func uncapitalize(s string) string {
-	if s == "Free" { // reserved names
-		return ""
-	}
-
-	return strings.ToLower(s[0:1]) + s[1:]
-}
-
-type fieldNameMapper struct{}
-
-func (fnp fieldNameMapper) FieldName(_ reflect.Type, f reflect.StructField) string {
-	return uncapitalize(f.Name)
-}
-
-func (fnp fieldNameMapper) MethodName(_ reflect.Type, m reflect.Method) string {
-	return uncapitalize(m.Name)
-}
 
 type ScriptResult struct {
 	Name        string
@@ -48,13 +26,9 @@ type Script struct {
 	program     *goja.Program
 }
 
-func (s *Script) Name() string {
-	return s.name
-}
+func (s *Script) Name() string { return s.name }
 
-func (s *Script) Description() string {
-	return s.description
-}
+func (s *Script) Description() string { return s.description }
 
 func (s *Script) Runtime() (*goja.Runtime, error) {
 	vm := goja.New()
@@ -69,7 +43,13 @@ func (s *Script) Runtime() (*goja.Runtime, error) {
 	return vm, nil
 }
 
-func (s *Script) Run(name string, doc types.Document, emitter *internal.Emitter, coll *Collection, config map[string]interface{}) internal.Result {
+func (s *Script) Run(
+	name string,
+	doc *xml.Document,
+	emitter *internal.Emitter,
+	coll *xml.Collection,
+	config map[string]interface{},
+) internal.Result {
 	fields := map[string]interface{}{
 		"scope":    "main",
 		"script":   s.name,
@@ -182,4 +162,22 @@ func (m ScriptMap) Keys() []string {
 	}
 
 	return keys
+}
+
+func uncapitalize(s string) string {
+	if s == "Free" { // reserved names
+		return ""
+	}
+
+	return strings.ToLower(s[0:1]) + s[1:]
+}
+
+type fieldNameMapper struct{}
+
+func (fnp fieldNameMapper) FieldName(_ reflect.Type, f reflect.StructField) string {
+	return uncapitalize(f.Name)
+}
+
+func (fnp fieldNameMapper) MethodName(_ reflect.Type, m reflect.Method) string {
+	return uncapitalize(m.Name)
 }

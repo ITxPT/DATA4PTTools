@@ -3,13 +3,9 @@ package js
 import (
 	"fmt"
 	"regexp"
-	"strings"
 
 	"github.com/concreteit/greenlight/internal"
-	"github.com/lestrrat-go/libxml2/clib"
-	"github.com/lestrrat-go/libxml2/types"
-	"github.com/lestrrat-go/libxml2/xpath"
-	"github.com/lestrrat-go/libxml2/xsd"
+	"github.com/concreteit/greenlight/xml"
 )
 
 var (
@@ -26,7 +22,7 @@ var (
 		"netex@1.03":    "xsd/netex/1.03/NeTEx_publication.xsd",
 		"netex@1.03-nc": "xsd/netex/1.03/NeTEx_publication-NoConstraint.xsd",
 	}
-	xsdSchemas = map[string]*xsd.Schema{}
+	xsdSchemas = map[string]*xml.Schema{}
 )
 
 var (
@@ -35,51 +31,26 @@ var (
 )
 
 type Xsd struct {
-	document types.Document
+	document *xml.Document
 }
 
 func (x Xsd) Validate(version string) internal.Result {
-	res := []ScriptError{}
-	if err := ValidateSchema(x.document, version); err != nil {
-		if sve, ok := err.(*ValidationError); ok {
-			for _, d := range sve.Details() {
-				line := 0
-				if verr, ok := d.(clib.SchemaValidationError); ok {
-					line = verr.Line
-				}
-
-				res = append(res, ScriptError{
-					Type:    ErrTypeXSD.Error(),
-					Message: d.Error(),
-					Extra: internal.M{
-						"line": int64(line),
-					},
-				})
-			}
-
-			return internal.NewResult(res, err)
-		} else {
-			return internal.NewResult(nil, err)
+	scriptErrors := []ScriptError{}
+	if res, err := ValidateSchema(x.document, version); err != nil {
+		return internal.NewResult(nil, err)
+	} else if !res.Valid {
+		for _, verr := range res.Errors {
+			scriptErrors = append(scriptErrors, ScriptError{
+				Type:    ErrTypeXSD.Error(),
+				Message: verr.Message,
+				Extra: internal.M{
+					"line": verr.Line,
+				},
+			})
 		}
 	}
 
-	return internal.NewResult(res, nil)
-}
-
-func newXPathContext(nodes ...types.Node) (*xpath.Context, error) {
-	ctx, err := xpath.NewContext(nodes...)
-	if err != nil {
-		return nil, err
-	}
-
-	if err := ctx.RegisterNS("xsd", "http://www.w3.org/2001/XMLSchema"); err != nil {
-		return nil, err
-	}
-	if err := ctx.RegisterNS("netex", "http://www.netex.org.uk/netex"); err != nil {
-		return nil, err
-	}
-
-	return ctx, nil
+	return internal.NewResult(scriptErrors, nil)
 }
 
 type ValidationError struct {
@@ -98,33 +69,28 @@ func NewValidationError(err error, details []error) *ValidationError {
 	}
 }
 
-func ValidateSchema(document types.Document, version string) error {
+func ValidateSchema(doc *xml.Document, version string) (*xml.ValidationResult, error) {
 	xsdPath := xsdPaths[version]
 	if xsdPath == "" {
-		return NewValidationError(ErrXSDSchemaNotFound, nil)
+		return nil, ErrXSDSchemaNotFound
 	}
 	if xsdSchemas[version] == nil {
 		_, err := CompileSchemaVersion(version)
 		if err != nil {
-			return NewValidationError(err, nil)
+			return nil, err
 		}
 	}
 
-	_, errors := xsdSchemas[version].Validate(document)
-	if errors != nil {
-		return NewValidationError(ErrXSDValidationInvalid, errors)
-	}
-
-	return nil
+	return xsdSchemas[version].Validate(doc.FilePath)
 }
 
-func CompileSchemaVersion(version string) (*xsd.Schema, error) {
+func CompileSchemaVersion(version string) (*xml.Schema, error) {
 	xsdPath := xsdPaths[version]
 	if xsdPath == "" {
 		return nil, ErrXSDSchemaNotFound
 	}
 
-	schema, err := xsd.ParseFromFile(xsdPath)
+	schema, err := xml.NewSchema(xsdPath)
 	if err != nil {
 		return nil, err
 	}
@@ -132,13 +98,4 @@ func CompileSchemaVersion(version string) (*xsd.Schema, error) {
 	xsdSchemas[version] = schema
 
 	return schema, nil
-}
-
-func JoinXPath(values ...string) string {
-	for i, v := range values {
-		if xpathEleRe.MatchString(v) {
-			values[i] = "netex:" + v
-		}
-	}
-	return strings.Join(values, "/")
 }

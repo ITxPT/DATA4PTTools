@@ -40,8 +40,8 @@ const interestingItems = new Set([
 function main(ctx) {
   return ctx.node.find(stopPlacesPath)
     .map(v => v.reduce((res, node) => {
-      const id = node.valueAt("@id").get();
-      const stopType = node.valueAt(stopPlaceTypePath).get();
+      const id = node.attr("id").get();
+      const stopType = node.textAt(stopPlaceTypePath).get();
 
       if (!stopType) {
         res.push(errors.ConsistencyError(

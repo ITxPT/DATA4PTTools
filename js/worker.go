@@ -4,11 +4,12 @@ import (
 	"fmt"
 
 	"github.com/concreteit/greenlight/internal"
+	"github.com/concreteit/greenlight/xml"
 )
 
 type Task struct {
 	Handler string
-	Node    *Node
+	Node    xml.Node
 }
 
 type Worker struct {
@@ -24,7 +25,7 @@ func NewWorker(ctx *Context) *Worker {
 	}
 }
 
-func (w *Worker) Queue(handler string, node *Node) {
+func (w *Worker) Queue(handler string, node xml.Node) {
 	w.tasks = append(w.tasks, Task{
 		Handler: handler,
 		Node:    node,
@@ -35,6 +36,7 @@ func (w *Worker) Run() internal.Result { // TODO type response object
 	n := len(w.tasks)
 	queue := internal.NewQueue(0, n)
 	for _, t := range w.tasks {
+		t := t
 		queue.Add(func() internal.Task {
 			return func(id int) internal.Result {
 				var handler ContextHandler
@@ -57,13 +59,6 @@ func (w *Worker) Run() internal.Result { // TODO type response object
 					}
 				}
 
-				// TODO sigsev issue running this in a worker
-				/* callstack := c.runtime.CaptureCallStack(2, nil)
-				 * if len(callstack) == 2 {
-				 *   frame := callstack[1]
-				 *   fields["position"] = frame.Position()
-				 * } */
-
 				ctx := &Context{
 					emitter: w.ctx.emitter,
 					fields:  fields,
@@ -84,6 +79,12 @@ func (w *Worker) Run() internal.Result { // TODO type response object
 
 	res := []ScriptError{}
 	for _, r := range queue.Run() {
+		if r.IsErr() {
+			return r
+		}
+		if r.Get() == nil {
+			return internal.NewResult(nil, fmt.Errorf("unexpected result (nil) returned from task '%v'", r))
+		}
 		if v, ok := r.Get().([]interface{}); !ok {
 			return internal.NewResult(nil, fmt.Errorf("expected '%v' to be of type []interface{}", r))
 		} else {

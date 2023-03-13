@@ -24,7 +24,7 @@ const shortNamePath = xpath.join("ShortName");
 function main(ctx) {
   return ctx.node.find(stopPlacesPath)
     .map(v => v.reduce((res, node) => {
-      const id = node.valueAt("@id").get();
+      const id = node.attr("id").get();
 
       if (!id) {
         res.push(errors.ConsistencyError(
@@ -34,8 +34,8 @@ function main(ctx) {
         return res;
       }
 
-      const name = node.valueAt(namePath).get();
-      const shortName = node.valueAt(shortNamePath).get();
+      const name = node.textAt(namePath).get();
+      const shortName = node.textAt(shortNamePath).get();
 
       if (!name && !shortName) {
         res.push(errors.ConsistencyError(

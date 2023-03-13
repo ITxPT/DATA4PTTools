@@ -26,29 +26,35 @@ declare module "types" {
 
   /** */
   export interface Node {
-    /** */
-    ref(): string;
+    /**
+     * @param {string} expr
+     */
+    attr(expr: string): Result<string>;
 
     /** */
     line(): number;
 
     /** */
-    value(): string;
-
-    /** */
     parent(): Result<Node>;
 
-    /** */
-    find(pattern: string): Result<Node[]>;
+    /**
+     * @param {string} expr
+     */
+    find(expr: string): Result<Node[]>;
+
+    /**
+     * @param {string} expr
+     */
+    first(expr: string): Result<Node>;
 
     /** */
-    first(pattern: string): Result<Node>;
+    text(): string;
 
     /**
      * Try to find the value of the first node matching pattern
-     * @param {string} pattern
+     * @param {string} expr
      */
-    valueAt(pattern: string): Result<string>;
+    textAt(expr: string): Result<string>;
   }
 
   /** */

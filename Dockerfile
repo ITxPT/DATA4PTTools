@@ -1,4 +1,4 @@
-FROM golang:1.17-alpine as builder
+FROM golang:1.20-alpine as builder
 RUN apk add libxml2-dev gcc musl-dev nodejs npm
 RUN mkdir /greenlight
 ADD . /usr/local/greenlight
@@ -11,7 +11,7 @@ RUN npm install
 RUN npm run build
 
 
-FROM golang:1.17-alpine
+FROM golang:1.20-alpine
 RUN apk add libxml2
 WORKDIR /usr/local/greenlight
 COPY --from=builder /usr/local/greenlight/glc /usr/local/greenlight/glc

@@ -34,7 +34,7 @@ function main(ctx) {
     return [errors.NotFoundError("Document is missing element <FrameDefaults />")];
   }
 
-  const defaultLocationSystem = frameDefaults.valueAt(defaultLocationSystemPath).get();
+  const defaultLocationSystem = frameDefaults.textAt(defaultLocationSystemPath).get();
 
   ctx.log.debug(`defaultLocationSystem: ${defaultLocationSystem}`);
   ctx.log.debug(`configured max distance: ${config.distance}`);
@@ -49,16 +49,16 @@ function main(ctx) {
   ctx.node.find(stopPlacesPath)
     .getOrElse(() => [])
     .forEach(node => {
-      const id = node.valueAt("@id").get();
-      const long = parseFloat(node.valueAt(longitudePath).get());
-      const lat = parseFloat(node.valueAt(latitudePath).get());
+      const id = node.attr("id").get();
+      const long = parseFloat(node.textAt(longitudePath).get());
+      const lat = parseFloat(node.textAt(latitudePath).get());
 
       node.find(quayPath)
         .getOrElse(() => [])
         .forEach(quay => {
-          const idQuay = quay.valueAt("@id").get();
-          const longQuay = parseFloat(quay.valueAt(longitudePath).get());
-          const latQuay = parseFloat(quay.valueAt(latitudePath).get());
+          const idQuay = quay.attr("id").get();
+          const longQuay = parseFloat(quay.textAt(longitudePath).get());
+          const latQuay = parseFloat(quay.textAt(latitudePath).get());
           const d = getDistanceFromLatLonInKm(lat, long, latQuay, longQuay);
           const distance = Math.round(d * 1000);
 

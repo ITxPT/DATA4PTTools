@@ -23,8 +23,8 @@ const scheduledStopPointsPath = xpath.join(
   "ServiceFrame",
   "scheduledStopPoints",
 );
-const scheduledStopPointRefPath = xpath.join("ScheduledStopPointRef/@ref");
-const stopPlaceRefPath = xpath.join("StopPlaceRef/@ref");
+const scheduledStopPointRefPath = xpath.join("ScheduledStopPointRef");
+const stopPlaceRefPath = xpath.join("StopPlaceRef");
 const spLongitudePath = xpath.join("Centroid", "Location", "Longitude");
 const spLatitudePath = xpath.join("Centroid", "Location", "Latitude");
 const sspLongitudePath = xpath.join("Location", "Longitude");
@@ -37,59 +37,52 @@ const sspLatitudePath = xpath.join("Location", "Latitude");
  * @return {errors.ScriptError[]?}
  */
 function main(ctx) {
+  ctx.node.find(passengerStopAssignmentsPath)
+    .getOrElse(() => [])
+    .forEach(n => ctx.worker.queue("worker", n));
+
+  return ctx.worker.run().get();
+}
+
+function worker(ctx) {
+  const { node } = ctx;
   const config = { distance: 100, ...ctx.config };
+  const id = node.attr("id").get();
+  const scheduledStopPoint = node.first(scheduledStopPointRefPath)
+    .map(n => n.attr("ref").get())
+    .map(n => xpath.join(scheduledStopPointsPath, `ScheduledStopPoint[@id='${n}']`))
+    .map(p => ctx.document.first(p).get())
+    .get();
 
-  return ctx.node.find(passengerStopAssignmentsPath)
-    .map(v => v.reduce((res, node) => {
-      const id = node.valueAt("@id").get();
-      const scheduledStopPoint = node.first(scheduledStopPointRefPath)
-        .map(n => xpath.join(
-          scheduledStopPointsPath,
-          `ScheduledStopPoint[@id='${n.value()}']`,
-        ))
-        .map(p => ctx.document.first(p).get())
-        .get();
-      const stopPlace = node.first(stopPlaceRefPath)
-        .map(n => xpath.join(
-          stopPlacesPath,
-          `StopPlace[@id='${n.value()}']`),
-        )
-        .map(p => ctx.document.first(p).get())
-        .get();
+  if (!scheduledStopPoint) {
+    return [errors.ConsistencyError(
+      `Missing ScheduledStopPoint (PassengerStopAssignment @id=${id})`,
+      { line: node.line() },
+    )];
+  }
 
-      if (!scheduledStopPoint) {
-        res.push(errors.ConsistencyError(
-          `Missing ScheduledStopPoint (PassengerStopAssignment @id=${id})`,
-          { line: node.line() },
-        ));
-      }
-      if (!stopPlace) {
-        res.push(errors.ConsistencyError(
-          `Missing StopPoint (PassengerStopAssignment @id=${id})`,
-          { line: node.line() },
-        ));
-      }
-      if (!scheduledStopPoint || !stopPlace) {
-        return res;
-      }
+  const stopPlace = node.first(stopPlaceRefPath)
+    .map(n => n.attr("ref").get())
+    .map(n => xpath.join(stopPlacesPath, `StopPlace[@id='${n}']`))
+    .map(p => ctx.document.first(p).get())
+    .get();
 
-      const distance = getDistance(stopPlace, scheduledStopPoint); // argument order is important!
-      if (distance > config.distance) {
-        res.push(errors.ConsistencyError(
-          `ScheduledStopPoint and StopPlace is too far apart (PassengerStopAssignment @id=${id})`,
-          { line: node.line() },
-        ));
-      }
+  if (!stopPlace) {
+    return [errors.ConsistencyError(
+      `Missing StopPoint (PassengerStopAssignment @id=${id})`,
+      { line: node.line() },
+    )];
+  }
 
-      return res;
-    }, []))
-    .getOrElse(err => {
-      if (err == errors.NODE_NOT_FOUND) {
-        return [];
-      } else if (err) {
-        return [errors.GeneralError(err)];
-      }
-    });
+  const distance = getDistance(stopPlace, scheduledStopPoint); // argument order is important!
+  if (distance > config.distance) {
+    return [errors.ConsistencyError(
+      `ScheduledStopPoint and StopPlace is too far apart (PassengerStopAssignment @id=${id})`,
+      { line: node.line() },
+    )];
+  }
+
+  return [];
 }
 
 /**
@@ -99,10 +92,10 @@ function main(ctx) {
  * @returns {number}
  */
 function getDistance(n1, n2) {
-  const lonx = parseFloat(n1.valueAt(spLongitudePath).get());
-  const latx = parseFloat(n1.valueAt(spLatitudePath).get());
-  const lony = parseFloat(n2.valueAt(sspLongitudePath).get());
-  const laty = parseFloat(n2.valueAt(sspLatitudePath).get());
+  const lonx = parseFloat(n1.textAt(spLongitudePath).get());
+  const latx = parseFloat(n1.textAt(spLatitudePath).get());
+  const lony = parseFloat(n2.textAt(sspLongitudePath).get());
+  const laty = parseFloat(n2.textAt(sspLatitudePath).get());
   const d = getDistanceFromLatLonInKm(lonx, latx, lony, laty);
 
   return Math.round(d * 1000);

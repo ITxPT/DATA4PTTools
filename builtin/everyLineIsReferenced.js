@@ -22,7 +22,7 @@ const journeyLinePath = xpath.join(
 function main(ctx) {
   return ctx.node.find(linesPath)
     .map(v => v.reduce((res, node) => {
-      const id = node.valueAt("@id").get();
+      const id = node.attr("id").get();
 
       if (!id) {
         res.push(errors.ConsistencyError(

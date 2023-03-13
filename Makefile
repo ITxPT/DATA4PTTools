@@ -1,13 +1,16 @@
 APP_NAME ?= greenlight
+GIT_BRANCH ?= $(shell git rev-parse --abbrev-ref HEAD)
 GIT_HASH_LONG ?= $(shell git log --format="%H" -n 1)
 DOCKER_TAG ?= $(shell git log --format="%h" -n 1)
 BENCH_TIME=1s
+BENCH_COUNT=5
+TEST_TIMEOUT=10m
 
 run-web:
 	cd app && npm run dev
 
 build-web:
-	cd app && npm run build
+	cd app && npm i && npm run build
 
 run-server:
 	go run cmd/*.go server
@@ -16,8 +19,14 @@ build-cli:
 	go build cmd*.go -o greenlight
 
 benchmark:
-	$(info git hash is $(GIT_HASH_LONG))
-	go test -bench=. -benchmem -benchtime=$(BENCH_TIME)
+	$(info benchmarking target => $(GIT_BRANCH)@$(GIT_HASH_LONG))
+	go test -bench=. -benchmem -benchtime=$(BENCH_TIME) -timeout=$(TEST_TIMEOUT)
+
+clean:
+	go clean -cache
+
+test:
+	go test -test.v
 
 docker-build:
 	docker build -t $(DOCKER_USERNAME)/$(APP_NAME):$(DOCKER_TAG) .
