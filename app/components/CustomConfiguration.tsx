@@ -4,13 +4,13 @@ import {
   InputLabel,
   MenuItem,
   Select,
-  SelectChangeEvent,
+  type SelectChangeEvent,
   Stack,
   Typography
 } from '@mui/material'
 import ChevronRightIcon from '@mui/icons-material/ChevronRight'
 import React from 'react'
-import { Profile, Script } from '../api/types'
+import type { Profile, Script } from '../api/types'
 import scriptData from '../public/scripts.json'
 
 const scriptOptions = scriptData.filter(v => v.name !== 'xsd')

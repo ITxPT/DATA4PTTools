@@ -1,7 +1,7 @@
-import { NextPage } from 'next'
+import type { NextPage } from 'next'
 import { useRouter } from 'next/router'
 import React from 'react'
-import { Session } from '../../../api/types'
+import type { Session } from '../../../api/types'
 import App from '../../../components/App'
 import ErrorAlert from '../../../components/ErrorAlert'
 import FullscreenLoader from '../../../components/FullscreenLoader'
@@ -31,7 +31,9 @@ const Result: NextPage = () => {
     }).catch(err => {
       setSession(null)
       setErrorMessage(err.message)
-    }).finally(() => setLoading(false))
+    }).finally(() => {
+      setLoading(false)
+    })
   }, [apiClient, router.query])
 
   return (
@@ -39,7 +41,9 @@ const Result: NextPage = () => {
       <ErrorAlert
         open={errorOpen}
         message={errorMessage}
-        onClose={() => setErrorOpen(false)}
+        onClose={() => {
+          setErrorOpen(false)
+        }}
       />
 
       { loading

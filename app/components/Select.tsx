@@ -3,8 +3,8 @@ import {
   InputLabel,
   MenuItem,
   Select as MUISelect,
-  SelectChangeEvent,
-  SelectProps
+  type SelectChangeEvent,
+  type SelectProps
 } from '@mui/material'
 import React from 'react'
 

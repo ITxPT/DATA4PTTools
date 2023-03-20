@@ -31,7 +31,7 @@ import {
   Typography
 } from '@mui/material'
 import React from 'react'
-import { Session } from '../api/types'
+import type { Session } from '../api/types'
 import useApiClient from '../hooks/useApiClient'
 import theme from '../styles/theme'
 
@@ -127,13 +127,17 @@ const ErrorList = ({ errors }: ErrorListProps): JSX.Element => {
         <Box sx={{ position: 'absolute', top: '12px', right: '20px' }}>
           <IconButton
             disabled={index === 0}
-            onClick={() => setIndex(index - 1)}
+            onClick={() => {
+              setIndex(index - 1)
+            }}
           >
             <KeyboardArrowLeftIcon />
           </IconButton>
           <IconButton
             disabled={index === maxIndex}
-            onClick={() => setIndex(index + 1)}
+            onClick={() => {
+              setIndex(index + 1)
+            }}
           >
             <KeyboardArrowRightIcon />
           </IconButton>
@@ -179,7 +183,9 @@ const TaskTableRow = ({ validation }: TaskTableRowProps): JSX.Element => {
           { errors.length > 0 && <IconButton
             aria-label="expand row"
             size="small"
-            onClick={() => setOpen(!open)}
+            onClick={() => {
+              setOpen(!open)
+            }}
           >
             {open ? <KeyboardArrowUpIcon /> : <KeyboardArrowDownIcon />}
           </IconButton> }

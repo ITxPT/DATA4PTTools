@@ -1,4 +1,4 @@
-import { FirebaseOptions } from 'firebase/app'
+import type { FirebaseOptions } from 'firebase/app'
 import { useRouter } from 'next/router'
 import React from 'react'
 import Auth from './Auth'
@@ -44,11 +44,17 @@ const FirebaseApp = (props: FirebaseAppProps): any => {
     setIsLoading(true)
 
     signOut()
-      .catch(err => console.log(err))
-      .finally(() => setIsLoading(false))
+      .catch(err => {
+        console.log(err)
+      })
+      .finally(() => {
+        setIsLoading(false)
+      })
   }
 
-  React.useEffect(() => setIsLoading(loading), [loading])
+  React.useEffect(() => {
+    setIsLoading(loading)
+  }, [loading])
 
   if (isLoading || isSignIn) {
     if (isSignIn) {

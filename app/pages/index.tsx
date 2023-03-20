@@ -1,7 +1,7 @@
 import EmailIcon from '@mui/icons-material/Email'
 import GitHubIcon from '@mui/icons-material/GitHub'
 import { Alert, Button, Link, Stack, Typography } from '@mui/material'
-import { NextPage } from 'next'
+import type { NextPage } from 'next'
 import { useRouter } from 'next/router'
 import React from 'react'
 import App from '../components/App'
@@ -23,8 +23,12 @@ const Home: NextPage = () => {
       .then(async (session) => {
         await router.push('/jobs/' + session.id)
       })
-      .catch(err => setErrorMessage(err.message))
-      .finally(() => setLoading(false))
+      .catch(err => {
+        setErrorMessage(err.message)
+      })
+      .finally(() => {
+        setLoading(false)
+      })
   }
 
   return (
@@ -32,7 +36,9 @@ const Home: NextPage = () => {
       <ErrorAlert
         open={errorOpen}
         message={errorMessage}
-        onClose={() => setErrorOpen(false)}
+        onClose={() => {
+          setErrorOpen(false)
+        }}
       />
       <Stack spacing={{ xs: 2, md: 4 }} justifyContent="center">
         <Stack spacing={4}>

@@ -1,11 +1,11 @@
 import { Button, Stack, Typography } from '@mui/material'
-import { NextPage } from 'next'
+import type { NextPage } from 'next'
 import { useRouter } from 'next/router'
 import React from 'react'
-import { Session } from '../../../api/types'
+import type { Session } from '../../../api/types'
 import App from '../../../components/App'
 import ErrorAlert from '../../../components/ErrorAlert'
-import FileUpload, { FileList } from '../../../components/FileUpload'
+import FileUpload, { type FileList } from '../../../components/FileUpload'
 import FullscreenLoader from '../../../components/FullscreenLoader'
 import ValidationStepper from '../../../components/ValidationStepper'
 import useApiClient from '../../../hooks/useApiClient'
@@ -60,7 +60,9 @@ const Profiles: NextPage = () => {
     }).catch(err => {
       setSession(null)
       setErrorMessage(err.message)
-    }).finally(() => setLoading(false))
+    }).finally(() => {
+      setLoading(false)
+    })
   }, [apiClient, router.query])
 
   return (
@@ -68,7 +70,9 @@ const Profiles: NextPage = () => {
       <ErrorAlert
         open={errorOpen}
         message={errorMessage}
-        onClose={() => setErrorOpen(false)}
+        onClose={() => {
+          setErrorOpen(false)
+        }}
       />
 
       <Stack spacing={2}>
@@ -94,10 +98,14 @@ const Profiles: NextPage = () => {
             onClick={() => {
               if (canValidate) {
                 apiClient.validate(session?.id ?? '')
-                  .catch(err => console.log(err))
+                  .catch(err => {
+                    console.log(err)
+                  })
 
                 router.push(`/jobs/${session?.id ?? ''}/result`)
-                  .catch(err => console.log(err))
+                  .catch(err => {
+                    console.log(err)
+                  })
               }
             }}
           >

@@ -5,9 +5,8 @@ import React from 'react'
 import ErrorAlert from './ErrorAlert'
 import InfoMessage from './InfoMessage'
 import TaskRow from './TaskRow'
-import { Session } from '../api/types'
+import type { Session } from '../api/types'
 import useApiClient from '../hooks/useApiClient'
-import { useSubscription } from '../hooks/useMqttClient'
 import theme from '../styles/theme'
 
 function truncName (name: string): string {
@@ -28,37 +27,14 @@ interface ValidationResultProps {
 }
 
 const ValidationResult = (props: ValidationResultProps): JSX.Element => {
-  const { session } = props
   const router = useRouter()
-  const documentStatus = useSubscription(session !== undefined ? `sessions/${session.id}/documents/+` : '')
+  const [session, setSession] = React.useState<Session>(props.session)
   const [tasks, setTasks] = React.useState<any[]>([])
   const [errorOpen, setErrorOpen] = React.useState<boolean>(false)
   const [errorMessage, setErrorMessage] = React.useState<string>('')
   const apiClient = useApiClient()
   const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null)
   const open = Boolean(anchorEl)
-
-  React.useEffect(() => {
-    if (documentStatus === null) {
-      return
-    }
-
-    const data = documentStatus.d
-    const taskIndex = tasks.findIndex(t => t.originalName === data.document)
-
-    if (taskIndex === -1) {
-      setTasks([
-        ...tasks,
-        {
-          name: truncName(data.document),
-          originalName: data.document,
-          valid: false,
-          status: documentStatus.t === 'VALIDATE_DOCUMENT_START' ? 'running' : 'complete',
-          validations: []
-        }
-      ].sort((a: any, b: any) => a.name > b.name ? 1 : -1))
-    }
-  }, [documentStatus])
 
   const handleValidateAnother = (): void => {
     apiClient.createSession()
@@ -71,7 +47,9 @@ const ValidationResult = (props: ValidationResultProps): JSX.Element => {
       })
   }
 
-  const handleCloseError = (): void => setErrorOpen(false)
+  const handleCloseError = (): void => {
+    setErrorOpen(false)
+  }
 
   const handleClick = (event: React.MouseEvent<HTMLButtonElement>): void => {
     setAnchorEl(event.currentTarget)
@@ -110,6 +88,25 @@ const ValidationResult = (props: ValidationResultProps): JSX.Element => {
 
     setTasks(tasks)
   }, [session])
+
+  React.useEffect(() => {
+    if (session === null || session.status === 'complete') {
+      return
+    }
+
+    const i = setInterval(() => {
+      apiClient.session(session.id)
+        .then(setSession)
+        .catch(err => {
+          setErrorOpen(true)
+          setErrorMessage(err.message)
+        })
+    }, 5000)
+
+    return () => {
+      clearInterval(i)
+    }
+  }, [session, setSession])
 
   return (
     <Stack spacing={4}>
