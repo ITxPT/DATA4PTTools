@@ -10,11 +10,10 @@ import {
   Typography
 } from '@mui/material'
 import { grey } from '@mui/material/colors'
-import Image, { ImageLoaderProps } from 'next/image'
+import Image, { type ImageLoaderProps } from 'next/image'
 import RouterLink from 'next/link'
 import React from 'react'
 import useApiClient from '../hooks/useApiClient'
-import useMqttClient from '../hooks/useMqttClient'
 
 const imageLoader = ({ src }: ImageLoaderProps): string => src
 
@@ -71,33 +70,30 @@ const LinkSection = ({ title, links }: LinkSectionProps): JSX.Element => {
 }
 
 const Footer = (): JSX.Element => {
-  const [mqttCon, setMqttCon] = React.useState<boolean>(false)
   const [apiCon, setApiCon] = React.useState<boolean>(false)
   const apiClient = useApiClient()
-  const mqttClient = useMqttClient()
 
   React.useEffect(() => {
     const pingApi = (): void => {
       apiClient.ping()
-        .then(() => setApiCon(true))
-        .catch(() => setApiCon(false))
-    }
-
-    const pingMqtt = (): void => {
-      setMqttCon(mqttClient.connected)
+        .then(() => {
+          setApiCon(true)
+        })
+        .catch(() => {
+          setApiCon(false)
+        })
     }
 
     pingApi()
-    pingMqtt()
 
-    const apiId = setInterval(() => pingApi(), 10000)
-    const mqttId = setInterval(() => pingMqtt(), 10000)
+    const apiId = setInterval(() => {
+      pingApi()
+    }, 10000)
 
     return () => {
       clearInterval(apiId)
-      clearInterval(mqttId)
     }
-  }, [apiClient, mqttClient.connected])
+  }, [apiClient])
 
   return (
     <Box
@@ -264,17 +260,6 @@ const Footer = (): JSX.Element => {
                   variant="outlined"
                   label="API STATUS"
                   color={apiCon ? 'success' : 'error'}
-                  size="small"
-                />
-              </Tooltip>
-              <Tooltip
-                placement="top"
-                title={mqttCon ? 'Connection established' : 'Unable to establish a connection'}
-              >
-                <Chip
-                  variant="outlined"
-                  label="MQTT STATUS"
-                  color={mqttCon ? 'success' : 'error'}
                   size="small"
                 />
               </Tooltip>

@@ -99,7 +99,9 @@ const FileUpload = (props: FileUploadProps): JSX.Element => {
         fileContext.status = 'uploaded'
       }).catch(() => {
         fileContext.status = 'error'
-      }).finally(() => updateFileContext(fileContext))
+      }).finally(() => {
+        updateFileContext(fileContext)
+      })
     }
   }
 

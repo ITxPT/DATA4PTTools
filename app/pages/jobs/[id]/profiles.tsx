@@ -1,8 +1,8 @@
 import { Stack, Typography } from '@mui/material'
-import { NextPage } from 'next'
+import type { NextPage } from 'next'
 import { useRouter } from 'next/router'
 import React from 'react'
-import { Profile, Session } from '../../../api/types'
+import type { Profile, Session } from '../../../api/types'
 import App from '../../../components/App'
 import ErrorAlert from '../../../components/ErrorAlert'
 import FullscreenLoader from '../../../components/FullscreenLoader'
@@ -28,7 +28,7 @@ const Profiles: NextPage = () => {
   const router = useRouter()
   const apiClient = useApiClient()
 
-  const processRequest = (req: Promise<Session>, cb?: Function): void => {
+  const processRequest = (req: Promise<Session>, cb?: () => any): void => {
     setLoading(true)
 
     req.then(session => {
@@ -67,7 +67,9 @@ const Profiles: NextPage = () => {
       <ErrorAlert
         open={errorOpen}
         message={errorMessage}
-        onClose={() => setErrorOpen(false)}
+        onClose={() => {
+          setErrorOpen(false)
+        }}
       />
 
       <Stack spacing={4}>

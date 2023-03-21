@@ -1,8 +1,8 @@
 import { Box, Skeleton, Stack, Typography } from '@mui/material'
-import { NextPage } from 'next'
+import type { NextPage } from 'next'
 import Head from 'next/head'
 import React from 'react'
-import { Session } from '../api/types'
+import type { Session } from '../api/types'
 import App from '../components/App'
 import JobTable from '../components/JobTable'
 import useApiClient from '../hooks/useApiClient'
@@ -27,9 +27,13 @@ const Jobs: NextPage = () => {
           console.log(err)
         })
     }
-    const tid = setInterval(() => loadSessions(), 5000)
+    const tid = setInterval(() => {
+      loadSessions()
+    }, 30000)
 
-    return () => clearInterval(tid)
+    return () => {
+      clearInterval(tid)
+    }
   }, [apiClient])
 
   return (

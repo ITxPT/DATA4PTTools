@@ -1,5 +1,5 @@
 import { Backdrop, CircularProgress } from '@mui/material'
-import { Theme } from '@mui/material/styles'
+import type { Theme } from '@mui/material/styles'
 import React from 'react'
 
 export interface BackdropProps {

@@ -2,7 +2,7 @@ import { Box, Divider, Stack, Typography } from '@mui/material'
 import { blue } from '@mui/material/colors'
 import React from 'react'
 import CardButton from './CardButton'
-import { Profile, Script } from '../api/types'
+import type { Profile, Script } from '../api/types'
 
 export interface ProfileScriptTableProps {
   scripts: Script[]
