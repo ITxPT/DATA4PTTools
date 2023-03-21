@@ -1,4 +1,12 @@
 
+## 0.5.5 [2023-03-21]
+
+### Bug Fixes
+- Minor script optimizations and fixes ([ece2122](../../commit/ece21225a222802c88d57e53a63e3e10701c011d))([9f1e272](../../commit/9f1e2726f69c7121470048eeb32a9bdd6dc21af4))([1289827](../../commit/12898278ecfa1b8a4d14bfafb4e5a17e4afc1a25))
+- Fix unresponsive validation ([ed4d2f5](../../commit/ed4d2f53a0203bd5ec5c88360069218f3a7826fa))
+- Add better control of tmp files ([efd5fd0](../../commit/efd5fd07bcc7c68c1bdef2fd5e3d640be9da2679))
+
+
 ## v0.5.3 [2023-02-08]
 
 ### Style
