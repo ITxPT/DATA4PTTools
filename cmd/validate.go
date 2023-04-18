@@ -144,17 +144,24 @@ func createValidation(input string) (*greenlight.Validation, *FileContext, error
 		})
 
 		rules := viper.GetStringSlice("rules")
-		for name, script := range scripts {
-			if name == "xsd" {
-				continue
-			}
-			if rules == nil || len(rules) == 0 {
+		if rules == nil || len(rules) == 0 {
+			for name, script := range scripts {
+				if name == "xsd" {
+					continue
+				}
 				validation.AddScript(script, nil)
-			} else {
-				for _, r := range rules {
+			}
+		} else {
+			for _, r := range rules {
+				exist := false
+				for name, script := range scripts {
 					if r == name {
 						validation.AddScript(script, nil)
+						exist = true
 					}
+				}
+				if !exist {
+					log.Fatalf("unable to find rule with the name '%s'", r)
 				}
 			}
 		}
