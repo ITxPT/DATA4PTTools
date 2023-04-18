@@ -60,13 +60,14 @@ export type FileList = Record<string, any>
 
 export interface FileUploadProps {
   values: FileList
+  disabled?: boolean
   onUpload: (file: any, cb: (p: any) => void) => Promise<any>
   onChange: (fileList: FileList, valid: boolean) => void
   onError: (file: any) => JSX.Element | string
 }
 
 const FileUpload = (props: FileUploadProps): JSX.Element => {
-  const { values, onUpload, onChange, onError } = props
+  const { values, disabled, onUpload, onChange, onError } = props
 
   const updateFileContext = (fileContext: any): void => {
     values[fileContext.name] = fileContext
@@ -113,11 +114,17 @@ const FileUpload = (props: FileUploadProps): JSX.Element => {
       >
         <FileInput
           multiple
+          disabled={disabled}
           id="file-upload"
           type="file"
           onChange={handleOnChange as any}
         />
-        <Button variant="contained" component="span" sx={{ minWidth: '300px' }}>
+        <Button
+          disabled={disabled}
+          variant="contained"
+          component="span"
+          sx={{ minWidth: '300px' }}
+        >
           Select file(s)
         </Button>
       </label>

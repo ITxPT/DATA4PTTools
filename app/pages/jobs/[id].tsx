@@ -61,10 +61,10 @@ const Job: NextPage = () => {
         <Typography variant="h3">Configuration</Typography>
         <Stack spacing={2}>
           <a href={`/jobs/${session?.id ?? ''}/profiles`}>
-            <CardButton onClick={() => {}}>
+            <CardButton onClick={() => { setLoading(true) }}>
               <Stack spacing={1}>
-                <Typography variant="h4">Profiles</Typography>
-                <Typography variant="body1">Select from a list of predefined profiles</Typography>
+                <Typography variant="h4">Packages</Typography>
+                <Typography variant="body1">Select from a list of predefined packages of NeTEx profiles and rules</Typography>
               </Stack>
             </CardButton>
           </a>
@@ -72,7 +72,7 @@ const Job: NextPage = () => {
             <Typography variant="caption">OR</Typography>
           </Divider>
           <a href={`/jobs/${session?.id ?? ''}/custom`}>
-            <CardButton onClick={() => {}}>
+            <CardButton onClick={() => { setLoading(true) }}>
               <Stack spacing={1}>
                 <Typography variant="h4">Custom</Typography>
                 <Typography variant="body1">Create your own custom configuration</Typography>

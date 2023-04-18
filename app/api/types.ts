@@ -8,12 +8,14 @@ export interface Profile {
 export interface Script {
   name: string
   description?: string
+  longDescription?: string
   version: string
   config?: Record<string, any>
 }
 
 export interface Session {
   id: string
+  name: string
   ref: string
   created: number
   stopped: number

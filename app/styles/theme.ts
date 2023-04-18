@@ -296,5 +296,12 @@ theme.components.MuiMenuItem = {
     }
   }
 }
+theme.components.MuiListItemIcon = {
+  styleOverrides: {
+    root: {
+      minWidth: 0
+    }
+  }
+}
 
 export default theme

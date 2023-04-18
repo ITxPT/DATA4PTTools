@@ -1,5 +1,9 @@
-import { Box, Divider, Stack, Typography } from '@mui/material'
-import { blue } from '@mui/material/colors'
+import {
+  Chip,
+  Stack,
+  Tooltip,
+  Typography
+} from '@mui/material'
 import React from 'react'
 import CardButton from './CardButton'
 import type { Profile, Script } from '../api/types'
@@ -18,38 +22,26 @@ const ProfileScriptTable = (props: ProfileScriptTableProps): JSX.Element => {
         variant="caption"
         color="text.secondary"
       >
-        INCLUDED SCRIPTS
+        INCLUDED RULES
       </Typography>
 
-      <Box>
-      {
-        scripts.map(script => (
-          <Stack
-            direction="row"
-            key={script.name}
-            spacing={1}
-          >
-            <Stack alignItems="center">
-              <Box sx={{ width: '2px', height: 'calc(50% - 6px)', backgroundColor: blue[200] }}></Box>
-              <Box sx={{ width: '12px', height: '12px', borderRadius: '8px', border: `2px solid ${blue[200]}` }}></Box>
-              <Box sx={{ width: '2px', height: 'calc(50% - 6px)', backgroundColor: blue[200] }}></Box>
-            </Stack>
-            <Stack spacing={1} sx={{ padding: 1 }}>
-              <Stack spacing={1} direction="row" alignItems="center">
-                <Typography variant="caption">{script.name}</Typography>
-                { script.description !== '' && (
-                  <>
-                    <Divider orientation="vertical" />
-                    <Typography variant="caption" color="text.secondary">{script.description}</Typography>
-                  </>
-                )}
-                <Typography variant="caption" color="secondary">{`v${script.version}`}</Typography>
-              </Stack>
-            </Stack>
-          </Stack>
-        ))
-      }
-      </Box>
+      <Stack direction="row" flexWrap="wrap" gap="4px" maxWidth={'100%'}>
+        {
+          scripts.map(script => (
+            <Tooltip
+              placement="top"
+              key={script.name}
+              title={script.longDescription}
+              disableInteractive
+            >
+              <Chip
+                size="small"
+                label={script.description}
+              />
+            </Tooltip>
+          ))
+        }
+      </Stack>
     </>
   )
 }
@@ -57,6 +49,7 @@ const ProfileScriptTable = (props: ProfileScriptTableProps): JSX.Element => {
 export interface ProfileCardProps {
   onSelect: (profile: Profile) => void
   profile: Profile
+  disabled?: boolean
 }
 
 const ProfileCard = (props: ProfileCardProps): JSX.Element => {
@@ -67,7 +60,7 @@ const ProfileCard = (props: ProfileCardProps): JSX.Element => {
   }
 
   return (
-    <CardButton onClick={onClick}>
+    <CardButton onClick={onClick} disabled={props.disabled}>
       <Stack spacing={1}>
         <Stack sx={{ position: 'relative' }} direction="row" justifyContent="space-between" alignItems="center">
           <Stack spacing={1}>

@@ -7,7 +7,7 @@ const InfoMessage = (props: any): JSX.Element => {
       <Stack direction="row" spacing={1} alignItems="center">
         {props.children}
       </Stack>
-      </Alert>
+    </Alert>
   )
 }
 

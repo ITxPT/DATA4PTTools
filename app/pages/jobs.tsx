@@ -27,6 +27,9 @@ const Jobs: NextPage = () => {
           console.log(err)
         })
     }
+
+    loadSessions()
+
     const tid = setInterval(() => {
       loadSessions()
     }, 30000)

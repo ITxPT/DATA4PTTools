@@ -1,45 +1,56 @@
 [{
   "name": "xsd",
   "version": "1.0.0",
-  "description": "XSD schema validation"
+  "description": "XSD schema validation",
+  "longDescription": ""
 }, {
   "name": "everyLineIsReferenced",
   "version": "0.0.1",
-  "description": "Every line is referenced"
+  "description": "Every line is referenced",
+  "longDescription": "Make sure every Line (<Line />) is referenced from another element"
 }, {
   "name": "everyScheduledStopPointHasAName",
   "version": "0.0.1",
-  "description": "Every scheduled stop has a name"
+  "description": "Every scheduled stop has a name",
+  "longDescription": "Make sure every (<ScheduledStopPoint />) has a (<Name />) or (<ShortName />)"
 }, {
   "name": "everyStopPlaceHasACorrectStopPlaceType",
   "version": "0.0.1",
-  "description": "Every stop place has a stop place type"
+  "description": "Every stop place has a stop place type",
+  "longDescription": "Make sure every (<StopPlace />) has a (<stopPlaceType />) and that it is of correct type"
 }, {
   "name": "everyStopPlaceHasAName",
   "version": "0.0.1",
-  "description": "Every stop place has a name"
+  "description": "Every stop place has a name",
+  "longDescription": "Make sure every (<StopPlace />) has a name"
 }, {
   "name": "everyStopPlaceIsReferenced",
   "version": "0.0.1",
-  "description": "Every stop place is referenced"
+  "description": "Every stop place is referenced",
+  "longDescription": "Make sure every (<StopPlace />) is referenced from another element"
 }, {
   "name": "everyStopPointHaveAnArrivalAndDepartureTime",
   "version": "0.0.1",
-  "description": "Every stop point have an arrival and departure time"
+  "description": "Every stop point have an arrival and departure time",
+  "longDescription": "Make sure every (<ScheduledStopPointRef />) have an (<ArrivalTime />) and (<DepartureTime />)"
 }, {
   "name": "frameDefaultsHaveALocaleAndTimeZone",
   "version": "0.0.1",
-  "description": "Frame defauls have a locale and timezone"
+  "description": "Frame defaults have a locale and timezone",
+  "longDescription": "Validates the correctness of (<DefaultLocale />) and (<TimeZone />) inside (<FrameDefaults />)"
 }, {
   "name": "locationsAreReferencingTheSamePoint",
   "version": "0.0.1",
-  "description": "Locations are referencing the same point"
+  "description": "Locations are referencing the same point",
+  "longDescription": "Make sure every (<Location />) in (<StopPlace />) and (<ScheduledStopPoint />) for the same (<StopAssignment />) are pointing to the same coordinates"
 }, {
   "name": "passingTimesHaveIncreasingTimes",
   "version": "0.0.1",
-  "description": "Passing times have increasing times"
+  "description": "Passing times have increasing times",
+  "longDescription": "Make sure passing times have increasing times and day offsets"
 }, {
   "name": "stopPlaceQuayDistanceIsReasonable",
   "version": "0.0.1",
-  "description": "Stop place quay distance is reasonable"
+  "description": "Stop place quay distance is reasonable",
+  "longDescription": "Check the distance between a (<StopPlace />) and its (<Quay />)'s"
 }]

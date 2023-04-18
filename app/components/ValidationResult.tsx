@@ -9,7 +9,7 @@ import type { Session } from '../api/types'
 import useApiClient from '../hooks/useApiClient'
 import theme from '../styles/theme'
 
-function truncName (name: string): string {
+function truncName(name: string): string {
   const trunc = []
   const nameSlice = name.split('/')
 
@@ -109,7 +109,7 @@ const ValidationResult = (props: ValidationResultProps): JSX.Element => {
       <ErrorAlert open={errorOpen} message={errorMessage} onClose={handleCloseError} />
       <Stack spacing={1} direction="row">
         <Typography variant="h3">Validation result</Typography>
-        { session !== undefined && (
+        {session !== undefined && (
           <Stack direction="row" alignItems="center" gap={1}>
             <Chip
               size="small"
@@ -154,24 +154,24 @@ const ValidationResult = (props: ValidationResultProps): JSX.Element => {
         </Stack>
       </Stack>
       <Box>
-        { tasks !== undefined && tasks.length > 0
+        {tasks !== undefined && tasks.length > 0
           ? (
-              tasks.map(task => <TaskRow key={task.name} session={session} task={task} />)
-            )
+            tasks.map(task => <TaskRow key={task.name} session={session} task={task} />)
+          )
           : (
-              <>
-                <Box>
-                  <Skeleton height={50} />
-                  <Skeleton animation="wave" />
-                  <Skeleton animation={false} />
-                </Box>
-                <Box>
-                  <Skeleton height={50} />
-                  <Skeleton animation="wave" />
-                  <Skeleton animation={false} />
-                </Box>
-              </>
-            )
+            <>
+              <Box>
+                <Skeleton height={50} />
+                <Skeleton animation="wave" />
+                <Skeleton animation={false} />
+              </Box>
+              <Box>
+                <Skeleton height={50} />
+                <Skeleton animation="wave" />
+                <Skeleton animation={false} />
+              </Box>
+            </>
+          )
         }
       </Box>
       <Divider />
@@ -205,16 +205,16 @@ const ValidationResult = (props: ValidationResultProps): JSX.Element => {
                 <MenuItem onClick={handleClose}>
                   json
                 </MenuItem>
-                </a>
-                <a
-                  href={apiClient.reportLink(session.id, 'csv')}
-                  target="_blank"
-                  rel="noreferrer"
-                >
-                  <MenuItem onClick={handleClose}>
-                    csv
-                  </MenuItem>
-                </a>
+              </a>
+              <a
+                href={apiClient.reportLink(session.id, 'csv')}
+                target="_blank"
+                rel="noreferrer"
+              >
+                <MenuItem onClick={handleClose}>
+                  csv
+                </MenuItem>
+              </a>
             </Menu>
           </ButtonGroup>
         </Grid>
