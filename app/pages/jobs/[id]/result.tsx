@@ -16,16 +16,16 @@ const Result: NextPage = () => {
   const router = useRouter()
   const apiClient = useApiClient()
 
-  const processRequest = (req: Promise<Session>, cb?: (session: Session | null) => void): void => {
+  const processRequest = (req: Promise<Session>, cb?: (session: Session | null) => any): void => {
     setLoading(true)
     req.then(session => {
       setErrorMessage('')
-      if (cb != undefined) {
+      if (cb !== undefined) {
         cb(session)
       }
     }).catch(err => {
       setErrorMessage(err.message)
-      if (cb != undefined) {
+      if (cb !== undefined) {
         cb(null)
       }
     }).finally(() => {
@@ -35,7 +35,7 @@ const Result: NextPage = () => {
 
   const handleValidateAnother = (): void => {
     processRequest(apiClient.createSession(), newSession => {
-      if (session?.profile != undefined) {
+      if (session?.profile !== undefined) {
         processRequest(apiClient.setProfile(newSession?.id ?? '', session.profile), async () => {
           await router.push(`/jobs/${newSession?.id ?? ''}/files`)
         })

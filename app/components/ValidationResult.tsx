@@ -1,15 +1,13 @@
 import ArrowDropDownIcon from '@mui/icons-material/ArrowDropDown'
-import { Box, Button, ButtonGroup, Card, Chip, Divider, Grid, Menu, MenuItem, Skeleton, Stack, Tooltip, Typography } from '@mui/material'
-import { useRouter } from 'next/router'
+import { Box, Button, ButtonGroup, Chip, Divider, Grid, Menu, MenuItem, Skeleton, Stack, Tooltip, Typography } from '@mui/material'
 import React from 'react'
 import ErrorAlert from './ErrorAlert'
-import InfoMessage from './InfoMessage'
 import TaskRow from './TaskRow'
 import type { Session } from '../api/types'
 import useApiClient from '../hooks/useApiClient'
 import theme from '../styles/theme'
 
-function truncName(name: string): string {
+function truncName (name: string): string {
   const trunc = []
   const nameSlice = name.split('/')
 
@@ -28,7 +26,6 @@ interface ValidationResultProps {
 }
 
 const ValidationResult = (props: ValidationResultProps): JSX.Element => {
-  const router = useRouter()
   const [session, setSession] = React.useState<Session>(props.session)
   const [tasks, setTasks] = React.useState<any[]>([])
   const [errorOpen, setErrorOpen] = React.useState<boolean>(false)
@@ -131,7 +128,7 @@ const ValidationResult = (props: ValidationResultProps): JSX.Element => {
           background: '#fff',
           padding: 2,
           border: '1px solid #e0e0e0',
-          borderRadius: 2,
+          borderRadius: 2
         }}
       >
         <Typography variant="h5">{session.profile?.description}</Typography>
@@ -156,22 +153,22 @@ const ValidationResult = (props: ValidationResultProps): JSX.Element => {
       <Box>
         {tasks !== undefined && tasks.length > 0
           ? (
-            tasks.map(task => <TaskRow key={task.name} session={session} task={task} />)
-          )
+              tasks.map(task => <TaskRow key={task.name} session={session} task={task} />)
+            )
           : (
-            <>
-              <Box>
-                <Skeleton height={50} />
-                <Skeleton animation="wave" />
-                <Skeleton animation={false} />
-              </Box>
-              <Box>
-                <Skeleton height={50} />
-                <Skeleton animation="wave" />
-                <Skeleton animation={false} />
-              </Box>
-            </>
-          )
+              <>
+                <Box>
+                  <Skeleton height={50} />
+                  <Skeleton animation="wave" />
+                  <Skeleton animation={false} />
+                </Box>
+                <Box>
+                  <Skeleton height={50} />
+                  <Skeleton animation="wave" />
+                  <Skeleton animation={false} />
+                </Box>
+              </>
+            )
         }
       </Box>
       <Divider />
