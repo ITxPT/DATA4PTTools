@@ -304,4 +304,19 @@ theme.components.MuiListItemIcon = {
   }
 }
 
+theme.components.MuiListItemText = {
+  styleOverrides: {
+    secondary: {
+      fontSize: '12px'
+    }
+  }
+}
+
+theme.components.MuiOutlinedInput = {
+  styleOverrides: {
+    root: {
+    }
+  }
+}
+
 export default theme

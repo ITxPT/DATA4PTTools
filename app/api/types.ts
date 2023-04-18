@@ -10,7 +10,16 @@ export interface Script {
   description?: string
   longDescription?: string
   version: string
+  configOptions?: ScriptConfigOption[]
   config?: Record<string, any>
+}
+
+export interface ScriptConfigOption {
+  name: string
+  description: string
+  type: string
+  default?: any
+  options?: any[]
 }
 
 export interface Session {

@@ -42,7 +42,13 @@
   "name": "locationsAreReferencingTheSamePoint",
   "version": "0.0.1",
   "description": "Locations are referencing the same point",
-  "longDescription": "Make sure every (<Location />) in (<StopPlace />) and (<ScheduledStopPoint />) for the same (<StopAssignment />) are pointing to the same coordinates"
+  "longDescription": "Make sure every (<Location />) in (<StopPlace />) and (<ScheduledStopPoint />) for the same (<StopAssignment />) are pointing to the same coordinates",
+  "configOptions": [{
+    "name": "distance",
+    "description": "Distance",
+    "type": "number",
+    "default": 100
+  }]
 }, {
   "name": "passingTimesHaveIncreasingTimes",
   "version": "0.0.1",
@@ -52,5 +58,11 @@
   "name": "stopPlaceQuayDistanceIsReasonable",
   "version": "0.0.1",
   "description": "Stop place quay distance is reasonable",
-  "longDescription": "Check the distance between a (<StopPlace />) and its (<Quay />)'s"
+  "longDescription": "Check the distance between a (<StopPlace />) and its (<Quay />)'s",
+  "configOptions": [{
+    "name": "distance",
+    "description": "Distance",
+    "type": "number",
+    "default": 500
+  }]
 }]
