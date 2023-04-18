@@ -16,6 +16,33 @@ const Result: NextPage = () => {
   const router = useRouter()
   const apiClient = useApiClient()
 
+  const processRequest = (req: Promise<Session>, cb?: (session: Session | null) => void): void => {
+    setLoading(true)
+    req.then(session => {
+      setErrorMessage('')
+      if (cb != undefined) {
+        cb(session)
+      }
+    }).catch(err => {
+      setErrorMessage(err.message)
+      if (cb != undefined) {
+        cb(null)
+      }
+    }).finally(() => {
+      setLoading(false)
+    })
+  }
+
+  const handleValidateAnother = (): void => {
+    processRequest(apiClient.createSession(), newSession => {
+      if (session?.profile != undefined) {
+        processRequest(apiClient.setProfile(newSession?.id ?? '', session.profile), async () => {
+          await router.push(`/jobs/${newSession?.id ?? ''}/files`)
+        })
+      }
+    })
+  }
+
   React.useEffect(() => {
     const id = router.query.id ?? ''
 
@@ -25,14 +52,8 @@ const Result: NextPage = () => {
 
     setLoading(true)
 
-    apiClient.session(id as string).then(session => {
-      setErrorMessage('')
+    processRequest(apiClient.session(id as string), session => {
       setSession(session)
-    }).catch(err => {
-      setSession(null)
-      setErrorMessage(err.message)
-    }).finally(() => {
-      setLoading(false)
     })
   }, [apiClient, router.query])
 
@@ -46,9 +67,9 @@ const Result: NextPage = () => {
         }}
       />
 
-      { loading
+      {loading
         ? <FullscreenLoader open={loading} />
-        : <ValidationResult session={session as any} />
+        : <ValidationResult session={session as any} onValidateAnother={handleValidateAnother} />
       }
 
     </App>
