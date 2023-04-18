@@ -7,8 +7,13 @@ import (
 	"time"
 
 	"github.com/concreteit/greenlight"
+	"github.com/dustinkirkland/golang-petname"
 	"github.com/matoous/go-nanoid"
 )
+
+func init() {
+	petname.NonDeterministicMode()
+}
 
 type SessionMap struct {
 	rw       sync.Mutex
@@ -32,6 +37,7 @@ func (s *SessionMap) New() (*Session, error) {
 
 	session := &Session{
 		ID:          id,
+		Name:        petname.Generate(2, "-"),
 		Created:     time.Now(),
 		fileContext: NewFileContext(context.Background()),
 		Status:      "created",
@@ -44,6 +50,7 @@ func (s *SessionMap) New() (*Session, error) {
 
 type Session struct {
 	ID      string    `json:"id"`
+	Name    string    `json:"name"`
 	Created time.Time `json:"created"`
 	Stopped time.Time `json:"stopped"`
 	Status  string    `json:"status"`
@@ -98,6 +105,7 @@ func (s *Session) NewValidation() (*greenlight.Validation, error) {
 func (s Session) MarshalJSON() ([]byte, error) {
 	obj := map[string]interface{}{
 		"id":      s.ID,
+		"name":    s.Name,
 		"created": s.Created.Unix(),
 		"files":   s.fileContext.Find("xml"),
 		"status":  s.Status,
