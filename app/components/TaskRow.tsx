@@ -294,11 +294,11 @@ const TaskRow = ({ session, task }: TaskRowProps): JSX.Element => {
             </Table>
           </TableContainer>
           <ButtonGroup disabled={session.status !== 'complete'}>
-            <a href={apiClient.reportFileLink(session.id, task.originalName, 'csv')} target="_blank" style={{ textDecoration: 'none' }} rel="noreferrer">
-              <Button disabled={session.status !== 'complete'} variant="contained">Download report</Button>
+            <a href={apiClient.reportFileLink(session.id, task.originalName, 'csv')} target="_blank" style={{ marginRight: '-1px', textDecoration: 'none' }} rel="noreferrer">
+              <Button disabled={session.status !== 'complete'} variant="outlined">Download report for {task.name}</Button>
             </a>
             <Button
-              variant="contained"
+              variant="outlined"
               size="small"
               onClick={handleClick}
             >
