@@ -39,7 +39,7 @@ func init() {
 	validateCmd.Flags().StringP("output", "o", "pretty", "Set which output format to use (one of \"json\", \"xml\", \"csv\", \"pretty\"")
 	validateCmd.Flags().StringP("profile", "p", "", "Set path of validation profile (note: flags 'rules' and 'schema' is ignored)")
 	validateCmd.Flags().StringSliceP("rules", "r", []string{}, "Set which validation rules to run (defaults to all inside the builtin dir)")
-	validateCmd.Flags().StringP("schema", "s", "netex@1.2", "Which xsd schema to use (supported \"netex@1.2\", \"netex@1.2-nc\", \"epip@1.1.1\", \"epip@1.1.1-nc\")")
+	validateCmd.Flags().StringP("schema", "s", "netex@1.2-nc", "Which xsd schema to use (supported \"netex@1.2\", \"netex@1.2-nc\", \"epip@1.1.1\", \"epip@1.1.1-nc\")")
 	validateCmd.Flags().BoolP("silent", "", false, "Running in silent will only output the result in a boolean fashion")
 
 	// read properties from environment
