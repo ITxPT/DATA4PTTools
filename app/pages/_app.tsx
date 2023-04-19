@@ -4,9 +4,12 @@ import Head from 'next/head'
 import React from 'react'
 import theme from '../styles/theme'
 import '../styles/globals.css'
+import useConfig from '../hooks/useWebConfig'
 
 const App = (props: AppProps): any => {
   const { Component } = props
+
+  useConfig()
 
   return (
     <>

@@ -45,12 +45,14 @@ type FirebaseConfig struct {
 }
 
 type FeatureConfig struct {
-	Firebase bool `env:"FIREBASE" json:"firebase"`
+	Firebase         bool `env:"FIREBASE" json:"firebase"`
+	GoogleTagManager bool `env:"GTAG" json:"gtag"`
 }
 
 type WebConfig struct {
-	Firebase FirebaseConfig `envPrefix:"FIREBASE_" json:"firebase"`
-	Features FeatureConfig  `envPrefix:"FEATURE_" json:"features"`
+	Features           FeatureConfig  `envPrefix:"FEATURE_" json:"features"`
+	Firebase           FirebaseConfig `envPrefix:"FIREBASE_" json:"firebase"`
+	GoogleTagManagerID string         `env:"GTAG_ID" json:"gtagId"`
 }
 
 func init() {
