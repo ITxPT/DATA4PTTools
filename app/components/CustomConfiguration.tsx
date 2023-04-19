@@ -175,6 +175,7 @@ const CustomConfiguration = (props: CustomConfigurationProps): JSX.Element => {
     props.onNext({
       name: 'custom',
       description: 'Custom configuration',
+      longDescription: '',
       scripts: [
         xsdScript as Script,
         ...scripts.map(name => {

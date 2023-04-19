@@ -1,6 +1,7 @@
 export interface Profile {
   name: string
   description: string
+  longDescription: string
   version?: string
   scripts: Script[]
 }

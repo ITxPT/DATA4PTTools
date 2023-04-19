@@ -53,7 +53,7 @@ export interface ProfileCardProps {
 }
 
 const ProfileCard = (props: ProfileCardProps): JSX.Element => {
-  const { name, description, version, scripts } = props.profile
+  const { name, description, longDescription, version, scripts } = props.profile
 
   const onClick = (): void => {
     props.onSelect(props.profile)
@@ -70,6 +70,9 @@ const ProfileCard = (props: ProfileCardProps): JSX.Element => {
             </Stack>
             <Typography variant="h5">
               {description}
+            </Typography>
+            <Typography variant="body2">
+              {longDescription}
             </Typography>
             {scripts.length > 0 && (<ProfileScriptTable scripts={scripts} />)}
           </Stack>
