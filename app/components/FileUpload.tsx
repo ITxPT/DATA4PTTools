@@ -129,7 +129,7 @@ const FileUpload = (props: FileUploadProps): JSX.Element => {
         </Button>
       </label>
 
-      { Object.keys(values).length > 0
+      {Object.keys(values).length > 0
         ? (
           <TableContainer component={Paper}>
             <Table>
@@ -140,7 +140,7 @@ const FileUpload = (props: FileUploadProps): JSX.Element => {
                 </TableRow>
               </TableHead>
               <TableBody>
-              { Object.keys(values).map(key => {
+              {Object.keys(values).map(key => {
                 const file = values[key]
 
                 return (
@@ -159,7 +159,7 @@ const FileUpload = (props: FileUploadProps): JSX.Element => {
                     </TableCell>
                   </TableRow>
                 )
-              }) }
+              })}
               </TableBody>
             </Table>
           </TableContainer>

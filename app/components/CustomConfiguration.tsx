@@ -106,7 +106,7 @@ const ScriptRow = ({
         <DialogTitle>Configuration</DialogTitle>
         <DialogContent>
           <Stack gap={2}>
-            { script.configOptions?.map(opt => (
+            {script.configOptions?.map(opt => (
               <Stack key={opt.name} gap={1}>
                 <InputLabel>{opt.description}</InputLabel>
                 <OutlinedInput
@@ -227,7 +227,7 @@ const CustomConfiguration = (props: CustomConfigurationProps): JSX.Element => {
             padding: 0
           }}
         >
-          { scriptOptions.map(script => (
+          {scriptOptions.map(script => (
             <ScriptRow
               key={script.name}
               script={script}
@@ -236,7 +236,7 @@ const CustomConfiguration = (props: CustomConfigurationProps): JSX.Element => {
               onChange={handleConfigChange}
               defaults={scriptOpts[script.name]}
             />
-          )) }
+          ))}
         </List>
       </Stack>
       <Stack alignItems="center">

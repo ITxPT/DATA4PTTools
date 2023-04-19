@@ -29,9 +29,9 @@ const FirebaseApp = (props: FirebaseAppProps): any => {
 
   const handleSignIn = (email: string): void => {
     const origin =
-    typeof window !== 'undefined' && window.location.origin !== ''
-      ? window.location.origin
-      : ''
+      typeof window !== 'undefined' && window.location.origin !== ''
+        ? window.location.origin
+        : ''
 
     sendSignInLinkToEmail(email, origin).then(() => {
       setEmail(email)

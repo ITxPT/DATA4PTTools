@@ -42,7 +42,7 @@ const CardButton = ({
   return (
     <Card sx={style}>
       <CardContent onClick={handleOnClick}>
-        { children }
+        {children}
         <Box
           sx={{
             position: 'absolute',

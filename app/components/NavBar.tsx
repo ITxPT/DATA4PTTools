@@ -80,20 +80,20 @@ const NavBar = ({ items, onSignOut }: NavBarProps): JSX.Element => {
             </LinkElement>
           )
         })}
-        { onSignOut !== undefined && (
-            <Button
-              variant="text"
-              disableElevation
-              size="small"
-              sx={{
-                fontFamily: 'Inter',
-                borderRadius: '32px'
-              }}
-              endIcon={<LogoutIcon fontSize="small" />}
-              onClick={onSignOut}
-            >
-              Logout
-            </Button>
+        {onSignOut !== undefined && (
+          <Button
+            variant="text"
+            disableElevation
+            size="small"
+            sx={{
+              fontFamily: 'Inter',
+              borderRadius: '32px'
+            }}
+            endIcon={<LogoutIcon fontSize="small" />}
+            onClick={onSignOut}
+          >
+            Logout
+          </Button>
         )}
       </Stack>
     </Stack>

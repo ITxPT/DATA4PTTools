@@ -42,9 +42,9 @@ export const FormSelect = (props: FormSelectProps): JSX.Element => {
 
   return (
     <FormControl fullWidth>
-      { labelId !== '' && label !== '' && (
+      {labelId !== '' && label !== '' && (
         <InputLabel id={labelId}>{label}</InputLabel>
-      ) }
+      )}
       <Select
         labelId={labelId}
         name={name}

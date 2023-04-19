@@ -38,7 +38,7 @@ const JobStatus = ({
       <Link href={`/jobs/${session.id}/result`}>
         <span style={{ textDecoration: 'underline', fontWeight: 500 }}>{linkText}</span>
       </Link>
-      { onValidate !== undefined && (
+      {onValidate !== undefined && (
         <>
           {' '}or{' '}
           <span

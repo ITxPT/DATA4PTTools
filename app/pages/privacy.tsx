@@ -34,11 +34,11 @@ const Policy: NextPage = () => {
               <li>Your email address. We treat this information as “Personally Identifiable Information” or “PII”.</li>
               <li>
                 Non-personally identifiable information, such as demographic information about you, information about your computer system or device, your preferences, your online activity, and your location information (“Non-Personally Identifiable Information” a “Non-PII”). Non-PII, by itself, does not identify you, but it can be combined with other information in way that allows you to be identified. If this happens, we will treat the combined information as PII
-                <br/><br/>
+                <br /><br />
                 We may collect information from or about you in the following ways:
-                <br/><br/>
+                <br /><br />
                 Information Provided by You. We collect information provided by you when you (1) create your user account; (2) communicate with us or request information about or from us by e-mail or other means; (3) fill out forms or fields on this Website; (4) sign-up for any of our newsletters, materials or our services on this Website or other sites; or (5) participate in our online surveys or questionnaires.
-                <br/><br/>
+                <br /><br />
                 Automatic Information Collection. We also use automatic data collection technologies to collect and store certain information about your equipment, browsing actions and patterns when you interact with this Website through your computer or mobile device.
               </li>
             </ol>
@@ -65,7 +65,7 @@ const Policy: NextPage = () => {
             <Typography>The information that we collect about your equipment, browsing actions and patterns includes, but is not limited to, traffic data, location data, logs, the resources that you access, search queries, as well as information about the computer or device you are using and the Internet connection, including your IP address, operating system and browser type.</Typography>
             <Typography>This automatically collected information typically does not include PII, but we may maintain it or associate it with your personal information collected in other ways. Collection of this type of information helps us to improve this Website and to deliver a better and more personalized service by enabling us to, among other things: (1) estimate our audience size and usage patterns; (2) store information about your preferences, allowing us to customize this Website according to your individual interests; (3) speed up your searches; and (4) recognize you when you return to this Website.</Typography>
             <Typography>The automatic collection technologies we or our service providers use for this automatic information collection may include:
-Cookies (or browser cookies). This Website may use two types of cookies (small data files placed on the hard drive of your computer when you visit a website): a “session cookie,” which expires immediately when you end your browsing session and a “persistent cookie,” which stores information on your hard drive so when you end your browsing session and return to this website later, the cookie information is still available. Web Beacons. Pages of this Website and any e-mails sent to you may contain small electronic files known as web beacons (also referred to as clear gifs, pixel tags, and single-pixel gifs) that permit us, for example, to count users who have visited those pages or opened our e-mails.</Typography>
+              Cookies (or browser cookies). This Website may use two types of cookies (small data files placed on the hard drive of your computer when you visit a website): a “session cookie,” which expires immediately when you end your browsing session and a “persistent cookie,” which stores information on your hard drive so when you end your browsing session and return to this website later, the cookie information is still available. Web Beacons. Pages of this Website and any e-mails sent to you may contain small electronic files known as web beacons (also referred to as clear gifs, pixel tags, and single-pixel gifs) that permit us, for example, to count users who have visited those pages or opened our e-mails.</Typography>
             <Stack spacing={1} direction="row">
               <Typography variant="subtitle1" sx={{ color: theme.palette.accent.main }}>1.4.</Typography>
               <Typography variant="subtitle1">Service providers and partners</Typography>
@@ -142,10 +142,10 @@ Cookies (or browser cookies). This Website may use two types of cookies (small d
             <Typography>If you have questions or concerns about this Privacy Policy, our information practices, or wish to make a request regarding your information, please contact us at any of the following:</Typography>
             <Typography>Via postal mail:</Typography>
             <Typography>
-              Information Technology for Public Transport<br/>
-              Rue Sainte-Marie 6<br/>
-              B-1080 Brussels<br/>
-              Belgium<br/>
+              Information Technology for Public Transport<br />
+              Rue Sainte-Marie 6<br />
+              B-1080 Brussels<br />
+              Belgium<br />
             </Typography>
             <Typography>Via e-mail: <a href="mailto:info@itxpt.org">info@itxpt.org</a></Typography>
           </Stack>

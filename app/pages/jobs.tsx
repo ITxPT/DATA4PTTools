@@ -48,7 +48,7 @@ const Jobs: NextPage = () => {
 
       <Stack spacing={4}>
         <Typography variant="h3">Jobs</Typography>
-        { loading && (<>
+        {loading && (<>
           <Box>
             <Skeleton height={50} />
             <Skeleton animation="wave" />
@@ -60,7 +60,7 @@ const Jobs: NextPage = () => {
             <Skeleton animation={false} />
           </Box>
         </>)}
-        { sessions !== null && <JobTable jobs={sessions} /> }
+        {sessions !== null && <JobTable jobs={sessions} />}
       </Stack>
     </App>
   )

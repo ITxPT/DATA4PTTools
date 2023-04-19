@@ -71,7 +71,7 @@ const ProfileCard = (props: ProfileCardProps): JSX.Element => {
             <Typography variant="h5">
               {description}
             </Typography>
-            { scripts.length > 0 && (<ProfileScriptTable scripts={scripts} />) }
+            {scripts.length > 0 && (<ProfileScriptTable scripts={scripts} />)}
           </Stack>
         </Stack>
       </Stack>
