@@ -115,6 +115,12 @@ declare module "types" {
      * @param {string} version 
      */
     validate(version: string): Result<ScriptError[]>;
+
+    /**
+     * Parse xsd as a document
+     * @param {string} version
+     */
+    parse(version: string): Result<Node>;
   }
 
   export interface Context {

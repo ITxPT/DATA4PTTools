@@ -34,6 +34,10 @@ type Xsd struct {
 	document *xml.Document
 }
 
+func (x Xsd) Parse(version string) internal.Result {
+	return internal.NewResult(xml.NewDocument("xsd", xsdPaths[version]))
+}
+
 func (x Xsd) Validate(version string) internal.Result {
 	scriptErrors := []ScriptError{}
 	if res, err := ValidateSchema(x.document, version); err != nil {
