@@ -58,14 +58,23 @@ function keyRefConstraints(ctx) {
     .getOrElse(() => [])
     .reduce((/** @type {Set<string>} */ o, /** @type {types.Node} */ n) => {
       o.add(attrHash(n, ctx.params.key.fields));
+
+      if (ctx.params.key.fields.includes("@version")) {
+        const f = [...ctx.params.key.fields];
+
+        f[ctx.params.key.fields.indexOf("@version")] = "_notfound_";
+
+        o.add(attrHash(n, f));
+      }
       return o;
     }, new Set());
 
   refs.forEach((/** @type {types.Node} n */ n) => {
     const k = attrHash(n, ctx.params.ref.fields);
+
     if (!keyMap.has(k)) {
       res.push(errors.ConsistencyError(
-        `Missing reference violates key-ref constraint "${ctx.params.ref.name}" (key: ${k})`,
+        `In violation of key-ref constraint, missing key reference "${ctx.params.ref.name}" (key: ${k})`,
         { line: n.line() },
       ));
     }
