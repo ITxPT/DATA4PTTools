@@ -45,7 +45,7 @@ function main(ctx) {
 }
 
 function worker(ctx) {
-  const { node } = ctx;
+  const { node } = ctx;
   const config = { distance: 100, ...ctx.config };
   const id = node.attr("id").get();
   const scheduledStopPoint = node.first(scheduledStopPointRefPath)
@@ -110,15 +110,15 @@ function getDistance(n1, n2) {
  * @param {number} lon2
  * @returns {number}
  */
-function getDistanceFromLatLonInKm(lat1,lon1,lat2,lon2) {
+function getDistanceFromLatLonInKm(lat1, lon1, lat2, lon2) {
   const R = 6371; // radius of the earth in km
-  const dLat = deg2rad(lat2-lat1); // deg2rad below
-  const dLon = deg2rad(lon2-lon1);
+  const dLat = deg2rad(lat2 - lat1); // deg2rad below
+  const dLon = deg2rad(lon2 - lon1);
   const a =
-    Math.sin(dLat/2) * Math.sin(dLat/2) +
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
     Math.cos(deg2rad(lat1)) * Math.cos(deg2rad(lat2)) *
-    Math.sin(dLon/2) * Math.sin(dLon/2);
-  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    Math.sin(dLon / 2) * Math.sin(dLon / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
   const d = R * c; // distance in km
 
   return d;
@@ -129,5 +129,5 @@ function getDistanceFromLatLonInKm(lat1,lon1,lat2,lon2) {
  * @returns {number}
  */
 function deg2rad(deg) {
-  return deg * (Math.PI/180);
+  return deg * (Math.PI / 180);
 }
