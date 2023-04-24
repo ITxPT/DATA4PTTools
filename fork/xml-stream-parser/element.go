@@ -1,11 +1,12 @@
 package xmlparser
 
 type XMLElement struct {
-	childs    []*XMLElement
-	parent    *XMLElement
-	attrs     []*xmlAttr
-	localName string
-	prefix    string
+	childs     []*XMLElement
+	parent     *XMLElement
+	attrs      []*xmlAttr
+	localName  string
+	prefix     string
+	elementMap map[string][]*XMLElement
 
 	Line      int
 	Name      string
@@ -44,7 +45,7 @@ func (n *XMLElement) PrevSibling() *XMLElement {
 	if n.parent != nil {
 		for i, c := range n.parent.childs {
 			if c == n {
-				if i >= 0 {
+				if i > 0 {
 					return n.parent.childs[i-1]
 				}
 				return nil

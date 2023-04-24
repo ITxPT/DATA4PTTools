@@ -7,17 +7,19 @@ import (
 )
 
 type XMLParser struct {
-	line     int
-	reader   *bufio.Reader
-	scratch  *scratch
-	scratch2 *scratch
+	line       int
+	reader     *bufio.Reader
+	scratch    *scratch
+	scratch2   *scratch
+	elementMap map[string]map[*XMLElement]bool
 }
 
 func Parse(reader *bufio.Reader) (*XMLElement, error) {
 	x := &XMLParser{
-		reader:   reader,
-		scratch:  &scratch{data: make([]byte, 1024)},
-		scratch2: &scratch{data: make([]byte, 1024)},
+		reader:     reader,
+		scratch:    &scratch{data: make([]byte, 1024)},
+		scratch2:   &scratch{data: make([]byte, 1024)},
+		elementMap: make(map[string]map[*XMLElement]bool),
 	}
 
 	return x.Parse()
@@ -57,6 +59,15 @@ func (x *XMLParser) Parse() (*XMLElement, error) {
 			}
 
 			ele := x.getElementTree(element)
+			ele.elementMap = make(map[string][]*XMLElement)
+			for k, v := range x.elementMap {
+				eles := []*XMLElement{}
+				for el, _ := range v {
+					eles = append(eles, el)
+				}
+				ele.elementMap[k] = eles
+			}
+
 			return ele, nil
 		}
 	}
@@ -147,6 +158,15 @@ func (x *XMLParser) startElement() (*XMLElement, bool, error) {
 	var result = &XMLElement{
 		Line: x.line + 1,
 	}
+	defer func() {
+		if result == nil || result.Name == "" {
+			return
+		}
+		if x.elementMap[result.Name] == nil {
+			x.elementMap[result.Name] = make(map[*XMLElement]bool)
+		}
+		x.elementMap[result.Name][result] = true
+	}()
 
 	for {
 		cur, err := x.readByte()
