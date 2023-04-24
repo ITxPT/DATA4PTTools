@@ -61,6 +61,7 @@ type Context struct {
 
 	// export to js runtime
 	Config     internal.M
+	Params     internal.M
 	Document   xml.Node
 	Collection *xml.Collection
 	Log        Logger
