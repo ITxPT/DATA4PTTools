@@ -1,4 +1,4 @@
-import create from 'zustand'
+import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 
 interface Email {
@@ -10,7 +10,7 @@ const useEmail = create<Email>()(
   persist(
     (set) => ({
       email: '',
-      setEmail: (email: string) => set({ email })
+      setEmail: (email: string) => { set({ email }) }
     }), { name: 'email-storage' }
   )
 )

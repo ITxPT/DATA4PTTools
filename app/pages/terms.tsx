@@ -103,7 +103,7 @@ const Terms: NextPage = () => {
               <li>If any court or competent authority finds that any provision of these terms of use (or part of any provision) is invalid, illegal or unenforceable, that provision or part-provision will, to the extent required, be deemed to be deleted, and the validity and enforceability of the other provisions of these terms of use will not be affected.</li>
               <li>Unless otherwise agreed, no delay, act or omission by a party in exercising any right or remedy will be deemed a waiver of that, or any other, right or remedy.These terms of use will be governed by and interpreted according to Belgian law. All disputes arising under these terms of use will be subject to the exclusive jurisdiction of the Belgian courts.</li>
             </ol>
-            <Typography>ITxPT details<br/>ITxPT is an association incorporated in Belgium whose registered address is UITP, International Association of Public Transport, Rue Sainte-Marie 6, B-1080 Brussels, Belgium and it operates the <a href={siteUrl}>Website</a>. The registered VAT number is BE0656563009.</Typography>
+            <Typography>ITxPT details<br />ITxPT is an association incorporated in Belgium whose registered address is UITP, International Association of Public Transport, Rue Sainte-Marie 6, B-1080 Brussels, Belgium and it operates the <a href={siteUrl}>Website</a>. The registered VAT number is BE0656563009.</Typography>
             <Typography>You can contact ITxPT association by email at <a href="mailto:info@itxpt.org">info@itxpt.org</a></Typography>
           </Stack>
         </Stack>

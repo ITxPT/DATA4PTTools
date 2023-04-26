@@ -1,106 +1,162 @@
-[{
-  "name": "netex-full-all-rules",
-  "description": "NeTEx full (v1.2), all rules",
-  "version": "1.0.0",
-  "scripts": [{
-    "name": "xsd",
-    "config": {
-      "schema": "netex@1.2"
-    }
-  }, {
-    "name": "everyLineIsReferenced"
-  }, {
-    "name": "everyScheduledStopPointHasAName"
-  }, {
-    "name": "everyStopPlaceHasACorrectStopPlaceType"
-  }, {
-    "name": "everyStopPlaceHasAName"
-  }, {
-    "name": "everyStopPlaceIsReferenced"
-  }, {
-    "name": "everyStopPointHaveAnArrivalAndDepartureTime"
-  }, {
-    "name": "frameDefaultsHaveALocaleAndTimeZone"
-  }, {
-    "name": "locationsAreReferencingTheSamePoint"
-  }, {
-    "name": "passingTimesHaveIncreasingTimes"
-  }, {
-    "name": "stopPlaceQuayDistanceIsReasonable"
-  }]
-}, {
-  "name": "netex-full",
-  "description": "NeTEx full (v1.2), no rules",
-  "version": "1.0.0",
-  "scripts": [{
-    "name": "xsd",
-    "config": {
-      "schema": "netex@1.2"
-    }
-  }]
-}, {
-  "name": "netex-light-all-rules",
-  "description": "NeTEx light (v1.2), all rules",
-  "version": "1.0.0",
-  "scripts": [{
-    "name": "xsd",
-    "config": {
-      "schema": "netex@1.2-nc"
-    }
-  }, {
-    "name": "everyLineIsReferenced"
-  }, {
-    "name": "everyScheduledStopPointHasAName"
-  }, {
-    "name": "everyStopPlaceHasACorrectStopPlaceType"
-  }, {
-    "name": "everyStopPlaceHasAName"
-  }, {
-    "name": "everyStopPlaceIsReferenced"
-  }, {
-    "name": "everyStopPointHaveAnArrivalAndDepartureTime"
-  }, {
-    "name": "frameDefaultsHaveALocaleAndTimeZone"
-  }, {
-    "name": "locationsAreReferencingTheSamePoint"
-  }, {
-    "name": "passingTimesHaveIncreasingTimes"
-  }, {
-    "name": "stopPlaceQuayDistanceIsReasonable"
-  }]
-}, {
-  "name": "netex-light",
-  "description": "NeTEx light (v1.2), no rules",
-  "version": "1.0.0",
-  "scripts": [{
-    "name": "xsd",
-    "config": {
-      "schema": "netex@1.2-nc"
-    }
-  }]
-}, {
-  "name": "rules-only",
-  "description": "All rules, no schema validation",
-  "version": "1.0.0",
-  "scripts": [{
-    "name": "everyLineIsReferenced"
-  }, {
-    "name": "everyScheduledStopPointHasAName"
-  }, {
-    "name": "everyStopPlaceHasACorrectStopPlaceType"
-  }, {
-    "name": "everyStopPlaceHasAName"
-  }, {
-    "name": "everyStopPlaceIsReferenced"
-  }, {
-    "name": "everyStopPointHaveAnArrivalAndDepartureTime"
-  }, {
-    "name": "frameDefaultsHaveALocaleAndTimeZone"
-  }, {
-    "name": "locationsAreReferencingTheSamePoint"
-  }, {
-    "name": "passingTimesHaveIncreasingTimes"
-  }, {
-    "name": "stopPlaceQuayDistanceIsReasonable"
-  }]
-}]
+[
+  {
+    "name": "netex-light-all-rules",
+    "description": "NeTEx Fast (v1.2), all rules",
+    "longDescription": "NeTEx validation (rule based constraints) and all rules included",
+    "version": "1.0.0",
+    "scripts": [
+      {
+        "name": "xsd",
+        "config": {
+          "schema": "netex@1.2-nc"
+        }
+      },
+      {
+        "name": "everyLineIsReferenced"
+      },
+      {
+        "name": "everyScheduledStopPointHasAName"
+      },
+      {
+        "name": "everyStopPlaceHasACorrectStopPlaceType"
+      },
+      {
+        "name": "everyStopPlaceHasAName"
+      },
+      {
+        "name": "everyStopPlaceIsReferenced"
+      },
+      {
+        "name": "everyStopPointHaveAnArrivalAndDepartureTime"
+      },
+      {
+        "name": "frameDefaultsHaveALocaleAndTimeZone"
+      },
+      {
+        "name": "locationsAreReferencingTheSamePoint"
+      },
+      {
+        "name": "passingTimesHaveIncreasingTimes"
+      },
+      {
+        "name": "stopPlaceQuayDistanceIsReasonable"
+      },
+      {
+        "name": "netexUniqueConstraints"
+      },
+      {
+        "name": "netexKeyRefConstraints"
+      }
+    ]
+  },
+  {
+    "name": "netex-light",
+    "description": "NeTEx Fast (v1.2), no rules",
+    "longDescription": "NeTEx validation without constraints or rules",
+    "version": "1.0.0",
+    "scripts": [
+      {
+        "name": "xsd",
+        "config": {
+          "schema": "netex@1.2-nc"
+        }
+      }
+    ]
+  },
+  {
+    "name": "netex-full-all-rules",
+    "description": "NeTEx full (v1.2), all rules",
+    "longDescription": "Full NeTEx validation (constraints included in xsd), with all rules included",
+    "version": "1.0.0",
+    "scripts": [
+      {
+        "name": "xsd",
+        "config": {
+          "schema": "netex@1.2"
+        }
+      },
+      {
+        "name": "everyLineIsReferenced"
+      },
+      {
+        "name": "everyScheduledStopPointHasAName"
+      },
+      {
+        "name": "everyStopPlaceHasACorrectStopPlaceType"
+      },
+      {
+        "name": "everyStopPlaceHasAName"
+      },
+      {
+        "name": "everyStopPlaceIsReferenced"
+      },
+      {
+        "name": "everyStopPointHaveAnArrivalAndDepartureTime"
+      },
+      {
+        "name": "frameDefaultsHaveALocaleAndTimeZone"
+      },
+      {
+        "name": "locationsAreReferencingTheSamePoint"
+      },
+      {
+        "name": "passingTimesHaveIncreasingTimes"
+      },
+      {
+        "name": "stopPlaceQuayDistanceIsReasonable"
+      }
+    ]
+  },
+  {
+    "name": "netex-full",
+    "description": "NeTEx full (v1.2), no rules",
+    "longDescription": "Full NeTEx validation (constraints included) without any rules",
+    "version": "1.0.0",
+    "scripts": [
+      {
+        "name": "xsd",
+        "config": {
+          "schema": "netex@1.2"
+        }
+      }
+    ]
+  },
+  {
+    "name": "rules-only",
+    "description": "All rules, no schema validation",
+    "longDescription": "No NeTEx schema validation, only rules",
+    "version": "1.0.0",
+    "scripts": [
+      {
+        "name": "everyLineIsReferenced"
+      },
+      {
+        "name": "everyScheduledStopPointHasAName"
+      },
+      {
+        "name": "everyStopPlaceHasACorrectStopPlaceType"
+      },
+      {
+        "name": "everyStopPlaceHasAName"
+      },
+      {
+        "name": "everyStopPlaceIsReferenced"
+      },
+      {
+        "name": "everyStopPointHaveAnArrivalAndDepartureTime"
+      },
+      {
+        "name": "frameDefaultsHaveALocaleAndTimeZone"
+      },
+      {
+        "name": "locationsAreReferencingTheSamePoint"
+      },
+      {
+        "name": "passingTimesHaveIncreasingTimes"
+      },
+      {
+        "name": "stopPlaceQuayDistanceIsReasonable"
+      }
+    ]
+  }
+]

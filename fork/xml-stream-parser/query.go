@@ -1,7 +1,15 @@
 package xmlparser
 
 import (
+	"regexp"
+	"strings"
+
 	"github.com/tamerh/xpath"
+)
+
+var (
+	rootPattern     = regexp.MustCompile(`(?i)^(\.?//[a-z0-9_\s\/]+(\s?\|\s?)?)*$`)
+	rootReplPattern = regexp.MustCompile(`\.?//`)
 )
 
 // CreateXPathNavigator creates a new xpath.NodeNavigator for the specified html.Node.
@@ -26,6 +34,32 @@ type XmlNodeNavigator struct {
 
 // Find searches the Node that matches by the specified XPath expr.
 func find(top *XMLElement, expr string) ([]*XMLElement, error) {
+	if rootPattern.MatchString(expr) {
+		qs := strings.Split(expr, "|")
+		res := []*XMLElement{}
+		for _, q := range qs {
+			n := rootReplPattern.ReplaceAllString(strings.TrimSpace(q), "")
+			if strings.Contains(n, "/") {
+				ns := strings.Split(n, "/")
+				if elems := top.elementMap[ns[0]]; elems != nil {
+					subExpr := strings.Join(ns[1:], "/")
+					for _, el := range elems {
+						v, err := find(el, subExpr)
+						if err != nil {
+							return nil, err
+						}
+						res = append(res, v...)
+					}
+				}
+				continue
+			}
+			if el := top.elementMap[n]; el != nil {
+				res = append(res, el...)
+			}
+		}
+		return res, nil
+	}
+
 	exp, err := xpath.Compile(expr)
 	if err != nil {
 		return []*XMLElement{}, err

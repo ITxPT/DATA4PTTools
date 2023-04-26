@@ -1,6 +1,6 @@
 import axios from 'axios'
 import crypto from 'crypto-js'
-import { Profile, Script, Session } from './types'
+import type { Profile, Script, Session } from './types'
 
 async function calculateChecksum (file: any): Promise<any> {
   return await new Promise((resolve, reject) => {

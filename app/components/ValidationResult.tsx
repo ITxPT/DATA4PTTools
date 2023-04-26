@@ -1,9 +1,7 @@
 import ArrowDropDownIcon from '@mui/icons-material/ArrowDropDown'
-import { Box, Button, ButtonGroup, Divider, Grid, Menu, MenuItem, Skeleton, Stack, Typography } from '@mui/material'
-import { useRouter } from 'next/router'
+import { Box, Button, ButtonGroup, Chip, Divider, Grid, Menu, MenuItem, Skeleton, Stack, Tooltip, Typography } from '@mui/material'
 import React from 'react'
 import ErrorAlert from './ErrorAlert'
-import InfoMessage from './InfoMessage'
 import TaskRow from './TaskRow'
 import type { Session } from '../api/types'
 import useApiClient from '../hooks/useApiClient'
@@ -24,10 +22,10 @@ function truncName (name: string): string {
 
 interface ValidationResultProps {
   session: Session
+  onValidateAnother?: () => void
 }
 
 const ValidationResult = (props: ValidationResultProps): JSX.Element => {
-  const router = useRouter()
   const [session, setSession] = React.useState<Session>(props.session)
   const [tasks, setTasks] = React.useState<any[]>([])
   const [errorOpen, setErrorOpen] = React.useState<boolean>(false)
@@ -37,14 +35,9 @@ const ValidationResult = (props: ValidationResultProps): JSX.Element => {
   const open = Boolean(anchorEl)
 
   const handleValidateAnother = (): void => {
-    apiClient.createSession()
-      .then(async (session) => {
-        await router.push('/jobs/' + session.id)
-      })
-      .catch(err => {
-        setErrorOpen(true)
-        setErrorMessage(err.message)
-      })
+    if (props.onValidateAnother !== undefined) {
+      props.onValidateAnother()
+    }
   }
 
   const handleCloseError = (): void => {
@@ -113,15 +106,52 @@ const ValidationResult = (props: ValidationResultProps): JSX.Element => {
       <ErrorAlert open={errorOpen} message={errorMessage} onClose={handleCloseError} />
       <Stack spacing={1} direction="row">
         <Typography variant="h3">Validation result</Typography>
-        { session !== undefined && (
-          <Typography variant="body2" sx={{ [theme.breakpoints.down('md')]: { display: 'none' } }}>[{session.id}]</Typography>
+        {session !== undefined && (
+          <Stack direction="row" alignItems="center" gap={1}>
+            <Chip
+              size="small"
+              label={session.name}
+              sx={{ [theme.breakpoints.down('md')]: { display: 'none' } }}
+              color="info"
+            />
+            <Chip
+              size="small"
+              label={session.id}
+              sx={{ [theme.breakpoints.down('md')]: { display: 'none' } }}
+            />
+          </Stack>
         )}
       </Stack>
-      <InfoMessage>
-        <span>Are you interested in diving deeper? Consider testing it locally with <a href="https://hub.docker.com/r/lekojson/greenlight" target="_blank" rel="noreferrer">Docker</a></span>
-      </InfoMessage>
+      <Stack
+        gap={2}
+        sx={{
+          background: '#fff',
+          padding: 2,
+          border: '1px solid #e0e0e0',
+          borderRadius: 2
+        }}
+      >
+        <Typography variant="h5">{session.profile?.description}</Typography>
+        <Stack direction="row" flexWrap="wrap" gap="4px" maxWidth={'100%'}>
+          {
+            session.profile?.scripts.map(script => (
+              <Tooltip
+                placement="top"
+                key={script.name}
+                title={script.longDescription}
+                disableInteractive
+              >
+                <Chip
+                  size="small"
+                  label={script.description}
+                />
+              </Tooltip>
+            ))
+          }
+        </Stack>
+      </Stack>
       <Box>
-        { tasks !== undefined && tasks.length > 0
+        {tasks !== undefined && tasks.length > 0
           ? (
               tasks.map(task => <TaskRow key={task.name} session={session} task={task} />)
             )
@@ -172,16 +202,16 @@ const ValidationResult = (props: ValidationResultProps): JSX.Element => {
                 <MenuItem onClick={handleClose}>
                   json
                 </MenuItem>
-                </a>
-                <a
-                  href={apiClient.reportLink(session.id, 'csv')}
-                  target="_blank"
-                  rel="noreferrer"
-                >
-                  <MenuItem onClick={handleClose}>
-                    csv
-                  </MenuItem>
-                </a>
+              </a>
+              <a
+                href={apiClient.reportLink(session.id, 'csv')}
+                target="_blank"
+                rel="noreferrer"
+              >
+                <MenuItem onClick={handleClose}>
+                  csv
+                </MenuItem>
+              </a>
             </Menu>
           </ButtonGroup>
         </Grid>
@@ -190,7 +220,7 @@ const ValidationResult = (props: ValidationResultProps): JSX.Element => {
             variant="contained"
             onClick={handleValidateAnother}
           >
-            Validate more files
+            Validate with this configuration
           </Button>
         </Grid>
       </Grid>

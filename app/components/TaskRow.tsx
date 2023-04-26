@@ -180,15 +180,17 @@ const TaskTableRow = ({ validation }: TaskTableRowProps): JSX.Element => {
     <React.Fragment>
       <TableRow key={name}>
         <TableCell sx={{ width: '50px' }}>
-          { errors.length > 0 && <IconButton
-            aria-label="expand row"
-            size="small"
-            onClick={() => {
-              setOpen(!open)
-            }}
-          >
-            {open ? <KeyboardArrowUpIcon /> : <KeyboardArrowDownIcon />}
-          </IconButton> }
+          {errors.length > 0 && (
+            <IconButton
+              aria-label="expand row"
+              size="small"
+              onClick={() => {
+                setOpen(!open)
+              }}
+            >
+              {open ? <KeyboardArrowUpIcon /> : <KeyboardArrowDownIcon />}
+            </IconButton>
+          )}
         </TableCell>
         <TableCell sx={{ width: '75px' }}>
           <StatusChip status={status} valid={valid} />
@@ -212,7 +214,7 @@ const TaskTableRow = ({ validation }: TaskTableRowProps): JSX.Element => {
       </TableRow>
       <TableRow>
         <TableCell style={{ paddingBottom: 0, paddingTop: 0 }} colSpan={6}>
-          { errors.length > 0 && (
+          {errors.length > 0 && (
             <Collapse in={open} timeout="auto" unmountOnExit>
               <ErrorList errors={errors} />
             </Collapse>
@@ -266,7 +268,7 @@ const TaskRow = ({ session, task }: TaskRowProps): JSX.Element => {
               textOverflow: 'ellipsis',
               whiteSpace: 'nowrap',
               overflow: 'hidden'
-            }}>{ name }</Typography>
+            }}>{name}</Typography>
           </Box>
         </Stack>
       </AccordionSummary>
@@ -284,21 +286,21 @@ const TaskRow = ({ session, task }: TaskRowProps): JSX.Element => {
                 </TableRow>
               </TableHead>
               <TableBody>
-                { validations.map(v => (
+                {validations.map(v => (
                   <TaskTableRow
                     key={v.name}
                     validation={v}
                   />
-                )) }
+                ))}
               </TableBody>
             </Table>
           </TableContainer>
           <ButtonGroup disabled={session.status !== 'complete'}>
-            <a href={apiClient.reportFileLink(session.id, task.originalName, 'csv')} target="_blank" style={{ textDecoration: 'none' }} rel="noreferrer">
-              <Button disabled={session.status !== 'complete'} variant="contained">Download report</Button>
+            <a href={apiClient.reportFileLink(session.id, task.originalName, 'csv')} target="_blank" style={{ marginRight: '-1px', textDecoration: 'none' }} rel="noreferrer">
+              <Button disabled={session.status !== 'complete'} variant="outlined">Download report for {task.name}</Button>
             </a>
             <Button
-              variant="contained"
+              variant="outlined"
               size="small"
               onClick={handleClick}
             >

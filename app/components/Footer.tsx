@@ -43,7 +43,7 @@ const LinkSection = ({ title, links }: LinkSectionProps): JSX.Element => {
   return (
     <Stack spacing={2}>
       <Typography sx={{ color: 'black', marginBottom: '4px' }}>{title}</Typography>
-      { links.map(item => (
+      {links.map(item => (
         item.external === true
           ? (
               <CustomLink key={`${item.href}-${item.text}`}>

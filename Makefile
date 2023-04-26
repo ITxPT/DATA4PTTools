@@ -7,7 +7,7 @@ BENCH_COUNT=5
 TEST_TIMEOUT=10m
 
 run-web:
-	cd app && npm run dev
+	cd app && npm i && npm run dev
 
 build-web:
 	cd app && npm i && npm run build

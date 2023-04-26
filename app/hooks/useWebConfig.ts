@@ -3,8 +3,9 @@ import React from 'react'
 import { client } from './useApiClient'
 
 export interface WebConfig {
-  firebase: FirebaseOptions
   features: Features
+  firebase: FirebaseOptions
+  gtagId: string
 }
 
 export interface WebConfigState {
@@ -78,15 +79,17 @@ class RemoteValue<T> {
 
 const configObserver = new RemoteValue<WebConfig>(
   client.config().then(config => ({
+    features: new Features(config.features),
     firebase: config.firebase,
-    features: new Features(config.features)
+    gtagId: config.gtagId
   }))
 )
 
 const useConfig = (): WebConfigState => {
   const [config, setConfig] = React.useState<WebConfig>({
+    features: new Features({}),
     firebase: {},
-    features: new Features({})
+    gtagId: ''
   })
   const [loading, setLoading] = React.useState<boolean>(true)
   const [error, setError] = React.useState<Error | null>(null)

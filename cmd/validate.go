@@ -39,7 +39,7 @@ func init() {
 	validateCmd.Flags().StringP("output", "o", "pretty", "Set which output format to use (one of \"json\", \"xml\", \"csv\", \"pretty\"")
 	validateCmd.Flags().StringP("profile", "p", "", "Set path of validation profile (note: flags 'rules' and 'schema' is ignored)")
 	validateCmd.Flags().StringSliceP("rules", "r", []string{}, "Set which validation rules to run (defaults to all inside the builtin dir)")
-	validateCmd.Flags().StringP("schema", "s", "netex@1.2", "Which xsd schema to use (supported \"netex@1.2\", \"netex@1.2-nc\", \"epip@1.1.1\", \"epip@1.1.1-nc\")")
+	validateCmd.Flags().StringP("schema", "s", "netex@1.2-nc", "Which xsd schema to use (supported \"netex@1.2\", \"netex@1.2-nc\", \"epip@1.1.1\", \"epip@1.1.1-nc\")")
 	validateCmd.Flags().BoolP("silent", "", false, "Running in silent will only output the result in a boolean fashion")
 
 	// read properties from environment
@@ -144,17 +144,24 @@ func createValidation(input string) (*greenlight.Validation, *FileContext, error
 		})
 
 		rules := viper.GetStringSlice("rules")
-		for name, script := range scripts {
-			if name == "xsd" {
-				continue
-			}
-			if rules == nil || len(rules) == 0 {
+		if rules == nil || len(rules) == 0 {
+			for name, script := range scripts {
+				if name == "xsd" {
+					continue
+				}
 				validation.AddScript(script, nil)
-			} else {
-				for _, r := range rules {
+			}
+		} else {
+			for _, r := range rules {
+				exist := false
+				for name, script := range scripts {
 					if r == name {
 						validation.AddScript(script, nil)
+						exist = true
 					}
+				}
+				if !exist {
+					log.Fatalf("unable to find rule with the name '%s'", r)
 				}
 			}
 		}

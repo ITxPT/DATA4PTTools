@@ -6,6 +6,7 @@ import type { Profile, Session } from '../../../api/types'
 import App from '../../../components/App'
 import ErrorAlert from '../../../components/ErrorAlert'
 import FullscreenLoader from '../../../components/FullscreenLoader'
+import JobStatus from '../../../components/JobStatus'
 import ProfileCard from '../../../components/ProfileCard'
 import ValidationStepper from '../../../components/ValidationStepper'
 import useApiClient from '../../../hooks/useApiClient'
@@ -25,8 +26,22 @@ const Profiles: NextPage = () => {
   const [errorMessage, setErrorMessage] = React.useState<string>('')
   const [errorOpen, setErrorOpen] = React.useState<boolean>(false)
   const [loading, setLoading] = React.useState<boolean>(true)
+  const [disabled, setDisabled] = React.useState<boolean>(false)
   const router = useRouter()
   const apiClient = useApiClient()
+
+  const handleNewValidationClick = (): void => {
+    apiClient.createSession()
+      .then(async (session) => {
+        await router.push('/jobs/' + session.id)
+      })
+      .catch(err => {
+        setErrorMessage(err.message)
+      })
+      .finally(() => {
+        setLoading(false)
+      })
+  }
 
   const processRequest = (req: Promise<Session>, cb?: () => any): void => {
     setLoading(true)
@@ -53,6 +68,10 @@ const Profiles: NextPage = () => {
   }
 
   React.useEffect(() => {
+    setDisabled(session?.status !== 'created')
+  }, [session, setDisabled])
+
+  React.useEffect(() => {
     const id = router.query.id ?? ''
 
     if (id === '') {
@@ -74,15 +93,17 @@ const Profiles: NextPage = () => {
 
       <Stack spacing={4}>
         <ValidationStepper step={0} />
-        <Typography variant="h3">Select profile</Typography>
+        <JobStatus session={session} onValidate={handleNewValidationClick} />
+        <Typography variant="h3">Select configuration</Typography>
         <Stack spacing={1}>
-          { profiles.map(profile => (
-              <ProfileCard
-                key={profile.name}
-                profile={profile}
-                onSelect={handleNext}
-              />
-          )) }
+          {profiles.map(profile => (
+            <ProfileCard
+              disabled={disabled}
+              key={profile.name}
+              profile={profile}
+              onSelect={handleNext}
+            />
+          ))}
         </Stack>
       </Stack>
 

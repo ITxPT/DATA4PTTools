@@ -27,7 +27,7 @@ const Layout = ({ children, onSignOut }: LayoutProps): JSX.Element => {
             <span>Note that this is an early build and more capabilities will be available soon. Visit us regularly for updated!
               You may provide your feedback in <Link underline="hover" href="https://forms.gle/eRfRYeFs2D7JhmPRA" target="_blank" rel="noreferrer">this form</Link></span>
           </InfoMessage>
-          { children }
+          {children}
         </Stack>
       </Container>
       <Footer />

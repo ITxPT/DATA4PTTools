@@ -94,12 +94,18 @@ declare module "types" {
     error(v: any, extra?: M): void;
   }
 
-  /** */
   export interface Worker {
-    /** */
-    queue(handler: string, node: Node): void;
+    /**
+     * Queue task to be run in worker
+     * @param {string} handler function handler name
+     * @param {Node} node
+     * @param {M} params 
+     */
+    queue(handler: string, node: Node, params?: M): void;
 
-    /** */
+    /**
+     * Run queued tasks
+     */
     run(): Result<ScriptError[]?>;
   }
 
@@ -109,10 +115,17 @@ declare module "types" {
      * @param {string} version 
      */
     validate(version: string): Result<ScriptError[]>;
+
+    /**
+     * Parse xsd as a document
+     * @param {string} version
+     */
+    parse(version: string): Result<Node>;
   }
 
   export interface Context {
     config: M;
+    params: M;
     document: Node;
     collection: Collection;
     log: Logger;

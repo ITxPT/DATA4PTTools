@@ -10,6 +10,7 @@ import (
 type Task struct {
 	Handler string
 	Node    xml.Node
+	Params  map[string]any
 }
 
 type Worker struct {
@@ -25,10 +26,11 @@ func NewWorker(ctx *Context) *Worker {
 	}
 }
 
-func (w *Worker) Queue(handler string, node xml.Node) {
+func (w *Worker) Queue(handler string, node xml.Node, params map[string]any) {
 	w.tasks = append(w.tasks, Task{
 		Handler: handler,
 		Node:    node,
+		Params:  params,
 	})
 }
 
@@ -69,6 +71,7 @@ func (w *Worker) Run() internal.Result { // TODO type response object
 					Collection: w.ctx.Collection,
 					Log:        w.ctx.Log,
 					Node:       t.Node,
+					Params:     t.Params,
 				}
 				ctx.Worker = NewWorker(ctx)
 

@@ -45,7 +45,7 @@ const Home: NextPage = () => {
           <Stack spacing={2}>
             <Typography variant="h3">Data4PT</Typography>
             <Typography>
-The DATA4PT project aims to advance data-sharing practices in the public transport sector by supporting the development of data exchange standards and models, to fulfil the needs of multimodal travel information service providers.
+              The DATA4PT project aims to advance data-sharing practices in the public transport sector by supporting the development of data exchange standards and models, to fulfil the needs of multimodal travel information service providers.
             </Typography>
             <Typography gutterBottom>By supporting EU Member States in deploying a set of harmonised European public data standards (Transmodel, NeTEx and SIRI), DATA4PT wants to enable union-wide multimodal travel information services and contribute to a seamless door-to-door travel ecosystem across Europe that covers all mobility services.</Typography>
           </Stack>

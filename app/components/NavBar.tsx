@@ -5,6 +5,7 @@ import RouterLink from 'next/link'
 import { useRouter } from 'next/router'
 import React from 'react'
 import LogoSquareIcon from './icons/LogoSquareIcon'
+import useApiClient from '../hooks/useApiClient'
 import theme from '../styles/theme'
 
 export interface NavBarItem {
@@ -33,7 +34,29 @@ interface NavBarProps {
 }
 
 const NavBar = ({ items, onSignOut }: NavBarProps): JSX.Element => {
-  const { pathname } = useRouter()
+  const router = useRouter()
+  const apiClient = useApiClient()
+  const [loading, setLoading] = React.useState<boolean>(false)
+  const [errorMessage, setErrorMessage] = React.useState<string>('')
+
+  const handleNewValidation = (): void => {
+    setLoading(true)
+
+    apiClient.createSession()
+      .then(async (session) => {
+        await router.push('/jobs/' + session.id)
+      })
+      .catch(err => {
+        setErrorMessage(err.message)
+      })
+      .finally(() => {
+        setLoading(false)
+
+        setTimeout(() => {
+          setErrorMessage('')
+        }, 3000)
+      })
+  }
 
   return (
     <Stack
@@ -60,7 +83,7 @@ const NavBar = ({ items, onSignOut }: NavBarProps): JSX.Element => {
       </Stack>
       <Stack direction="row" spacing={2} alignItems="center">
         {items.map(item => {
-          const active = item.href === pathname.toLowerCase()
+          const active = item.href === router.pathname.toLowerCase()
 
           return (
             <LinkElement key={item.name} href={item.href} external={item.external}>
@@ -80,20 +103,37 @@ const NavBar = ({ items, onSignOut }: NavBarProps): JSX.Element => {
             </LinkElement>
           )
         })}
-        { onSignOut !== undefined && (
-            <Button
-              variant="text"
-              disableElevation
-              size="small"
-              sx={{
-                fontFamily: 'Inter',
-                borderRadius: '32px'
-              }}
-              endIcon={<LogoutIcon fontSize="small" />}
-              onClick={onSignOut}
-            >
-              Logout
-            </Button>
+        <Button
+          variant="contained"
+          disableElevation
+          size="small"
+          sx={{
+            fontFamily: 'Inter',
+            borderRadius: '32px'
+          }}
+          disabled={loading}
+          onClick={handleNewValidation}
+          color={errorMessage !== '' ? 'error' : 'primary'}
+        >
+          {errorMessage !== ''
+            ? errorMessage
+            : (loading ? 'Creating...' : 'New validation')
+          }
+        </Button>
+        {onSignOut !== undefined && (
+          <Button
+            variant="text"
+            disableElevation
+            size="small"
+            sx={{
+              fontFamily: 'Inter',
+              borderRadius: '32px'
+            }}
+            endIcon={<LogoutIcon fontSize="small" />}
+            onClick={onSignOut}
+          >
+            Logout
+          </Button>
         )}
       </Stack>
     </Stack>

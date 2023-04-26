@@ -1,41 +1,138 @@
 import {
   Button,
+  Checkbox,
+  Dialog,
+  DialogContent,
+  DialogTitle,
   FormControl,
+  IconButton,
   InputLabel,
+  List,
+  ListItem,
+  ListItemIcon,
+  ListItemText,
   MenuItem,
   Select,
   type SelectChangeEvent,
   Stack,
-  Typography
+  Typography,
+  OutlinedInput,
+  DialogActions
 } from '@mui/material'
+import { grey } from '@mui/material/colors'
+import TuneOutlineIcon from '@mui/icons-material/TuneOutlined'
 import ChevronRightIcon from '@mui/icons-material/ChevronRight'
 import React from 'react'
 import type { Profile, Script } from '../api/types'
 import scriptData from '../public/scripts.json'
 
 const scriptOptions = scriptData.filter(v => v.name !== 'xsd')
-  .map(v => ({
-    value: v.name,
-    label: v.description
-  }))
-
-const Caption = ({
-  children
-}: {
-  children: JSX.Element | string
-}): JSX.Element => {
-  return (
-    <Typography variant="caption" component="span">{children}</Typography>
-  )
-}
 
 export interface CustomConfigurationProps {
   onNext: (profile: Profile) => void
+  disabled?: boolean
+}
+
+interface ScriptRowProps {
+  script: Script
+  checked: boolean
+  defaults?: Record<string, any>
+  onToggle: (script: Script) => void
+  onChange: (script: Script, changes: Record<string, any>) => void
+}
+
+const ScriptRow = ({
+  script,
+  checked,
+  defaults,
+  onToggle,
+  onChange
+}: ScriptRowProps): JSX.Element => {
+  const [open, setOpen] = React.useState<boolean>(false)
+  const [changes, setChanges] = React.useState<Record<string, any>>(defaults ?? {})
+  const labelId = `cb-list-label-${script.name}`
+
+  const handleChange = (event: React.ChangeEvent<HTMLInputElement>): void => {
+    setChanges({
+      ...changes,
+      [event.target.name]: event.target.type === 'number' ? parseInt(event.target.value) : event.target.value
+    })
+  }
+
+  const handleClose = (): void => {
+    setOpen(false)
+
+    if (Object.keys(changes).length > 0) {
+      onChange(script, changes)
+    }
+  }
+
+  return (
+    <>
+      <ListItem
+        key={script.name}
+        secondaryAction={(
+          script.configOptions !== undefined && (
+            <IconButton onClick={() => {
+              setOpen(true)
+            }}>
+              <TuneOutlineIcon />
+            </IconButton>
+          )
+        )}
+        divider
+      >
+        <ListItemIcon>
+          <Checkbox
+            edge="start"
+            checked={checked}
+            tabIndex={-1}
+            disableRipple
+            inputProps={{ 'aria-labelledby': labelId }}
+            onClick={() => {
+              onToggle(script)
+            }}
+          />
+        </ListItemIcon>
+        <Stack>
+          <ListItemText
+            id={labelId}
+            primary={script.description}
+            secondary={script.longDescription}
+          />
+        </Stack>
+      </ListItem>
+      <Dialog open={open} onClose={handleClose}>
+        <DialogTitle>Configuration</DialogTitle>
+        <DialogContent>
+          <Stack gap={2}>
+            {script.configOptions?.map(opt => (
+              <Stack key={opt.name} gap={1}>
+                <InputLabel>{opt.description}</InputLabel>
+                <OutlinedInput
+                  placeholder={opt.default?.toString()}
+                  size="small"
+                  type={opt.type}
+                  name={opt.name}
+                  value={changes[opt.name] ?? ''}
+                  onChange={handleChange}
+                />
+              </Stack>
+            ))}
+          </Stack>
+        </DialogContent>
+        <DialogActions>
+          <Button variant="text" onClick={handleClose}>Close</Button>
+        </DialogActions>
+      </Dialog>
+    </>
+  )
 }
 
 const CustomConfiguration = (props: CustomConfigurationProps): JSX.Element => {
-  const [schema, setSchema] = React.useState<string>('netex@1.2')
-  const [scripts, setScripts] = React.useState<string[]>(scriptOptions.map(v => v.value))
+  const [schema, setSchema] = React.useState<string>('netex@1.2-nc')
+  const [scripts, setScripts] = React.useState<string[]>(scriptOptions.map(v => v.name))
+  const [scriptOpts, setScriptOpts] = React.useState<Record<string, Record<string, any>>>({})
 
   const handleSelectSchema = (event: SelectChangeEvent): void => {
     if (event.target?.name === '') {
@@ -45,15 +142,31 @@ const CustomConfiguration = (props: CustomConfigurationProps): JSX.Element => {
     setSchema(event.target.value)
   }
 
-  const handleSelectScripts = (event: SelectChangeEvent): void => {
-    if (event.target?.name === '' || !Array.isArray(event.target.value)) {
-      return
+  const handleScriptToggle = (v: Script): void => {
+    const i = scripts.indexOf(v.name)
+    const s = [...scripts]
+
+    if (i === -1) {
+      s.push(v.name)
+    } else {
+      s.splice(i, 1)
     }
 
-    setScripts(event.target.value)
+    setScripts(s)
+  }
+
+  const handleConfigChange = (script: Script, changes: Record<string, any>): void => {
+    setScriptOpts({
+      ...scriptOpts,
+      [script.name]: changes
+    })
   }
 
   const handleNextClick = (): void => {
+    if (props.disabled === true) {
+      return
+    }
+
     const xsdScript = {
       ...scriptData.find(v => v.name === 'xsd'),
       config: { schema }
@@ -62,15 +175,25 @@ const CustomConfiguration = (props: CustomConfigurationProps): JSX.Element => {
     props.onNext({
       name: 'custom',
       description: 'Custom configuration',
-      scripts: [xsdScript as Script, ...scripts.map(name => scriptData.find(v => v.name === name) as Script)]
+      longDescription: '',
+      scripts: [
+        xsdScript as Script,
+        ...scripts.map(name => {
+          const script = scriptData.find(v => v.name === name) as Script
+
+          script.config = scriptOpts[script.name]
+
+          return script
+        })
+      ]
     })
   }
 
   return (
     <Stack spacing={4}>
       <Stack spacing={2}>
-        <Typography variant="h5">Schema</Typography>
-        <Typography><b>1.</b> Begin by selecting which schema to validate against</Typography>
+        <Typography variant="h5">Profile</Typography>
+        <Typography><b>1.</b> Begin by selecting which profile to use for validation</Typography>
         <Typography>
           <ul style={{ marginTop: 0 }}>
             <li>NeTEx - The full NeTEx schema (<a href="https://github.com/NeTEx-CEN/NeTEx" target="_blank" rel="noreferrer">more info</a>)</li>
@@ -88,51 +211,38 @@ const CustomConfiguration = (props: CustomConfigurationProps): JSX.Element => {
             onChange={handleSelectSchema}
           >
             <MenuItem key="netex" value="netex@1.2">NeTEx (v1.2)</MenuItem>
-            <MenuItem key="netex-light" value="netex@1.2-nc">NeTEx Light (v1.2)</MenuItem>
+            <MenuItem key="netex-light" value="netex@1.2-nc">NeTEx Fast (v1.2)</MenuItem>
             <MenuItem key="epip" value="epip@1.1.1">EPIP (v1.1.1)</MenuItem>
-            <MenuItem key="epip-light" value="epip@1.1.1-nc">EPIP Light (v1.1.1)</MenuItem>
+            <MenuItem key="epip-light" value="epip@1.1.1-nc">EPIP Fast (v1.1.1)</MenuItem>
           </Select>
         </FormControl>
       </Stack>
       <Stack spacing={2}>
         <Typography variant="h5">Rules</Typography>
-          <Typography><b>2.</b> In addition to the schema validation, we have also included a few optional rules that validate the consistency of the documents (work in progress)</Typography>
-          <Typography>
-            <ul style={{ marginTop: 0 }}>
-              <li><i>Every line is referenced</i> - Make sure every Line <Caption>{'<Line />'}</Caption> is referenced from another element.</li>
-              <li><i>Every scheduled stop point has a name</i> - Make sure every <Caption>{'<ScheduledStopPoint />'}</Caption> has a <Caption>{'<Name />'}</Caption> or <Caption>{'<ShortName />'}</Caption>.</li>
-              <li><i>Every stop place has a correct stop place type</i> - Make sure every <Caption>{'<StopPlace />'}</Caption> has a <Caption>{'<stopPlaceType />'}</Caption> and that it is of correct type.</li>
-              <li><i>Every stop place has a name</i> - Make sure every <Caption>{'<StopPlace />'}</Caption> has a name.</li>
-              <li><i>Every stop place is referenced</i> - Make sure every <Caption>{'<StopPlace />'}</Caption> is referenced from another element.</li>
-              <li><i>Every stop point have an arrival and departure time</i> - Make sure every <Caption>{'<ScheduledStopPointRef />'}</Caption> have an <Caption>{'<ArrivalTime />'}</Caption> and <Caption>{'<DepartureTime />'}</Caption>.</li>
-              <li><i>Frame defaults have a locale and timezone</i> - Validates the correctness of <Caption>{'<DefaultLocale />'}</Caption> and <Caption>{'<TimeZone />'}</Caption> inside <Caption>{'<FrameDefaults />'}</Caption>.</li>
-              <li><i>Locations are referencing the same point</i> - Make sure every <Caption>{'<Location />'}</Caption> in <Caption>{'<StopPlace />'}</Caption> and <Caption>{'<ScheduledStopPoint />'}</Caption> for the same <Caption>{'<StopAssignment />'}</Caption> are pointing to the same coordinates.</li>
-              <li><i>Passing times have increasing times</i> - Make sure passing times have increasing times and day offsets.</li>
-              <li><i>Stop place quay distance is reasonable</i> - Check the distance between a <Caption>{'<StopPlace />'}</Caption> and its <Caption>{'<Quay />'}</Caption>{'\''}s.</li>
-            </ul>
-        </Typography>
-        <FormControl>
-          <InputLabel id="scripts-label">Rules</InputLabel>
-          <Select
-            labelId="scripts-label"
-            name="scripts"
-            value={scripts as any}
-            multiple
-            onChange={handleSelectScripts}
-          >
-            { scriptOptions.map(opt => (
-              <MenuItem
-                key={opt.value}
-                value={opt.value}
-              >
-                {opt.label}
-              </MenuItem>
-            )) }
-          </Select>
-        </FormControl>
+        <Typography><b>2.</b> In addition to the schema validation, we have also included a few optional rules that validate the consistency of the documents</Typography>
+        <List
+          sx={{
+            bgcolor: 'background.paper',
+            border: `1px solid ${grey[300]}`,
+            borderBottom: 0,
+            padding: 0
+          }}
+        >
+          {scriptOptions.map(script => (
+            <ScriptRow
+              key={script.name}
+              script={script}
+              checked={scripts.includes(script.name)}
+              onToggle={handleScriptToggle}
+              onChange={handleConfigChange}
+              defaults={scriptOpts[script.name]}
+            />
+          ))}
+        </List>
       </Stack>
       <Stack alignItems="center">
         <Button
+          disabled={props.disabled}
           variant="contained"
           endIcon={<ChevronRightIcon />}
           onClick={handleNextClick}

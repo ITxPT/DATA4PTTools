@@ -296,5 +296,27 @@ theme.components.MuiMenuItem = {
     }
   }
 }
+theme.components.MuiListItemIcon = {
+  styleOverrides: {
+    root: {
+      minWidth: 0
+    }
+  }
+}
+
+theme.components.MuiListItemText = {
+  styleOverrides: {
+    secondary: {
+      fontSize: '12px'
+    }
+  }
+}
+
+theme.components.MuiOutlinedInput = {
+  styleOverrides: {
+    root: {
+    }
+  }
+}
 
 export default theme

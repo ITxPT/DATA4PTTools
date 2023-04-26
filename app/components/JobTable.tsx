@@ -80,6 +80,7 @@ export interface Job {
   stopped: number
   ref: string
   id: string
+  name: string
   created: number
   results?: any[]
 }
@@ -143,6 +144,11 @@ const JobRow = ({ job }: JobRowProps): JSX.Element => {
       </TableCell>
       <TableCell>
         <Link href={`/jobs/${job.id}/result`} legacyBehavior>
+          {job.name}
+        </Link>
+      </TableCell>
+      <TableCell>
+        <Link href={`/jobs/${job.id}/result`} legacyBehavior>
           {job.id}
         </Link>
       </TableCell>
@@ -172,11 +178,12 @@ const JobTable = (props: JobTableProps): JSX.Element => {
 
   return (
     <TableContainer component={Paper}>
-      <Table sx={{ minWidth: 650 }} aria-label="simple table">
+      <Table sx={{ minWidth: 650 }} aria-label="jobs table">
         <TableHead>
           <TableRow>
             <TableCell>Status</TableCell>
             <TableCell>Valid</TableCell>
+            <TableCell>Name</TableCell>
             <TableCell>Ref</TableCell>
             <TableCell align="right">Created</TableCell>
             <TableCell align="right">Duration</TableCell>

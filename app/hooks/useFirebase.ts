@@ -1,6 +1,6 @@
 import {
-  FirebaseApp,
-  FirebaseOptions,
+  type FirebaseApp,
+  type FirebaseOptions,
   getApps,
   getApp,
   initializeApp
@@ -12,8 +12,8 @@ import {
   sendSignInLinkToEmail,
   signInWithEmailLink,
   signOut,
-  User,
-  UserCredential
+  type User,
+  type UserCredential
 } from 'firebase/auth'
 import { useEffect, useState } from 'react'
 
