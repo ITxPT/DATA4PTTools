@@ -50,6 +50,7 @@ require (
 )
 
 require (
+	github.com/sourcegraph/conc v0.3.0 // indirect
 	github.com/tamerh/xpath v1.0.0 // indirect
 	golang.org/x/net v0.9.0 // indirect
 	golang.org/x/sys v0.7.0 // indirect
