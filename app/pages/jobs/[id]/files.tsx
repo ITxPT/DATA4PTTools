@@ -119,8 +119,8 @@ const Profiles: NextPage = () => {
             disabled={disabled}
             onUpload={handleOnUpload}
             onChange={handleOnChange}
-            onError={() => {
-              return 'File will not be included in the validation'
+            onError={({ errorMessage }: { errorMessage: string }) => {
+              return `Error caught uploading file, message: ${errorMessage}`
             }}
           />
           <Button
