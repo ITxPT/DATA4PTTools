@@ -62,10 +62,10 @@
     ]
   },
   {
-    "name": "passingTimesHaveIncreasingTimes",
+    "name": "passingTimesIsNotDecreasing",
     "version": "0.0.1",
-    "description": "Passing times have increasing times",
-    "longDescription": "Make sure passing times have increasing times and day offsets"
+    "description": "Passing times don't have decreasing times",
+    "longDescription": "Make sure passing times don't have decreasing times and day offsets"
   },
   {
     "name": "stopPlaceQuayDistanceIsReasonable",
