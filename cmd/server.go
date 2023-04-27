@@ -8,14 +8,10 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	"net/url"
 	"sort"
 	"time"
 
 	"github.com/caarlos0/env/v6"
-	"github.com/concreteit/greenlight/internal"
-	"github.com/gorilla/websocket"
-	"github.com/koding/websocketproxy"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 	"github.com/spf13/cobra"
@@ -57,10 +53,8 @@ type WebConfig struct {
 
 func init() {
 	serverCmd.Flags().StringP("port", "p", "8080", "Which port to listen http server on")
-	serverCmd.Flags().StringP("mqtt-port", "", "1883", "Which port to listen mqtt server on")
 
 	viper.BindPFlag("port", serverCmd.Flags().Lookup("port"))
-	viper.BindPFlag("mqtt-port", serverCmd.Flags().Lookup("mqtt-port"))
 
 	rootCmd.AddCommand(serverCmd)
 
@@ -74,13 +68,6 @@ func startServer(cmd *cobra.Command, args []string) {
 	if port == "" {
 		port = "8080"
 	}
-
-	broker, err := NewMQTTBroker(DefaultBrokerConfig())
-	if err != nil {
-		log.Fatalln(err)
-	}
-
-	broker.Start()
 
 	fs := http.FileServer(StaticDir{http.Dir("app/out")})
 	e := echo.New()
@@ -214,15 +201,6 @@ func startServer(cmd *cobra.Command, args []string) {
 			return err
 		}
 
-		v.Subscribe(func(event internal.Event) {
-			switch event.Type {
-			case internal.EventTypeValidateDocumentStart, internal.EventTypeValidateDocumentStop:
-				broker.PublishMessage(fmt.Sprintf("sessions/%s/documents/%s", session.ID, event.Data["document"]), event)
-			case internal.EventTypeScriptStart, internal.EventTypeScriptStop:
-				broker.PublishMessage(fmt.Sprintf("sessions/%s/documents/%s/scripts/%s", session.ID, event.Data["document"], event.Data["script"]), event)
-			}
-		})
-
 		res, err := v.Validate(context.Background())
 		if err != nil {
 			session.Stopped = time.Now()
@@ -329,20 +307,6 @@ func startServer(cmd *cobra.Command, args []string) {
 		}
 
 		return c.String(http.StatusBadRequest, "unsupported file format")
-	})
-
-	u, err := url.Parse("ws://localhost:1888/ws")
-	if err != nil {
-		log.Fatalln(err)
-	}
-
-	wsProxy := websocketproxy.NewProxy(u)
-	wsProxy.Upgrader = &websocket.Upgrader{}
-	wsProxy.Upgrader.CheckOrigin = func(r *http.Request) bool { return true }
-
-	e.GET("/ws", func(c echo.Context) error {
-		wsProxy.ServeHTTP(c.Response(), c.Request())
-		return nil
 	})
 
 	e.Any("*", func(c echo.Context) error {
