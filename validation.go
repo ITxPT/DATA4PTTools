@@ -8,7 +8,7 @@ import (
 	"github.com/concreteit/greenlight/internal"
 	"github.com/concreteit/greenlight/js"
 	"github.com/concreteit/greenlight/xml"
-	"github.com/matoous/go-nanoid/v2"
+	gonanoid "github.com/matoous/go-nanoid/v2"
 )
 
 type ScriptEnv struct {
@@ -68,8 +68,7 @@ func (v *Validation) Validate(ctx context.Context) ([]*ValidationResult, error) 
 	defer v.emitter.Close()
 	defer v.Emit(internal.EventTypeValidationStop, emitData)
 
-	n := len(v.documentMap)
-	queue := internal.NewQueue(0, n)
+	queue := internal.NewQueue()
 	for name, doc := range v.documentMap {
 		queue.Add(func(name string, doc *xml.Document) internal.Task {
 			return func(id int) internal.Result {
@@ -91,8 +90,8 @@ func (v *Validation) Validate(ctx context.Context) ([]*ValidationResult, error) 
 					if r.IsErr() {
 						return internal.NewResult(nil, r.Message())
 					}
-					if v, ok := r.Get().(*RuleValidation); !ok {
-						return internal.NewResult(nil, fmt.Errorf("expected '%+v' to be of type '*RuleValidation'", r.Get()))
+					if v, ok := r.Get().(*RuleValidation); !ok || v == nil {
+						return internal.NewResult(nil, fmt.Errorf("expected '%+v' to be of type '*RuleValidation' in document '%s'", r.Get(), name))
 					} else {
 						res.ValidationRules = append(res.ValidationRules, v)
 
@@ -112,7 +111,7 @@ func (v *Validation) Validate(ctx context.Context) ([]*ValidationResult, error) 
 		if r.IsErr() {
 			return nil, r.Message()
 		}
-		if vr, ok := r.Get().(*ValidationResult); !ok {
+		if vr, ok := r.Get().(*ValidationResult); !ok || vr == nil {
 			return nil, fmt.Errorf("expected '%+v' to be of type 'ValidationResult'", r.Get())
 		} else {
 			res = append(res, vr)
@@ -123,8 +122,7 @@ func (v *Validation) Validate(ctx context.Context) ([]*ValidationResult, error) 
 }
 
 func (v *Validation) validateDocument(name string, doc *xml.Document) []internal.Result {
-	n := len(v.scripts)
-	queue := internal.NewQueue(0, n)
+	queue := internal.NewQueue()
 	for _, script := range v.scripts {
 		queue.Add(func(env ScriptEnv) internal.Task {
 			return func(id int) internal.Result {

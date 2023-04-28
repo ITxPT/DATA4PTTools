@@ -34,9 +34,8 @@ func (w *Worker) Queue(handler string, node xml.Node, params map[string]any) {
 	})
 }
 
-func (w *Worker) Run() internal.Result { // TODO type response object
-	n := len(w.tasks)
-	queue := internal.NewQueue(0, n)
+func (w *Worker) Run() internal.Result {
+	queue := internal.NewQueue()
 	for _, t := range w.tasks {
 		t := t
 		queue.Add(func() internal.Task {

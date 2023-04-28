@@ -2,56 +2,39 @@ package internal
 
 import (
 	"runtime"
-	"sync"
+
+	"github.com/sourcegraph/conc/pool"
 )
 
 type Task func(int) Result
 
 type Queue struct {
-	concurrency int
-	tasks       chan Task
+	tasks []Task
 }
 
 func (q *Queue) Add(task Task) {
-	q.tasks <- task
+	q.tasks = append(q.tasks, task)
 }
 
 func (q *Queue) Run() []Result {
-	var wg sync.WaitGroup
-	n := len(q.tasks)
+	wg := pool.New().WithMaxGoroutines(runtime.GOMAXPROCS(0))
 	res := []Result{}
-
-	wg.Add(n)
-
-	for i := 0; i < q.concurrency; i++ {
-		go func(id int) {
-			for task := range q.tasks {
-				res = append(res, task(id))
-				wg.Done()
-			}
-		}(i + 1)
+	for i, t := range q.tasks {
+		task := t
+		id := i + 1
+		wg.Go(func() {
+			res = append(res, task(id))
+		})
 	}
 
+	q.tasks = []Task{}
 	wg.Wait()
 
 	return res
 }
 
-func NewQueue(n, size int) *Queue {
-	var tasks chan Task
-	if size > 0 {
-		tasks = make(chan Task, size)
-	} else {
-		tasks = make(chan Task)
-	}
-
-	concurrency := n
-	if n <= 0 {
-		concurrency = runtime.NumCPU()
-	}
-
+func NewQueue() *Queue {
 	return &Queue{
-		concurrency: concurrency,
-		tasks:       tasks,
+		tasks: []Task{},
 	}
 }

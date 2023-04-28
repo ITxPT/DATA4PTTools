@@ -8,12 +8,7 @@ const errors = require("errors");
 const types = require("types");
 const xpath = require("xpath");
 const linesPath = xpath.join(xpath.path.FRAMES, "ServiceFrame", "lines", "Line");
-const journeyLinePath = xpath.join(
-  xpath.path.FRAMES,
-  "TimetableFrame",
-  "vehicleJourneys",
-  "ServiceJourney",
-);
+
 /**
  * Make sure every Line is referenced from another element
  * @param {types.Context} ctx
@@ -32,10 +27,12 @@ function main(ctx) {
         return res;
       }
 
-      const lineRefsPath = xpath.join(journeyLinePath, `LineRef[@ref='${id}']`);
-      const refs = ctx.document.find(lineRefsPath).get();
+      const refExist = ctx.document
+        .find(".//LineRef")
+        .getOrElse(() => [])
+        .find((/** @type {types.Node} n */ n) => n.attr("ref").get() === id);
 
-      if (!refs || !refs.length) {
+      if (!refExist) {
         res.push(errors.ConsistencyError(
           `Missing reference for Line(@id=${id})`,
           { line: node.line() },

@@ -82,14 +82,15 @@ const FileUpload = (props: FileUploadProps): JSX.Element => {
     event: React.ChangeEvent<HTMLInputElement>
   ): Promise<void> => {
     if (event.target.files == null) {
-      return // TODO handle
+      return
     }
 
     for (const file of (event.target.files as any)) {
       const fileContext = {
         name: file.name,
         status: 'uploading',
-        progress: 0
+        progress: 0,
+        errorMessage: ''
       }
 
       await onUpload(file, (p) => {
@@ -98,7 +99,8 @@ const FileUpload = (props: FileUploadProps): JSX.Element => {
       }).then(res => {
         fileContext.progress = 100
         fileContext.status = 'uploaded'
-      }).catch(() => {
+      }).catch((err) => {
+        fileContext.errorMessage = err.response.statusText
         fileContext.status = 'error'
       }).finally(() => {
         updateFileContext(fileContext)

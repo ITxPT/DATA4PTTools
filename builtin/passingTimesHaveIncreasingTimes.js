@@ -1,9 +1,9 @@
 /**
- * @name passingTimesHaveIncreasingTimes
- * @overview Makes sure passing times have increasing times and day offsets
+ * @name passingTimesIsNotDecreasing
+ * @overview Makes sure passing times don't have decreasing times and day offsets
  * @author Concrete IT
  */
-const name = "passingTimesHaveIncreasingTimes";
+const name = "passingTimesIsNotDecreasing";
 const errors = require("errors");
 const types = require("types");
 const xpath = require("xpath");
@@ -17,7 +17,7 @@ const departureTimePath = xpath.join("DepartureTime");
 const departureOffsetPath = xpath.join("DepartureDayOffset");
 
 /**
- * Makes sure passing times have increasing times and day offsets
+ * Makes sure passing times don't have decreasing times and day offsets
  * @param {types.Context} ctx
  * @return {errors.ScriptError[]?}
  */
@@ -46,9 +46,9 @@ function worker(ctx) {
     const departureDayOffset = node.textAt(departureOffsetPath).get();
 
     if (i !== 0) {
-      if (prevDepartureTime >= arrivalTime && arrivalDayOffset === prevArrivalDayOffset) {
+      if (prevDepartureTime > arrivalTime && arrivalDayOffset === prevArrivalDayOffset) {
         res.push(errors.ConsistencyError(
-          `Expected passing time to increase in ServiceJourney(@id=${id}), TimetabledPassingTime(@id=${tid})`,
+          `Expected passing time to not decrease in ServiceJourney(@id=${id}), TimetabledPassingTime(@id=${tid})`,
           { line: node.line() },
         ));
       }

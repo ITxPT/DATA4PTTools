@@ -36,7 +36,7 @@
         "name": "locationsAreReferencingTheSamePoint"
       },
       {
-        "name": "passingTimesHaveIncreasingTimes"
+        "name": "passingTimesIsNotDecreasing"
       },
       {
         "name": "stopPlaceQuayDistanceIsReasonable"
@@ -100,7 +100,7 @@
         "name": "locationsAreReferencingTheSamePoint"
       },
       {
-        "name": "passingTimesHaveIncreasingTimes"
+        "name": "passingTimesIsNotDecreasing"
       },
       {
         "name": "stopPlaceQuayDistanceIsReasonable"
@@ -152,7 +152,7 @@
         "name": "locationsAreReferencingTheSamePoint"
       },
       {
-        "name": "passingTimesHaveIncreasingTimes"
+        "name": "passingTimesIsNotDecreasing"
       },
       {
         "name": "stopPlaceQuayDistanceIsReasonable"
