@@ -46,7 +46,35 @@
 </tr>
 </table>
 
+# Table of Content
+- [Greenlight - The Data4PT Validation tool](#greenlight---the-data4pt-validation-tool)
+- [Table of Content](#table-of-content)
+- [Introduction](#introduction)
+- [Getting started](#getting-started)
+  - [Local installation](#local-installation)
+- [Web interface](#web-interface)
+  - [Navigation](#navigation)
+  - [Configuration](#configuration)
+  - [Packages](#packages)
+  - [Custom configuration](#custom-configuration)
+  - [Select files to validate](#select-files-to-validate)
+  - [Validation result](#validation-result)
+  - [Downloading the result](#downloading-the-result)
+  - [Previous validation](#previous-validation)
+  - [Technical error messages](#technical-error-messages)
+- [Command Line Interface - CLI](#command-line-interface---cli)
+- [Building from source](#building-from-source)
+  - [Prerequisites](#prerequisites)
+  - [Getting started](#getting-started-1)
+  - [4.a Building the CLI](#4a-building-the-cli)
+  - [4.b Building the Web GUI](#4b-building-the-web-gui)
+- [Configuration](#configuration-1)
+  - [Command line](#command-line)
+  - [Environment variables](#environment-variables)
+  - [Configuration file](#configuration-file)
 
+
+&nbsp;
 # Introduction
 The tool consists of a number of components, each with a different responsibility. This will ensure that the tool is modular and that each component is easy to understand and maintain.
 
@@ -68,62 +96,162 @@ The tool consists of a number of components, each with a different responsibilit
 **Scripts** - Individual validation rules implemented as scripts. The scripts are written in JavaScript that is easy to start with and JavaScript is also well documented. The validation scripts are small programs that each implements one or more validation rules. The scrips provided with the tool implements one rule per script to make it easy to follow and understand how they work. To gain a better performance several rules can be implemented in the same script. Each script uses the API in Core to load the files to validate and to call functions in libXML. XPath provided via libXML is used by most of the scripts to search for and compare different elements in the NeTEx-files.
 </p>
 
+&nbsp;
+
 # Getting started
+To try out the tool for the first time and evaluate the functionality you can use our hosted web interface at https://greenlight.itxpt.eu See [Web Interface](#Web-interface) for an overview of how to use the tool with the visual interface.
 
-To use the tool you need to install Docker on the computer that you will use. You can use Windows, Mac or Linux as your base operating system, and you will find Docker and instructions on how to install in the [Docker Getting Started](https://www.docker.com/get-started/) guide.
+If you find the tool useful and want to use it in more advanced scenarios, with larger files or include it in a pipeline, then you can download and install it locally in your own environment.
 
-After you have installed Docker you can get the latest image by typing the following command in a terminal window:
+## Local installation
+
+To use the tool locally, you need to install Docker on the computer that you will use. You can use Windows, Mac or Linux as your base operating system, and you will find Docker and instructions on how to install in the [Docker Getting Started](https://www.docker.com/get-started/) guide.
+
+After you have installed Docker, you can get the latest version of the Greenlight image by typing the following command in a terminal window:
 
 ```
 docker pull lekojson/greenlight
 ```
 
-Then you can then start the container with the command:
+![Docker Pull](media/getting-started_docker-pull.png?raw=true)
+
+We suggest that you first start to use the web interface to verify that the installation works and to learn more about the functionality. 
+
+Start the web interface with the command:
 
 ```
 docker run -it -p 8080:8080 lekojson/greenlight server
 ```
 
-You can also start the container via Docker Desktop, find the downloaded image and click on start:
 
-![Docker Desktop](media/getting-started_docker-desktop.png?raw=true)
+![Docker Pull](media/getting-started_docker-start-web-server.png?raw=true)
+
+
+
+If you have used the image before, you can also start the web interface via Docker Desktop, goto to the Containers tab and press Start on the Greenlight container.
+
+![Docker Desktop - Images](media/getting-started_docker-desktop.png?raw=true)
+
+&nbsp;
+
+&nbsp;
 
 # Web interface
 
-When the container is running you can use the web interface by opening a web browser and type the address [http://localhost:8080/](http://localhost:8080/), and then click on **Begin validating** to start a new validation session.
+After the container has started you can use the web interface by opening a web browser and type the address [http://localhost:8080/](http://localhost:8080/), and click on **Start validating** to start a new validation session. You can also always use the **New validation** button in the upper right corner to start over with a new validation.
 
 ![Web Start page](media/getting-started_web-start.png?raw=true)
 
-Configuration
 
-First you select which schema/profile to use in the validation. In the current version three default schemas are available; NeTEx Standard, NeTEx Light and EPIP. In a future version of the tool it will be possible to upload your own local schema.
+&nbsp;
 
-![Web Select schema](media/getting-started_web-schema-selection.png?raw=true)
+## Navigation
+At the top of the web page is a menubar and a progressindicator. The logo to the left always take you to the start page. **Validations** in the menu will show recent done validations, **GitHub** will take you to our page with documentation and the sourecode and **New validation** will start over with a new validation. You can also use **Go back** to navigate to a previous step. 
 
-The next step is to select which additional rules you want to check. You first get an overview and brief description of each rule. Zero or more rules can be selected by clicking the rules in the list box.
+![Web Validation result](media/getting-started_web-navigation.png)
 
-![Web Select rules](media/getting-started_web-rule-selection.png?raw=true)
 
-The last step is to upload the files to be validated, it can be single files or multiple files compressed in an archive. Click **Upload files** to select which files to upload and then wait until all files has been uploaded, see the Status indicator in the files list.
+&nbsp;
 
-![Web Start upload](media/getting-started_web-start-upload.png?raw=true)
+## Configuration
+
+To start a validation you first decide if you want to use a premade configuration package or use a custom configuration. The packages are predefined with schemas and rules that are commonly used together. To select your own combination of schemas and rules you can do a custom configuration.
+
+![Web Select Configuration](media/getting-started_web-configuration-selection.png?raw=true)
+
+
+&nbsp;
+
+## Packages
+
+If you select to use the premade packages you are presented with a list to select from. Select the one that works best with your validation requrements. When you click on one of the packages you continue to the [selection of files](##Select-files-to-validate).
+
+![Web Start upload](media/getting-started_web-select-package.png?raw=true)
+
+
+&nbsp;
+
+## Custom configuration
+
+With the custom configuration you can be more detailed in which NeTEx Profile and combination of rules to use. In the list of rules you get brief description of each rule. Zero or more rules can be selected by clicking the checkbox for each rule.
+
+![Web Select Parameters](media/getting-started_web-custom-selection.png?raw=true)
+
+Some rules use prameters as input to the validation. Those rule have a default value that can be changed by clicking on the Configure icon to the right.
+
+![Web Select rules](media/getting-started_web-configuration-parameters.png?raw=true)
+
+&nbsp;
+
+## Select files to validate
+
+The last step is to upload the files to be validated, it can be single files or multiple files compressed in an archive. Click **Select file(s)** to select which files to upload and then wait until all files has been uploaded, see the Status indicator in the files list.
+
+If you want to get back to the selection of rules you can use the **Go back** button
+
+![Web Start upload](media/getting-started_web-selecting-files.png?raw=true)
+
+&nbsp;
 
 When all files are uploaded you start the validation by clicking on **Validate**.
 
+
 ![Web Uploaded files](media/getting-started_web-uploaded-files.png)
 
-The validation will start by validating each file against the selected schema and rules. Depending on the number of files and their sizes the validation can take some time to complete. When the validation is done the result for each file is displayed. You can also download the result in json or csv format to a local file to process it further.
 
+&nbsp;
+
+Each file is validated against the selected schema and rules, all validations run in paralell. Depending on the number of files and their sizes the validation can take some time to complete. 
+
+
+![Web Uploaded files](media/getting-started_web-validating.png)
+
+&nbsp;
+
+## Validation result
+
+When the validation is done you get an overview of the result. You can see the status of the validation for each file. If there are any errors you can get all the details by clicking on the down arrow to the right of each file. 
 ![Web Validation result](media/getting-started_web-validation-result.png)
 
+&nbsp;
 
-## 🖥️ CLI
+The details displays the numer of times that specific error occurs in the file and you can page between them with the arrorws to the right. For each error you get information about the type, line number in the file and a more detaild explanation. 
 
-### Prerequisites
+![Web Validation result](media/getting-started_web-validation-result-detailed.png)
 
-- [Docker](https://www.docker.com/) installed and ready to go
+&nbsp;
 
-### Getting started
+## Downloading the result
+You can download the result for each error or the complete validation to a file in json or csv format to process it further. For example to give as  documentation to someone who can correct the error
+![Web Validation result](media/getting-started_web-validation-result-report.png)
+
+Example of the saved data in json format.
+
+![Web Validation result](media/getting-started_web-validation-result-json.png)
+
+&nbsp;
+
+## Previous validation
+At the bottom of the result page you have an option **Validate with this configuration** to go back and start a new validation with the same configuration but with new files. You can also see recent validation by using the menu selection **Validations** at the to of the page. By clicking on the name of a job you will see the result page for that validation again.
+
+
+![Web Validation result](media/getting-started_web-previous-validations.png)
+
+&nbsp;
+
+## Technical error messages
+Sometimes the web interface will show error messages if the Greenlight tool stops to execute. Often that occurs when the communication to the web server is lost or the local Docker version has stopped. Check the status of your connection and that the Docker container is running if using it locally.
+
+![Web Validation result](media/getting-started_web-error.png)
+
+![Web Validation result](media/getting-started_web-error2.png)
+
+&nbsp;
+
+&nbsp;
+
+
+# Command Line Interface - CLI
 
 **Note**: if you don't have NeTEx xml document (or two) ready to test with we provide a few demo files in the source and docker image
 
@@ -146,15 +274,19 @@ The validation will start by validating each file against the selected schema an
    docker run -it -v /path/to/documents:/documents lekojson/greenlight validate -i /documents
    ```
 
-## 🛠️ Building from source
+&nbsp;
 
-### Prerequisites
+&nbsp;
+
+# Building from source
+
+## Prerequisites
 
 - [Go](https://go.dev/)
 - [libxml2](http://www.xmlsoft.org/)
 - [nodejs](https://nodejs.org/) - not required if only running cli edition
 
-### Getting started
+## Getting started
 
 **Note**: Greenlight is using Go and is powered by libxml2, so make sure those are installed and configured
 
@@ -173,53 +305,55 @@ cd DATA4PTTools
 go get
 ```
 
-#### 4.a CLI
+## 4.a Building the CLI
 
 1. Building and running a validation
-   - #### Validate with demo files provided in the source
+   - ### Validate with demo files provided in the source
    _changes in path definition will differ running on windows_
    ```sh
    go run cmd/*.go validate -i testdata
    ```
 
-   - #### Validate using your own files
+   - ### Validate using your own files
    _changes in path definition will differ running on windows_
    ```sh
    go run cmd/*.go validate -i /path/to/documents
    ```
 
-#### 4.b Web GUI
+## 4.b Building the Web GUI
 1. Buliding and running the backend server
-  - #### Build and start the server
+  - ### Build and start the server
   ```sh
   go run cmd/*.go server
   ```
 
 2. Building and running the frontend application
-  - #### Navigate to directory
+  - ### Navigate to directory
   ```sh
   cd app
   ```
 
-  - #### Install dependencies
+  - ### Install dependencies
   ```sh
   npm i
   ```
 
-  - #### Start the server
+  - ### Start the server
   ```sh
   npm run dev
   ```
 
 3. Open a browser and navigate to `http://localhost:3000`
 
-### ⚙️ Configuration
+&nbsp;
+
+# Configuration
 
 Configurations can be made in a three different ways (in order of priority), through _command line arguments_, _environment variables_ and _configuration file_
 
-#### Command line
+## Command line
 
-- ##### All arguments can be found by running
+- ### All arguments can be found by running
 
 ```sh
 docker run -it lekojson/greenlight --help
@@ -229,21 +363,23 @@ or by command
 docker run -it lekojson/greenlight [command] --help
 ```
 
-- ##### Example changing the output from `pretty` to `json` in validation
+- ### Example changing the output from `pretty` to `json` in validation
 
 ```sh
 docker run -it lekojson/greenlight validate -i testdata -o json
 ```
 
-#### Environment variables
+## Environment variables
 
 Environment comes with the prefix `GREENLIGHT_` and match the paths (separated by `_`) in configuration file (see below). Three different datatypes are supported, `string`, `boolean` and `string slice` which also match the configuration file.
 
-- ##### Setting input through environment variable
+- ### Setting input through environment variable
 
 ```sh
 docker run -it -e GREENLIGHT_INPUT=/path/to/documents lekojson/greenlight validate
 ```
+
+## Configuration file
 
 <h1></h1>
 
