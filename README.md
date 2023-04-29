@@ -108,7 +108,14 @@ The tool consists of a number of components, each with a different responsibilit
 &nbsp;
 
 # Requirements
-To run the tool locally you will need a suitable machine that can handle validation regarding  
+To run the tool locally you must ensure that the machine used has the capability to handle the files to be validated. The validation times can be long and the tool can stop if the processing power or memory is to low. Below is a recommendation for the configuration of a machine. Be aware that very large or very many files affects the performance, and can result in longer validation times even on a machine with the recommended hardware.
+
+| Minimum | Recommended | Best performance |
+|---------| ------------| -----------------|
+| 4 cores | 6 cores | 6 cores or more |
+| 8 GB memory | 16 GB memory | 32 GB memory |
+
+
 
 &nbsp;
 
