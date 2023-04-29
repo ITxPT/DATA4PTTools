@@ -39,7 +39,7 @@
 **The minimal, customizable, NeTEx validation tool**
 
 - **Customizable:** configure what you see and how you see it.
-- **Scripting** write your own validation rules using javascript
+- **Scripting** write your own validation rules using JavaScript
 - **Fancy** shows relevant information at a glance.
 - **Easy:** quick to install – start using it in minutes.
 </td>
@@ -50,6 +50,7 @@
 - [Greenlight - The Data4PT Validation tool](#greenlight---the-data4pt-validation-tool)
 - [Table of Content](#table-of-content)
 - [Introduction](#introduction)
+- [Requirements](#requirements)
 - [Getting started](#getting-started)
   - [Local installation](#local-installation)
 - [Web interface](#web-interface)
@@ -63,6 +64,14 @@
   - [Previous validation](#previous-validation)
   - [Technical error messages](#technical-error-messages)
 - [Command Line Interface - CLI](#command-line-interface---cli)
+  - [Getting help](#getting-help)
+  - [Server command](#server-command)
+  - [Validate command](#validate-command)
+    - [NeTEx profile](#netex-profile)
+    - [Rules](#rules)
+    - [Providing files](#providing-files)
+    - [Output](#output)
+  - [Completion command](#completion-command)
 - [Building from source](#building-from-source)
   - [Prerequisites](#prerequisites)
   - [Getting started](#getting-started-1)
@@ -95,6 +104,11 @@ The tool consists of a number of components, each with a different responsibilit
 
 **Scripts** - Individual validation rules implemented as scripts. The scripts are written in JavaScript that is easy to start with and JavaScript is also well documented. The validation scripts are small programs that each implements one or more validation rules. The scrips provided with the tool implements one rule per script to make it easy to follow and understand how they work. To gain a better performance several rules can be implemented in the same script. Each script uses the API in Core to load the files to validate and to call functions in libXML. XPath provided via libXML is used by most of the scripts to search for and compare different elements in the NeTEx-files.
 </p>
+
+&nbsp;
+
+# Requirements
+To run the tool locally you will need a suitable machine that can handle validation regarding  
 
 &nbsp;
 
@@ -146,7 +160,7 @@ After the container has started you can use the web interface by opening a web b
 &nbsp;
 
 ## Navigation
-At the top of the web page is a menubar and a progressindicator. The logo to the left always take you to the start page. **Validations** in the menu will show recent done validations, **GitHub** will take you to our page with documentation and the sourecode and **New validation** will start over with a new validation. You can also use **Go back** to navigate to a previous step. 
+At the top of the web page is a menu bar and a progress indicator. The logo to the left always take you to the start page. **Validations** in the menu will show recent done validations, **GitHub** will take you to our page with documentation and the soure code and **New validation** will start over with a new validation. You can also use **Go back** to navigate to a previous step. 
 
 ![Web Validation result](media/getting-started_web-navigation.png)
 
@@ -155,7 +169,7 @@ At the top of the web page is a menubar and a progressindicator. The logo to the
 
 ## Configuration
 
-To start a validation you first decide if you want to use a premade configuration package or use a custom configuration. The packages are predefined with schemas and rules that are commonly used together. To select your own combination of schemas and rules you can do a custom configuration.
+To start a validation, you first decide if you want to use a premade configuration package or use a custom configuration. The packages are predefined with schemas and rules that are commonly used together. To select your own combination of schemas and rules you can do a custom configuration.
 
 ![Web Select Configuration](media/getting-started_web-configuration-selection.png?raw=true)
 
@@ -164,7 +178,7 @@ To start a validation you first decide if you want to use a premade configuratio
 
 ## Packages
 
-If you select to use the premade packages you are presented with a list to select from. Select the one that works best with your validation requrements. When you click on one of the packages you continue to the [selection of files](##Select-files-to-validate).
+If you select to use the premade packages you are presented with a list to select from. Select the one that works best with your validation requirements. When you click on one of the packages you continue to the [selection of files](##Select-files-to-validate).
 
 ![Web Start upload](media/getting-started_web-select-package.png?raw=true)
 
@@ -173,11 +187,11 @@ If you select to use the premade packages you are presented with a list to selec
 
 ## Custom configuration
 
-With the custom configuration you can be more detailed in which NeTEx Profile and combination of rules to use. In the list of rules you get brief description of each rule. Zero or more rules can be selected by clicking the checkbox for each rule.
+With the custom configuration you can be more detailed in which NeTEx Profile and combination of rules to use. In the list of rules, you get brief description of each rule. Zero or more rules can be selected by clicking the checkbox for each rule.
 
 ![Web Select Parameters](media/getting-started_web-custom-selection.png?raw=true)
 
-Some rules use prameters as input to the validation. Those rule have a default value that can be changed by clicking on the Configure icon to the right.
+Some rules use parameters as input to the validation. Those rules have a default value that can be changed by clicking on the Configure icon to the right.
 
 ![Web Select rules](media/getting-started_web-configuration-parameters.png?raw=true)
 
@@ -201,7 +215,7 @@ When all files are uploaded you start the validation by clicking on **Validate**
 
 &nbsp;
 
-Each file is validated against the selected schema and rules, all validations run in paralell. Depending on the number of files and their sizes the validation can take some time to complete. 
+Each file is validated against the selected schema and rules, all validations run in parallel. Depending on the number of files and their sizes the validation can take some time to complete. 
 
 
 ![Web Uploaded files](media/getting-started_web-validating.png)
@@ -210,19 +224,19 @@ Each file is validated against the selected schema and rules, all validations ru
 
 ## Validation result
 
-When the validation is done you get an overview of the result. You can see the status of the validation for each file. If there are any errors you can get all the details by clicking on the down arrow to the right of each file. 
+When the validation is done you get an overview of the result. You can see the status of the validation for each file. If there are any errors, you can get all the details by clicking on the down arrow to the right of each file. 
 ![Web Validation result](media/getting-started_web-validation-result.png)
 
 &nbsp;
 
-The details displays the numer of times that specific error occurs in the file and you can page between them with the arrorws to the right. For each error you get information about the type, line number in the file and a more detaild explanation. 
+The details display the number of times that specific error occurs in the file, and you can page between them with the arrows to the right. For each error you get information about the type, line number in the file and a more detailed explanation. 
 
 ![Web Validation result](media/getting-started_web-validation-result-detailed.png)
 
 &nbsp;
 
 ## Downloading the result
-You can download the result for each error or the complete validation to a file in json or csv format to process it further. For example to give as  documentation to someone who can correct the error
+You can download the result for each error or the complete validation to a file in json or csv format to process it further. For example, to give as documentation to someone who can correct the error
 ![Web Validation result](media/getting-started_web-validation-result-report.png)
 
 Example of the saved data in json format.
@@ -232,7 +246,7 @@ Example of the saved data in json format.
 &nbsp;
 
 ## Previous validation
-At the bottom of the result page you have an option **Validate with this configuration** to go back and start a new validation with the same configuration but with new files. You can also see recent validation by using the menu selection **Validations** at the to of the page. By clicking on the name of a job you will see the result page for that validation again.
+At the bottom of the result page, you have an option **Validate with this configuration** to go back and start a new validation with the same configuration but with new files. You can also see recent validation by using the menu selection **Validations** at the to of the page. By clicking on the name of a job you will see the result page for that validation again.
 
 
 ![Web Validation result](media/getting-started_web-previous-validations.png)
@@ -240,7 +254,7 @@ At the bottom of the result page you have an option **Validate with this configu
 &nbsp;
 
 ## Technical error messages
-Sometimes the web interface will show error messages if the Greenlight tool stops to execute. Often that occurs when the communication to the web server is lost or the local Docker version has stopped. Check the status of your connection and that the Docker container is running if using it locally.
+Sometimes the web interface will show error messages if the Greenlight tool stops to execute. Often that occurs when the communication to the web server is lost, or the local Docker version has stopped. Check the status of your connection and that the Docker container is running if using it locally.
 
 ![Web Validation result](media/getting-started_web-error.png)
 
@@ -252,27 +266,132 @@ Sometimes the web interface will show error messages if the Greenlight tool stop
 
 
 # Command Line Interface - CLI
+The CLI is for more advanced use cases where you want more control over the validation or if you want to include the validation in your own pipeline. An example could be to recieve a file via an integration, validate the file with GreenLight and if there are any errors inform via email and otherwise save the file for use in another system.
 
-**Note**: if you don't have NeTEx xml document (or two) ready to test with we provide a few demo files in the source and docker image
+To use the CLI you must first download the Docker image as described in [Getting started](#getting-started)
 
-1. Getting the latest image
-  ```sh
-  docker pull lekojson/greenlight
-  ```
+When you use the CLI you first give the command ```docker``` and the parameters ```run -it [docker_image]``` in this case the docker_image is lekojson/greenlight. After that you give the different commands and flags to greenlight, e.g., ```help```. If you want to use other docker parameters, you have to put them before the name of the image to use. See below for more complex examples of how to invoke the greenlight command.
 
-2. Running a validation
+&nbsp;
 
-   - #### With demo files provided in the image
+## Getting help
 
-   ```sh
-   docker run -it lekojson/greenlight validate -i testdata
-   ```
+The tool has a built in help system that gives explanations of all commands and parameters in the tool. Use the command below to get an overview of the help you can get.  
+```sh
+ docker run -it lekojson/greenlight help
+```
+![Web Validation result](media/getting-started_cli_help.png)
 
-   - #### Providing your own files
+&nbsp;
 
-   ```sh
-   docker run -it -v /path/to/documents:/documents lekojson/greenlight validate -i /documents
-   ```
+## Server command
+
+![Web Validation result](media/getting-started_cli_help_server.png)
+
+```
+docker run -it -p 8080:8080 lekojson/greenlight server
+```
+
+This will start the built in web interface and it can be accessed via [http://localhost:8080/](http://localhost:8080/). Se [Web Interface](#web-interface) for a guide on how to use it.
+
+
+&nbsp;
+
+## Validate command
+A validation is started with the command ```Validate```, it uses the following flags as input to configure the validation.
+
+```
+Flags:
+  -h, --help               help for validate
+  -i, --input string       XML file, dir or archive to validate
+  -l, --log-level string   Set level of log output (one of "trace", "debug", "info", "warn", "error") (default "debug")
+  -o, --output string      Set which output format to use (one of "json", "xml", "csv", "pretty" (default "pretty")
+  -p, --profile string     Set path of validation profile (note: flags 'rules' and 'schema' is ignored)
+  -r, --rules strings      Set which validation rules to run (defaults to all inside the builtin dir)
+  -s, --schema string      Which xsd schema to use (supported "netex@1.2", "netex@1.2-nc", "epip@1.1.1", "epip@1.1.1-nc") (default "netex@1.2-nc")
+      --silent             Running in silent will only output the result in a boolean fashion
+```
+
+To verify that the tool works yo can do a validation with a NeTEx file provided with the tool.
+```
+ docker run -it lekojson/greenlight validate -i testdata
+```
+
+Example output from a validation done in the CLI
+
+![CLI Validation result](media/getting-started_cli_validation.png)
+
+### NeTEx profile
+To select NeTEx profile use the flag -s or --schema and the name of the profile. Valid names are netex@1.2, netex@1.2-nc, epip@1.1.1, epip@1.1.1-nc. If no schema is selected the netex@1.2-nc is used. -nc at the end means that the validation is with No Constraints. Which is a faster validation but needs that the no-constraints rule is used instead.
+
+Example of how to use the EPIP schema when validating the built in test file
+```
+docker run -it lekojson/greenlight validate -schema epip@1.1.1 -i testdata
+```
+
+### Rules
+Select which rules to use with the flag -r or --rules and then give the name of the rules to use. Several rules can be specified by separating them with a comma. 
+
+Example ```-r everyLineIsReferenced,everyScheduledStopPointHasAName```
+
+You can change or add your own rules by cloning the greenlight repo from GitHub and modify one of the scripts in the directory ```builtin```. Save it with a new name and then map the ```builtin``` folder to the docker container with the Docker parameter -v.
+
+```-v c:\code\greenlight\builtin:/usr/local/greenlight/builtin```
+
+Use the script in the same way as one of the standard scripts with the flag -r and name of the script.
+
+Example ```-r mymodifiedrule```
+
+### Providing files
+The files to test can be single files, a folder with files or a compressed archive with files. Put the files to be tested in a local folder and use the docker parameter -v to map it with a folder in the greenlight container. 
+
+```-v C:\code\netex\testdata:/usr/local/greenlight/testdata```
+
+Then you can use the greenlight flag -i to include the files in the validation
+
+
+&nbsp;
+
+Command to validate a folder with files
+```
+docker run -it -v c:\code\netex\testfiles:/usr/local/greenlight/testdata lekojson/greenlight validate -s netex@1.2-nc -r everyLineIsReferenced -i testdata
+```
+
+
+&nbsp;
+
+Command to validate an archive with several files
+```
+docker run -it -v c:\code\netex\testfiles:/usr/local/greenlight/testdata lekojson/greenlight validate -s netex@1.2-nc -r everyLineIsReferenced -i testdata/xt_2023_04_15.zip
+```
+
+
+&nbsp;
+
+Command to validate a single file
+```
+docker run -it -v c:\code\netex\testfiles:/usr/local/greenlight/testdata lekojson/greenlight validate -s netex@1.2-nc -r everyLineIsReferenced -i testdata/line_2_9011005000200000.xml
+```
+
+### Output
+The result of the validation can be presented in different formats. For example, the ```pretty``` will give an output adopted to be read on the screen. The other formats ```json```, ```xml``` and ```csv``` can be used to pipe the output to a file for further processing.
+
+```
+docker run -it lekojson/greenlight validate -s netex@1.2-nc -r everyLineIsReferenced -i testdata -o json > greenlight-result.json
+```
+
+&nbsp;
+
+## Completion command
+Generate an autocompletion script for Greenlight for different shells. The generated script can be added to your shell profile. Scripts can be generated for *bash*, *fish*, *zsh* and *powershell*.
+
+**Note:** This command is for power users who uses the CLI a lot and want to make it easier and faster to type commands and parameters.
+
+As an example, will the command below generate a script for bash
+```
+docker run -it lekojson/greenlight completion bash
+```
+
 
 &nbsp;
 
