@@ -4,7 +4,7 @@ import Head from 'next/head'
 import React from 'react'
 import App from '../components/App'
 
-const siteUrl = 'https://greenlight.atomite.io'
+const siteUrl = 'https://greenlight.itxpt.eu/'
 
 const Terms: NextPage = () => {
   const meta = {

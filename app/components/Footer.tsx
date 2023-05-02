@@ -156,7 +156,7 @@ const Footer = (): JSX.Element => {
                 external: true
               }, {
                 text: 'Docker',
-                href: 'https://hub.docker.com/r/lekojson/greenlight',
+                href: 'https://hub.docker.com/r/itxpt/greenlight',
                 external: true
               }, {
                 text: 'Issues',

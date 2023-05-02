@@ -1,17 +1,15 @@
 # Greenlight - The Data4PT Validation tool
 
-
-
 <p align="center">
   <img src="https://img.shields.io/badge/go%20version-%3E=1.17-61CFDD.svg?style=for-the-badge&logo=appveyor" alt="Go Version">
-  <a href="https://hub.docker.com/r/lekojson/greenlight"
+  <a href="https://hub.docker.com/r/itxpt/greenlight"
     ><img
-      src="https://img.shields.io/docker/pulls/lekojson/greenlight.svg?style=for-the-badge&logo=appveyor"
+      src="https://img.shields.io/docker/pulls/itxpt/greenlight.svg?style=for-the-badge&logo=appveyor"
       alt="Docker pulls"
   /></a>
-  <a href="https://hub.docker.com/r/lekojson/greenlight"
+  <a href="https://hub.docker.com/r/itxpt/greenlight"
     ><img
-      src="https://img.shields.io/docker/stars/lekojson/greenlight.svg?style=for-the-badge&logo=appveyor"
+      src="https://img.shields.io/docker/stars/itxpt/greenlight.svg?style=for-the-badge&logo=appveyor"
       alt="Docker stars"
   /></a>
 </p>
@@ -75,8 +73,8 @@
 - [Building from source](#building-from-source)
   - [Prerequisites](#prerequisites)
   - [Getting started](#getting-started-1)
-  - [4.a Building the CLI](#4a-building-the-cli)
-  - [4.b Building the Web GUI](#4b-building-the-web-gui)
+  - [Building the CLI](#building-the-cli)
+  - [Building the Web GUI](#building-the-web-gui)
 - [Configuration](#configuration-1)
   - [Command line](#command-line)
   - [Environment variables](#environment-variables)
@@ -131,7 +129,7 @@ To use the tool locally, you need to install Docker on the computer that you wil
 After you have installed Docker, you can get the latest version of the Greenlight image by typing the following command in a terminal window:
 
 ```
-docker pull lekojson/greenlight
+docker pull itxpt/greenlight
 ```
 
 ![Docker Pull](media/getting-started_docker-pull.png?raw=true)
@@ -141,7 +139,7 @@ We suggest that you first start to use the web interface to verify that the inst
 Start the web interface with the command:
 
 ```
-docker run -it -p 8080:8080 lekojson/greenlight server
+docker run -it -p 8080:8080 itxpt/greenlight server
 ```
 
 
@@ -277,7 +275,7 @@ The CLI is for more advanced use cases where you want more control over the vali
 
 To use the CLI you must first download the Docker image as described in [Getting started](#getting-started)
 
-When you use the CLI you first give the command ```docker``` and the parameters ```run -it [docker_image]``` in this case the docker_image is lekojson/greenlight. After that you give the different commands and flags to greenlight, e.g., ```help```. If you want to use other docker parameters, you have to put them before the name of the image to use. See below for more complex examples of how to invoke the greenlight command.
+When you use the CLI you first give the command ```docker``` and the parameters ```run -it [docker_image]``` in this case the docker_image is itxpt/greenlight. After that you give the different commands and flags to greenlight, e.g., ```help```. If you want to use other docker parameters, you have to put them before the name of the image to use. See below for more complex examples of how to invoke the greenlight command.
 
 &nbsp;
 
@@ -285,7 +283,7 @@ When you use the CLI you first give the command ```docker``` and the parameters 
 
 The tool has a built in help system that gives explanations of all commands and parameters in the tool. Use the command below to get an overview of the help you can get.  
 ```sh
- docker run -it lekojson/greenlight help
+ docker run -it itxpt/greenlight help
 ```
 ![Web Validation result](media/getting-started_cli_help.png)
 
@@ -296,7 +294,7 @@ The tool has a built in help system that gives explanations of all commands and 
 ![Web Validation result](media/getting-started_cli_help_server.png)
 
 ```
-docker run -it -p 8080:8080 lekojson/greenlight server
+docker run -it -p 8080:8080 itxpt/greenlight server
 ```
 
 This will start the built in web interface and it can be accessed via [http://localhost:8080/](http://localhost:8080/). Se [Web Interface](#web-interface) for a guide on how to use it.
@@ -321,7 +319,7 @@ Flags:
 
 To verify that the tool works yo can do a validation with a NeTEx file provided with the tool.
 ```
- docker run -it lekojson/greenlight validate -i testdata
+ docker run -it itxpt/greenlight validate -i testdata
 ```
 
 Example output from a validation done in the CLI
@@ -333,7 +331,7 @@ To select NeTEx profile use the flag -s or --schema and the name of the profile.
 
 Example of how to use the EPIP schema when validating the built in test file
 ```
-docker run -it lekojson/greenlight validate -schema epip@1.1.1 -i testdata
+docker run -it itxpt/greenlight validate -schema epip@1.1.1 -i testdata
 ```
 
 ### Rules
@@ -361,7 +359,7 @@ Then you can use the greenlight flag -i to include the files in the validation
 
 Command to validate a folder with files
 ```
-docker run -it -v c:\code\netex\testfiles:/usr/local/greenlight/testdata lekojson/greenlight validate -s netex@1.2-nc -r everyLineIsReferenced -i testdata
+docker run -it -v c:\code\netex\testfiles:/usr/local/greenlight/testdata itxpt/greenlight validate -s netex@1.2-nc -r everyLineIsReferenced -i testdata
 ```
 
 
@@ -369,7 +367,7 @@ docker run -it -v c:\code\netex\testfiles:/usr/local/greenlight/testdata lekojso
 
 Command to validate an archive with several files
 ```
-docker run -it -v c:\code\netex\testfiles:/usr/local/greenlight/testdata lekojson/greenlight validate -s netex@1.2-nc -r everyLineIsReferenced -i testdata/xt_2023_04_15.zip
+docker run -it -v c:\code\netex\testfiles:/usr/local/greenlight/testdata itxpt/greenlight validate -s netex@1.2-nc -r everyLineIsReferenced -i testdata/xt_2023_04_15.zip
 ```
 
 
@@ -377,14 +375,14 @@ docker run -it -v c:\code\netex\testfiles:/usr/local/greenlight/testdata lekojso
 
 Command to validate a single file
 ```
-docker run -it -v c:\code\netex\testfiles:/usr/local/greenlight/testdata lekojson/greenlight validate -s netex@1.2-nc -r everyLineIsReferenced -i testdata/line_2_9011005000200000.xml
+docker run -it -v c:\code\netex\testfiles:/usr/local/greenlight/testdata itxpt/greenlight validate -s netex@1.2-nc -r everyLineIsReferenced -i testdata/line_2_9011005000200000.xml
 ```
 
 ### Output
 The result of the validation can be presented in different formats. For example, the ```pretty``` will give an output adopted to be read on the screen. The other formats ```json```, ```xml``` and ```csv``` can be used to pipe the output to a file for further processing.
 
 ```
-docker run -it lekojson/greenlight validate -s netex@1.2-nc -r everyLineIsReferenced -i testdata -o json > greenlight-result.json
+docker run -it itxpt/greenlight validate -s netex@1.2-nc -r everyLineIsReferenced -i testdata -o json > greenlight-result.json
 ```
 
 &nbsp;
@@ -396,7 +394,7 @@ Generate an autocompletion script for Greenlight for different shells. The gener
 
 As an example, will the command below generate a script for bash
 ```
-docker run -it lekojson/greenlight completion bash
+docker run -it itxpt/greenlight completion bash
 ```
 
 
@@ -431,82 +429,51 @@ cd DATA4PTTools
 go get
 ```
 
-## 4.a Building the CLI
+## Building the CLI
+Building and running a validation
 
-1. Building and running a validation
-   - ### Validate with demo files provided in the source
+- ### Validate with demo files provided in the source
    _changes in path definition will differ running on windows_
    ```sh
    go run cmd/*.go validate -i testdata
    ```
 
-   - ### Validate using your own files
+- ### Validate using your own files
    _changes in path definition will differ running on windows_
    ```sh
    go run cmd/*.go validate -i /path/to/documents
    ```
 
-## 4.b Building the Web GUI
-1. Buliding and running the backend server
-  - ### Build and start the server
+## Building the Web GUI
+Building and running the backend server
+
+- ### Build and start the server
   ```sh
   go run cmd/*.go server
   ```
 
-2. Building and running the frontend application
-  - ### Navigate to directory
+- ### Navigate to directory
   ```sh
   cd app
   ```
 
-  - ### Install dependencies
+- ### Install dependencies
   ```sh
   npm i
   ```
 
-  - ### Start the server
+- ### Start the server
   ```sh
   npm run dev
   ```
 
-3. Open a browser and navigate to `http://localhost:3000`
+- ### Open GUI
+Open a browser and navigate to `http://localhost:3000`
 
-&nbsp;
+## Notes about building on windows
+Lorem
 
-# Configuration
-
-Configurations can be made in a three different ways (in order of priority), through _command line arguments_, _environment variables_ and _configuration file_
-
-## Command line
-
-- ### All arguments can be found by running
-
-```sh
-docker run -it lekojson/greenlight --help
-```
-or by command
-```sh
-docker run -it lekojson/greenlight [command] --help
-```
-
-- ### Example changing the output from `pretty` to `json` in validation
-
-```sh
-docker run -it lekojson/greenlight validate -i testdata -o json
-```
-
-## Environment variables
-
-Environment comes with the prefix `GREENLIGHT_` and match the paths (separated by `_`) in configuration file (see below). Three different datatypes are supported, `string`, `boolean` and `string slice` which also match the configuration file.
-
-- ### Setting input through environment variable
-
-```sh
-docker run -it -e GREENLIGHT_INPUT=/path/to/documents lekojson/greenlight validate
-```
-
-## Configuration file
-
+---
 <h1></h1>
 
 <p align="center">
