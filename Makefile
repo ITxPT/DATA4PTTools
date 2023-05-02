@@ -39,7 +39,7 @@ docker-release:
 	docker tag $(DOCKER_USERNAME)/$(APP_NAME):$(DOCKER_TAG) $(DOCKER_USERNAME)/$(APP_NAME):latest
 	docker push $(DOCKER_USERNAME)/$(APP_NAME):latest
 
-# example: make docker-buildx-release DOCKER_USERNAME=lekojson DOCKER_TAG=0.5.1
+# example: make docker-buildx-release DOCKER_USERNAME=itxpt DOCKER_TAG=0.5.1
 docker-buildx-release:
 	docker buildx build \
 		--platform=linux/amd64 \

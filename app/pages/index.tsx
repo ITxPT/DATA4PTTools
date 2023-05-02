@@ -59,9 +59,6 @@ const Home: NextPage = () => {
             </Typography>
           </Stack>
         </Stack>
-        <Alert severity="info">
-          Using the online version may apply limitations. For regular use, download and install the tool for free from <Link underline="hover" href="https://github.com/ITxPT/DATA4PTTools" target="_blank" rel="noreferrer">GitHub</Link> or <Link underline="hover" href="https://hub.docker.com/r/lekojson/greenlight" target="_blank" rel="noreferrer">Docker</Link>
-        </Alert>
         <Stack alignItems="center">
           <Button variant="contained" onClick={handleClick}>Start validating</Button>
         </Stack>

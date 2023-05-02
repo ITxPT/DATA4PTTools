@@ -143,6 +143,10 @@ const Footer = (): JSX.Element => {
                 href: 'https://github.com/ITxPT/DATA4PTTools/blob/develop/README.md',
                 external: true
               }, {
+                text: 'Requirements',
+                href: 'https://github.com/ITxPT/DATA4PTTools/tree/develop#requirements',
+                external: true
+              }, {
                 text: 'Changelog',
                 href: 'https://github.com/ITxPT/DATA4PTTools/releases',
                 external: true
@@ -156,7 +160,7 @@ const Footer = (): JSX.Element => {
                 external: true
               }, {
                 text: 'Docker',
-                href: 'https://hub.docker.com/r/lekojson/greenlight',
+                href: 'https://hub.docker.com/r/itxpt/greenlight',
                 external: true
               }, {
                 text: 'Issues',
