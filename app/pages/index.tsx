@@ -1,6 +1,6 @@
 import EmailIcon from '@mui/icons-material/Email'
 import GitHubIcon from '@mui/icons-material/GitHub'
-import { Alert, Button, Link, Stack, Typography } from '@mui/material'
+import { Button, Link, Stack, Typography } from '@mui/material'
 import type { NextPage } from 'next'
 import { useRouter } from 'next/router'
 import React from 'react'
