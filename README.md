@@ -470,10 +470,8 @@ Building and running the backend server
 - ### Open GUI
 Open a browser and navigate to `http://localhost:3000`
 
-## Notes about building on windows
-Lorem
-
 ---
+
 <h1></h1>
 
 <p align="center">
