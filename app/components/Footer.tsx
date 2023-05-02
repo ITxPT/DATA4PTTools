@@ -143,6 +143,10 @@ const Footer = (): JSX.Element => {
                 href: 'https://github.com/ITxPT/DATA4PTTools/blob/develop/README.md',
                 external: true
               }, {
+                text: 'Requirements',
+                href: 'https://github.com/ITxPT/DATA4PTTools/tree/develop#requirements',
+                external: true
+              }, {
                 text: 'Changelog',
                 href: 'https://github.com/ITxPT/DATA4PTTools/releases',
                 external: true
