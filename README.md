@@ -15,13 +15,11 @@
 </p>
 
 <p align="center">
-  <a href="#-web-gui">Web</a>
+  <a href="#web-interface">Web</a>
   ·
-  <a href="#%EF%B8%8F-cli">CLI</a>
+  <a href="#command-line-interface---cli">CLI</a>
   ·
-  <a href="#%EF%B8%8F-building-from-source">Source</a>
-  ·
-  <a href="#%EF%B8%8F-configuration">Configuration</a>
+  <a href="#building-from-source">Source</a>
 </p>
 <h1></h1>
 
@@ -39,7 +37,8 @@
 - **Customizable:** configure what you see and how you see it.
 - **Scripting** write your own validation rules using JavaScript
 - **Fancy** shows relevant information at a glance.
-- **Easy:** quick to install – start using it in minutes.
+- **Easy** quick to install – start using it in minutes.
+- **Try it yourself** https://greenlight.itxpt.eu 
 </td>
 </tr>
 </table>
@@ -406,15 +405,36 @@ docker run -it itxpt/greenlight completion bash
 
 ## Prerequisites
 
+Greenlight is using Go and is powered by libxml2, so make sure those are installed first. If you want to work on the web interface you will also need Node.js
+
 - [Go](https://go.dev/)
+
+  Download and install the latest version with standard settings
+
 - [libxml2](http://www.xmlsoft.org/)
-- [nodejs](https://nodejs.org/) - not required if only running cli edition
+
+  Install using
+
+  Mac: ```brew install libxml2```
+
+  Linux: ```sudo apt install libxml2```
+
+  Windows: Build from [source](https://gitlab.gnome.org/GNOME/libxml2) or download [precompiled binaries](https://pages.lip6.fr/Jean-Francois.Perrot/XML-Int/Session1/WinLibxml.html)
+
+- [nodejs](https://nodejs.org/) - only required for the web interface
+    
+    Download and install the latest version with standard settings
 
 ## Getting started
 
-**Note**: Greenlight is using Go and is powered by libxml2, so make sure those are installed and configured
 
-1. Clone repository
+
+1. Open a terminal and navigate to the folder where you want to install the source code.
+```sh
+cd /home/developer/code
+```
+
+2. Clone repository
 ```sh
 git clone https://github.com/ITxPT/DATA4PTTools
 ```
@@ -429,46 +449,75 @@ cd DATA4PTTools
 go get
 ```
 
-## Building the CLI
-Building and running a validation
+## Building and running the CLI
+With the source code and all dependencies downloaded you can try the tool with build in test files to verify that all is working
 
 - ### Validate with demo files provided in the source
-   _changes in path definition will differ running on windows_
+   _path definition will differ running on windows_
    ```sh
    go run cmd/*.go validate -i testdata
    ```
 
+You can now start validating your own files by providing the path to your document
 - ### Validate using your own files
-   _changes in path definition will differ running on windows_
+   _path definition will differ running on windows_
    ```sh
    go run cmd/*.go validate -i /path/to/documents
    ```
 
-## Building the Web GUI
-Building and running the backend server
+That is all that is needed to start using the tool and to be able to modify the core or work with your own validation scripts (you find the scripts in the folder ```builtin```).
 
-- ### Build and start the server
+## Building the Web GUI
+When running the web interface the core tool and the interface are started as two separate servers. The backend server is hosting the core tool and provides the functionallity for the validation itself. The interface is then started in a web server and calls the backend when needed.
+
+
+
+- ### Open a terminal and navigate to the DATA4PTTools directory
+
+  ```sh
+  cd /home/developer/code/DATA4PTTools
+  ```
+
+- ### Start the backend server
   ```sh
   go run cmd/*.go server
   ```
 
-- ### Navigate to directory
+- ### Then open a **new terminal** and navigate to he DATA4PTTools directory again
+
+  ```sh
+  cd /home/developer/code/DATA4PTTools
+  ```
+- ### Set current configuration for backend server
+  Remember to update with the current path to the backend server.
+  ```sh
+  echo "NEXT_PUBLIC_API_URL=http://localhost:8080" > app/.env.local
+  ```
+
+- ### Navigate to the web app directory
   ```sh
   cd app
   ```
 
-- ### Install dependencies
+- ### Install dependencies for the web server
   ```sh
   npm i
   ```
 
-- ### Start the server
+- ### Start the web server
   ```sh
   npm run dev
   ```
 
-- ### Open GUI
-Open a browser and navigate to `http://localhost:3000`
+- ### Open the web interface
+Open a browser and navigate to `http://localhost:3000` and you will see the web interface of Greenlight.
+
+![Web Uploaded files](media/build_from_source-web_interface.png)
+
+To verify that the web interface has contact with the backend server by looking at the API Status in the lower right corner of the web page.
+
+
+![Web Uploaded files](media/build_from_source-api_status.png)
 
 ---
 
