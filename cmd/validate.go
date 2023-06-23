@@ -135,10 +135,6 @@ func createValidation(input string) (*greenlight.Validation, *FileContext, error
 			return nil, nil, fmt.Errorf("no schema version defined")
 		}
 
-		if _, err := js.CompileSchemaVersion(schema); err != nil {
-			log.Fatal(err)
-		}
-
 		validation.AddScript(scripts["xsd"], map[string]interface{}{
 			"schema": schema,
 		})

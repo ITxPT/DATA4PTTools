@@ -3,6 +3,7 @@ package js
 import (
 	"fmt"
 	"regexp"
+	"sync"
 
 	"github.com/concreteit/greenlight/internal"
 	"github.com/concreteit/greenlight/xml"
@@ -10,19 +11,15 @@ import (
 
 var (
 	xpathEleRe = regexp.MustCompile("^(?i)[a-z]")
-	xsdPaths   = map[string]string{
+	xsdCache   = &XsdCache{
+		data: map[string]*xml.Schema{},
+	}
+	internalXSDPaths = map[string]string{
 		"epip@1.1.1":    "xsd/epip/1.1.1/NeTEx_publication_EPIP.xsd",
 		"epip@1.1.1-nc": "xsd/epip/1.1.1/NeTEx_publication_EPIP-NoConstraint.xsd",
 		"netex@1.2":     "xsd/netex/1.2/NeTEx_publication.xsd",
 		"netex@1.2-nc":  "xsd/netex/1.2/NeTEx_publication-NoConstraint.xsd",
-
-		// TODO none of the versioned xsd schemas below compiles
-		"netex@1.01":    "xsd/netex/1.01/NeTEx_publication.xsd",
-		"netex@1.02":    "xsd/netex/1.02/NeTEx_publication.xsd",
-		"netex@1.03":    "xsd/netex/1.03/NeTEx_publication.xsd",
-		"netex@1.03-nc": "xsd/netex/1.03/NeTEx_publication-NoConstraint.xsd",
 	}
-	xsdSchemas = map[string]*xml.Schema{}
 )
 
 var (
@@ -30,17 +27,30 @@ var (
 	ErrXSDValidationInvalid = fmt.Errorf("invalid document")
 )
 
+type XsdCache struct {
+	sync.RWMutex
+	data map[string]*xml.Schema
+}
+
+func (c *XsdCache) Get(k string) *xml.Schema {
+	return c.data[k]
+}
+
+func (c *XsdCache) Set(k string, v *xml.Schema) {
+	c.data[k] = v
+}
+
 type Xsd struct {
 	document *xml.Document
 }
 
 func (x Xsd) Parse(version string) internal.Result {
-	return internal.NewResult(xml.NewDocument("xsd", xsdPaths[version]))
+	return internal.NewResult(xml.NewDocument("xsd", internalXSDPaths[version]))
 }
 
-func (x Xsd) Validate(version string) internal.Result {
+func (x Xsd) Validate(v string) internal.Result {
 	scriptErrors := []ScriptError{}
-	if res, err := ValidateSchema(x.document, version); err != nil {
+	if res, err := ValidateSchema(x.document, resolveXSDPath(v)); err != nil {
 		return internal.NewResult(nil, err)
 	} else if !res.Valid {
 		for _, verr := range res.Errors {
@@ -53,7 +63,6 @@ func (x Xsd) Validate(version string) internal.Result {
 			})
 		}
 	}
-
 	return internal.NewResult(scriptErrors, nil)
 }
 
@@ -73,33 +82,25 @@ func NewValidationError(err error, details []error) *ValidationError {
 	}
 }
 
-func ValidateSchema(doc *xml.Document, version string) (*xml.ValidationResult, error) {
-	xsdPath := xsdPaths[version]
-	if xsdPath == "" {
-		return nil, ErrXSDSchemaNotFound
+func resolveXSDPath(v string) string {
+	if xsdPath := internalXSDPaths[v]; xsdPath != "" {
+		return xsdPath
+	} else {
+		return v
 	}
-	if xsdSchemas[version] == nil {
-		_, err := CompileSchemaVersion(version)
+}
+
+func ValidateSchema(doc *xml.Document, xsdPath string) (*xml.ValidationResult, error) {
+	xsdCache.Lock()
+	defer xsdCache.Unlock()
+	var err error
+	schema := xsdCache.Get(xsdPath)
+	if schema == nil {
+		schema, err = xml.NewSchema(xsdPath)
 		if err != nil {
 			return nil, err
 		}
+		xsdCache.Set(xsdPath, schema)
 	}
-
-	return xsdSchemas[version].Validate(doc.FilePath)
-}
-
-func CompileSchemaVersion(version string) (*xml.Schema, error) {
-	xsdPath := xsdPaths[version]
-	if xsdPath == "" {
-		return nil, ErrXSDSchemaNotFound
-	}
-
-	schema, err := xml.NewSchema(xsdPath)
-	if err != nil {
-		return nil, err
-	}
-
-	xsdSchemas[version] = schema
-
-	return schema, nil
+	return schema.Validate(doc.FilePath)
 }
