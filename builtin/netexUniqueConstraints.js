@@ -68,7 +68,11 @@ function uniqueConstraints(ctx) {
  */
 function attrHash(node, fields) {
   return fields.map((/** @type {string} */ v) => {
-    return node.attr(v.slice(1).toString()).get();
+    if (v[0] === "@") {
+      return node.attr(v.slice(1).toString()).get();
+    } else {
+      return node.textAt(v).get();
+    }
   })
     .join(";");
 }

@@ -17,8 +17,7 @@
 				<Date>
 					<Modified>2014-03-31</Modified>
 				</Date>
-				<Date>
-					<Modified>2019-01-16</Modified>Correct substitution group to be group of Entities, Make concrete not abstract
+				<Date><Modified>2019-01-16</Modified>Correct substitution group to be group of Entities, Make concrete not abstract
 				</Date>
 				<Description>
 					<p>NeTEx - Network Exchange. This subschema defines LAYER  identifier  types.</p>
@@ -39,7 +38,7 @@
 						<li>Derived from the SIRI standards.</li>
 					</ul>
 				</Source>
-				<Status>Version 1.0 Draft for approval</Status>
+				<Status>Version 1.0</Status>
 				<Subject>
 					<Category>Arts, recreation and travel, Tourism, Travel (tourism), Transport,
 Air transport, Airports,

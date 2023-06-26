@@ -26,8 +26,7 @@
 				<Date>
 					<Modified>2010-11-05</Modified>
 				</Date>
-				<Date>
-					<Modified>2017-06-28</Modified>  Cr0040  Add GENERAL SECTIONand Revise Section Structure.  
+				<Date><Modified>2017-06-28</Modified>  Cr0040  Add GENERAL SECTIONand Revise Section Structure.  
 					            Add generic SECTION supertype 
 								Add PointOnSection  for list of points (RetainCommonSectionMember for backwards compatibility)
 								AddLinkOnSection  for list of just links.  
@@ -54,7 +53,7 @@
 						<li>Derived from the Transmodel, VDV, TransXChange, NaPTAN, NOPTIS, BISON and Trident standards.</li>
 					</ul>
 				</Source>
-				<Status>Version 1.0 Draft for approval</Status>
+				<Status>Version 1.0</Status>
 				<Subject>
 					<Category>Arts, recreation and travel, Tourism, Travel (tourism), Transport,
 Air transport, Airports,
