@@ -1,3 +1,12 @@
+## v1.0.4 [2023-06-26]
+
+### Refactor
+- Optimize schema cache ([e328ac1](../../commit/e328ac1a0e236236aa6ec72912c8a4395a6a59fa))
+
+
+### Bug Fixes
+- Modify key ref constraint evaluation ([fba9da4](../../commit/fba9da402882226646cdf50065ce098ea1edd8e5))
+
 
 ## 0.5.5 [2023-03-21]
 
