@@ -1,3 +1,12 @@
+
+## v1.0.5 [2023-07-12]
+
+
+### Bug Fixes
+- Ignore externally referenced keys ([685d591](../../commit/685d59126a67fbc3a9a25ed70d41871ec31ce287))
+- Correctly handle attribute lookups ([a683ae3](../../commit/a683ae3df680f1511b331ddb7b95de1f8c602f3a))
+- Sort validation results by line number ([b8d7164](../../commit/b8d716437bee76ab1fc6752a7363e4c8c39346e9))
+
 ## v1.0.4 [2023-06-26]
 
 ### Refactor

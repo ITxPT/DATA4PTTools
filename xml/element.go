@@ -1,8 +1,10 @@
 package xml
 
 import (
+	"strings"
+
 	"github.com/concreteit/greenlight/internal"
-	"github.com/tamerh/xml-stream-parser"
+	xmlparser "github.com/tamerh/xml-stream-parser"
 )
 
 type Element struct {
@@ -16,7 +18,8 @@ func NewElement(el *xmlparser.XMLElement) *Element {
 }
 
 func (o *Element) find(q string) ([]Node, error) {
-	vs, err := o.el.SelectElements(q)
+	exp, attr, hasAttr := splitAttr(q)
+	vs, err := o.el.SelectElements(exp)
 	if err != nil {
 		return nil, err
 	} else if vs == nil {
@@ -25,6 +28,11 @@ func (o *Element) find(q string) ([]Node, error) {
 
 	eles := []Node{}
 	for _, v := range vs {
+		if hasAttr {
+			if _, ok := v.Attrs[attr]; !ok {
+				continue
+			}
+		}
 		eles = append(eles, NewElement(v))
 	}
 
@@ -53,9 +61,18 @@ func (o *Element) Parent() internal.Result { return internal.NewResult(o.first("
 func (o *Element) Text() string { return o.el.InnerText }
 
 func (o *Element) TextAt(q string) internal.Result {
+	_, attr, hasAttr := splitAttr(q)
+	if q == "@"+attr {
+		return o.Attr(attr)
+	}
+
 	el, err := o.first(q)
 	if err != nil {
 		return internal.NewResult(nil, err)
+	}
+
+	if hasAttr {
+		return el.Attr(attr)
 	}
 
 	return internal.NewResult(el.Text(), nil)
@@ -68,4 +85,13 @@ func (o *Element) Attr(k string) internal.Result {
 	}
 
 	return internal.NewResult(v, nil)
+}
+
+func splitAttr(q string) (string, string, bool) {
+	if exps := strings.Split(q, "/"); len(exps) > 0 {
+		if le := exps[len(exps)-1]; len(le) > 0 && le[0] == '@' {
+			return strings.Join(exps[:len(exps)-1], "/"), le[1:], true
+		}
+	}
+	return q, "", false
 }
