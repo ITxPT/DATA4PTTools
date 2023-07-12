@@ -3,6 +3,7 @@ package greenlight
 import (
 	"context"
 	"fmt"
+	"sort"
 	"time"
 
 	"github.com/concreteit/greenlight/internal"
@@ -93,6 +94,9 @@ func (v *Validation) Validate(ctx context.Context) ([]*ValidationResult, error) 
 					if v, ok := r.Get().(*RuleValidation); !ok || v == nil {
 						return internal.NewResult(nil, fmt.Errorf("expected '%+v' to be of type '*RuleValidation' in document '%s'", r.Get(), name))
 					} else {
+						sort.Slice(v.Errors, func(i, j int) bool {
+							return v.Errors[i].Line < v.Errors[j].Line
+						})
 						res.ValidationRules = append(res.ValidationRules, v)
 
 						if !v.Valid {
