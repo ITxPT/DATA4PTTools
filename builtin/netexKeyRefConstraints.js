@@ -144,7 +144,5 @@ function fieldValues(node, fields) {
  * @return {string[][]}
  */
 function fieldMatrix(node, fields) {
-  return fields.map((/** @type {string} */ v) => {
-    return [v, v[0] === "@" ? node.attr(v.slice(1).toString()).get() : node.textAt(v).get()];
-  });
+  return fields.map((/** @type {string} */ v) => [v, node.textAt(v).get()]);
 }
