@@ -52,6 +52,10 @@ function keyRefConstraints(ctx) {
       /** @type {{ matrix: string[][], key: string, name: string, descriptor: string, line: number }[]} */ o,
       /** @type {types.Node} */ n
     ) => {
+      if (n.attr("versionRef").get() != null) {
+        return o;
+      }
+
       const mx = fieldMatrix(n, ref.fields);
       const fields = mx.map(v => v[1]);
       const descriptor = mx.reduce((
