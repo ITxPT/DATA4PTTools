@@ -1,4 +1,20 @@
 
+## v1.0.6 [2023-07-28]
+
+### Chore
+- Update dep ([b507a4e](../../commit/b507a4e5118cebc04b36e1ad13a309a539090b07))
+
+
+### Refactor
+- Add links to netex, siri and transmodel ([021a970](../../commit/021a97066de05bbff663ca48d979dcedae235404))
+- Link to exact git commit ([22c01f5](../../commit/22c01f5b3b99a29d57a453e2bf3eed4e52ced06f))
+- Add nav btns and config to steps ([d414490](../../commit/d414490b40fbad6b5df09f0b680b471aa1b82c2c))
+
+
+### Bug Fixes
+- Fix typo ([1b66613](../../commit/1b666136e3e57e6ee1c4999136ee5b95751d2f54))
+
+
 ## v1.0.5 [2023-07-12]
 
 
