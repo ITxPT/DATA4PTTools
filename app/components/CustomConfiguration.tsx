@@ -197,7 +197,7 @@ const CustomConfiguration = (props: CustomConfigurationProps): JSX.Element => {
         <Typography>
           <ul style={{ marginTop: 0 }}>
             <li>NeTEx - The full NeTEx schema (<a href="https://github.com/NeTEx-CEN/NeTEx" target="_blank" rel="noreferrer">more info</a>)</li>
-            <li>NeTEx Light - NeTEx schema without constraint (<a href="https://data4pt.org/wiki/NeTEX#NeTEx-Light" target="_blank" rel="noreferrer">more info</a>)</li>
+            <li>NeTEx Fast - NeTEx schema without constraint (<a href="https://data4pt.org/wiki/NeTEX#NeTEx-Light" target="_blank" rel="noreferrer">more info</a>)</li>
             <li>EPIP - NeTEx European Passenger Information Profile (<a href="https://data4pt.org/NeTEx/GraphicKit/Documention_of_XSD_for_EPIP.html" target="_blank" rel="noreferrer">more info</a>)</li>
             <li>EPIP Light - NeTEx European Passenger Information Profile</li>
           </ul>
