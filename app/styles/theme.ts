@@ -319,4 +319,13 @@ theme.components.MuiOutlinedInput = {
   }
 }
 
+theme.components.MuiLink = {
+  styleOverrides: {
+    root: {
+      color: 'inherit',
+      fontWeight: 500,
+    }
+  }
+}
+
 export default theme
