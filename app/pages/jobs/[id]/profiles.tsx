@@ -92,7 +92,7 @@ const Profiles: NextPage = () => {
       />
 
       <Stack spacing={4}>
-        <ValidationStepper step={0} />
+        <ValidationStepper step={0} onBack={router.back} />
         <JobStatus session={session} onValidate={handleNewValidationClick} />
         <Typography variant="h3">Select configuration</Typography>
         <Stack spacing={1}>

@@ -1,10 +1,10 @@
-import ArrowBackIcon from '@mui/icons-material/ArrowBack'
 import { Button, Stack, Typography } from '@mui/material'
 import type { NextPage } from 'next'
 import { useRouter } from 'next/router'
 import React from 'react'
 import type { Session } from '../../../api/types'
 import App from '../../../components/App'
+import ConfigurationInfo from '../../../components/ConfigurationInfo'
 import ErrorAlert from '../../../components/ErrorAlert'
 import FileUpload, { type FileList } from '../../../components/FileUpload'
 import JobStatus from '../../../components/JobStatus'
@@ -95,18 +95,10 @@ const Profiles: NextPage = () => {
 
       <Stack spacing={2}>
         <Stack spacing={4}>
-          <ValidationStepper step={1} />
-          <div>
-            <Button
-              variant="contained"
-              onClick={() => {
-                router.back()
-              }}
-              startIcon={<ArrowBackIcon />}
-            >
-              Go back
-            </Button>
-          </div>
+          <ValidationStepper step={1} onBack={router.back} />
+          {session != null && (
+            <ConfigurationInfo session={session} />
+          )}
           <JobStatus session={session} onValidate={handleNewValidationClick} />
           <Typography variant="h3">Upload files</Typography>
         </Stack>
