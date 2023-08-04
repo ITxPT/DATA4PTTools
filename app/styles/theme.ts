@@ -319,6 +319,17 @@ theme.components.MuiOutlinedInput = {
   }
 }
 
+theme.components.MuiInputLabel = {
+  styleOverrides: {
+    root: {
+      background: 'white',
+      border: '1px solid rgb(195 195 195)',
+      borderRadius: '4px',
+      padding: '2px 4px'
+    }
+  }
+}
+
 theme.components.MuiLink = {
   styleOverrides: {
     root: {
