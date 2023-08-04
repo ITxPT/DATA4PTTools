@@ -10,6 +10,7 @@ const FullscreenLoader = ({ open }: BackdropProps): JSX.Element => {
   return (
     <Backdrop
       sx={{
+        margin: '0 !important',
         color: '#fff',
         zIndex: (theme: Theme) => theme.zIndex.drawer + 1
       }}
