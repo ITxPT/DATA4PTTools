@@ -84,8 +84,8 @@ const Custom: NextPage = () => {
       <Stack spacing={4}>
         <ValidationStepper step={0} onBack={router.back} />
         <JobStatus session={session} onValidate={handleNewValidationClick} />
-        <Typography variant="h4">Custom configuration</Typography>
-        <CustomConfiguration onNext={handleNext} disabled={disabled} />
+        <Typography variant="h3">Custom configuration</Typography>
+        <CustomConfiguration onNext={handleNext} disabled={disabled} session={session} />
       </Stack>
 
       <FullscreenLoader open={loading} />

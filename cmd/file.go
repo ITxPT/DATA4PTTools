@@ -77,7 +77,7 @@ func (c *FileContext) Open(name string, r io.Reader) error {
 }
 
 func (c *FileContext) Add(name string, r io.Reader) (*FileInfo, error) {
-	tempFile, err := os.CreateTemp("", "")
+	tempFile, err := os.CreateTemp("", "greenlight")
 	if err != nil {
 		return nil, err
 	}

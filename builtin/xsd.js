@@ -13,7 +13,9 @@ const types = require("types");
  * @return {errors.ScriptError[]?}
  */
 function main(ctx) {
-  ctx.log.debug(`validation using schema "${ctx.config.schema}"`);
+  const {config} = ctx;
 
-  return ctx.xsd.validate(ctx.config.schema).get()
+  ctx.log.debug(`validation using schema "${config.schema}"`);
+
+  return ctx.xsd.validate(config.schema).get();
 }

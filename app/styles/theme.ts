@@ -211,7 +211,19 @@ theme.components.MuiPaper = {
   styleOverrides: {
     root: {
       borderRadius: 0,
-      boxShadow: 'none'
+      boxShadow: 'none',
+      background: 'white'
+    }
+  }
+}
+
+theme.components.MuiCard = {
+  styleOverrides: {
+    root: {
+      borderStyle: 'solid',
+      borderRadius: 8,
+      borderWidth: 1,
+      borderColor: 'rgba(0, 0, 0, 0.12)'
     }
   }
 }
@@ -315,6 +327,18 @@ theme.components.MuiListItemText = {
 theme.components.MuiOutlinedInput = {
   styleOverrides: {
     root: {
+      background: 'white'
+    }
+  }
+}
+
+theme.components.MuiInputLabel = {
+  styleOverrides: {
+    root: {
+      background: 'white',
+      border: '1px solid rgb(195 195 195)',
+      borderRadius: '4px',
+      padding: '2px 4px'
     }
   }
 }
@@ -323,7 +347,7 @@ theme.components.MuiLink = {
   styleOverrides: {
     root: {
       color: 'inherit',
-      fontWeight: 500,
+      fontWeight: 500
     }
   }
 }

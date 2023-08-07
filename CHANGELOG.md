@@ -1,4 +1,20 @@
 
+## v1.0.7 [2023-08-07]
+
+### Style
+- Accent input label ([dcfc44b](../../commit/dcfc44b1bae1d85dc4315a3219793f797b523314))
+
+
+### Features
+- Add custom xsd ([c23f6d4](../../commit/c23f6d4f68b3051575cde593806b24f0bb134cf5))
+- Update epip version 1.1.2 ([5743d3f](../../commit/5743d3fccc8bdf7fd5db35b0e29b5a09716180aa))
+
+
+### Bug Fixes
+- Backdrop cover entire view ([c8fbed7](../../commit/c8fbed734b9c27d4a6bcc69ef0bf5928c52571e5))
+- Handle limbo state when moving back ([7d7ca64](../../commit/7d7ca648552d94c174e85969f7ac841e2d32db9e))
+
+
 ## v1.0.6 [2023-07-28]
 
 ### Chore

@@ -61,13 +61,21 @@ export type FileList = Record<string, any>
 export interface FileUploadProps {
   values: FileList
   disabled?: boolean
+  supportedFormats?: string[]
   onUpload: (file: any, cb: (p: any) => void) => Promise<any>
   onChange: (fileList: FileList, valid: boolean) => void
   onError: (file: any) => JSX.Element | string
 }
 
 const FileUpload = (props: FileUploadProps): JSX.Element => {
-  const { values, disabled, onUpload, onChange, onError } = props
+  const {
+    values,
+    disabled,
+    supportedFormats = ['xml', 'zip', 'gzip', 'bzip', 'tar'],
+    onUpload,
+    onChange,
+    onError
+  } = props
 
   const updateFileContext = (fileContext: any): void => {
     values[fileContext.name] = fileContext
@@ -175,7 +183,7 @@ const FileUpload = (props: FileUploadProps): JSX.Element => {
                 background: '#f3f3f3'
               }}
             >
-              <Typography>Supported archive/compression formats are zip, gzip, bzip and tar</Typography>
+              <Typography>Supported formats are {supportedFormats.join(', ')}</Typography>
             </Box>
           )}
     </>

@@ -46,6 +46,12 @@ const Job: NextPage = () => {
     processRequest(apiClient.session(id as string))
   }, [apiClient, router.query])
 
+  React.useEffect(() => {
+    if (loading && session != null) {
+      setLoading(false)
+    }
+  }, [session, loading, setLoading])
+
   return (
     <App authRequired>
       <ErrorAlert

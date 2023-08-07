@@ -23,6 +23,16 @@ export interface ScriptConfigOption {
   options?: any[]
 }
 
+export interface XSDUploadFile {
+  id: string
+  name: string
+}
+
+export interface XSDUpload {
+  name: string
+  files?: XSDUploadFile[]
+}
+
 export interface Session {
   id: string
   name: string
@@ -30,6 +40,7 @@ export interface Session {
   created: number
   stopped: number
   files: string[]
+  xsdFiles?: XSDUpload[]
   status: string
   results: any[]
   profile?: Profile

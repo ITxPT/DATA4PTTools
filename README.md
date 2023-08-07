@@ -312,7 +312,7 @@ Flags:
   -o, --output string      Set which output format to use (one of "json", "xml", "csv", "pretty" (default "pretty")
   -p, --profile string     Set path of validation profile (note: flags 'rules' and 'schema' is ignored)
   -r, --rules strings      Set which validation rules to run (defaults to all inside the builtin dir)
-  -s, --schema string      Which xsd schema to use (supported "netex@1.2", "netex@1.2-nc", "epip@1.1.1", "epip@1.1.1-nc") (default "netex@1.2-nc")
+  -s, --schema string      Which xsd schema to use (supported "netex@1.2", "netex@1.2-nc", "epip@1.1.2", "epip@1.1.2-nc") (default "netex@1.2-nc")
       --silent             Running in silent will only output the result in a boolean fashion
 ```
 
@@ -326,11 +326,11 @@ Example output from a validation done in the CLI
 ![CLI Validation result](media/getting-started_cli_validation.png)
 
 ### NeTEx profile
-To select NeTEx profile use the flag -s or --schema and the name of the profile. Valid names are netex@1.2, netex@1.2-nc, epip@1.1.1, epip@1.1.1-nc. If no schema is selected the netex@1.2-nc is used. -nc at the end means that the validation is with No Constraints. Which is a faster validation but needs that the no-constraints rule is used instead.
+To select NeTEx profile use the flag -s or --schema and the name of the profile. Valid names are netex@1.2, netex@1.2-nc, epip@1.1.2, epip@1.1.2-nc. If no schema is selected the netex@1.2-nc is used. -nc at the end means that the validation is with No Constraints. Which is a faster validation but needs that the no-constraints rule is used instead.
 
 Example of how to use the EPIP schema when validating the built in test file
 ```
-docker run -it itxpt/greenlight validate -schema epip@1.1.1 -i testdata
+docker run -it itxpt/greenlight validate -schema epip@1.1.2 -i testdata
 ```
 
 ### Rules

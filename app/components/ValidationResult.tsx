@@ -46,6 +46,7 @@ const ValidationResult = (props: ValidationResultProps): JSX.Element => {
   const apiClient = useApiClient()
   const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null)
   const open = Boolean(anchorEl)
+  const isCustom = session.profile?.scripts?.find(s => s.name === 'xsd')?.config?.schema === 'custom'
 
   const handleValidateAnother = (): void => {
     if (props.onValidateAnother !== undefined) {
@@ -205,8 +206,9 @@ const ValidationResult = (props: ValidationResultProps): JSX.Element => {
           <Button
             variant="contained"
             onClick={handleValidateAnother}
+            disabled={isCustom}
           >
-            Validate with this configuration
+            Validate with this configuration{isCustom && (<><br/>(unsupported when using custom xsd)</>)}
           </Button>
         </Grid>
       </Grid>
