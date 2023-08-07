@@ -17,18 +17,22 @@ import {
   Stack,
   Typography,
   OutlinedInput,
-  DialogActions
+  DialogActions,
+  Card
 } from '@mui/material'
 import { grey } from '@mui/material/colors'
 import TuneOutlineIcon from '@mui/icons-material/TuneOutlined'
 import ChevronRightIcon from '@mui/icons-material/ChevronRight'
 import React from 'react'
-import type { Profile, Script } from '../api/types'
+import FileUpload, { type FileList } from './FileUpload'
+import type { Profile, Script, Session, XSDUploadFile } from '../api/types'
 import scriptData from '../public/scripts.json'
+import useApiClient from '../hooks/useApiClient'
 
 const scriptOptions = scriptData.filter(v => v.name !== 'xsd')
 
 export interface CustomConfigurationProps {
+  session: Session | null
   onNext: (profile: Profile) => void
   disabled?: boolean
 }
@@ -129,10 +133,18 @@ const ScriptRow = ({
   )
 }
 
-const CustomConfiguration = (props: CustomConfigurationProps): JSX.Element => {
+const CustomConfiguration = ({
+  session,
+  disabled,
+  onNext
+}: CustomConfigurationProps): JSX.Element => {
   const [schema, setSchema] = React.useState<string>('netex@1.2-nc')
+  const [schemaEntry, setSchemaEntry] = React.useState<string>('')
   const [scripts, setScripts] = React.useState<string[]>(scriptOptions.map(v => v.name))
   const [scriptOpts, setScriptOpts] = React.useState<Record<string, Record<string, any>>>({})
+  const [fileList, setFileList] = React.useState<Record<string, unknown>>({})
+  const [schemaFiles, setSchemaFiles] = React.useState<XSDUploadFile[]>([])
+  const apiClient = useApiClient()
 
   const handleSelectSchema = (event: SelectChangeEvent): void => {
     if (event.target?.name === '') {
@@ -140,6 +152,14 @@ const CustomConfiguration = (props: CustomConfigurationProps): JSX.Element => {
     }
 
     setSchema(event.target.value)
+  }
+
+  const handleSelectSchemaEntry = (event: SelectChangeEvent): void => {
+    if (event.target?.name === '') {
+      return
+    }
+
+    setSchemaEntry(event.target.value)
   }
 
   const handleScriptToggle = (v: Script): void => {
@@ -163,16 +183,18 @@ const CustomConfiguration = (props: CustomConfigurationProps): JSX.Element => {
   }
 
   const handleNextClick = (): void => {
-    if (props.disabled === true) {
+    if (disabled === true) {
       return
     }
 
     const xsdScript = {
       ...scriptData.find(v => v.name === 'xsd'),
-      config: { schema }
+      config: schema === 'custom'
+        ? { schema: 'custom', entry: schemaEntry }
+        : { schema }
     }
 
-    props.onNext({
+    onNext({
       name: 'custom',
       description: 'Custom configuration',
       longDescription: '',
@@ -189,36 +211,118 @@ const CustomConfiguration = (props: CustomConfigurationProps): JSX.Element => {
     })
   }
 
+  React.useEffect(() => {
+    if (session == null) {
+      return
+    }
+    if (session.xsdFiles != null) {
+      const { xsdFiles } = session
+
+      setFileList(xsdFiles.reduce((o: Record<string, any>, { name }) => {
+        o[name] = {
+          name,
+          status: 'uploaded',
+          progress: 100
+        }
+        return o
+      }, {}) ?? {})
+      setSchemaFiles(xsdFiles.reduce((o: XSDUploadFile[], v) => {
+        if (v.files != null) {
+          o.push(...v.files)
+        }
+        return o
+      }, []) ?? [])
+    }
+    if (session.profile != null) {
+      const { profile } = session
+      const xsdScript = profile.scripts?.find(v => v.name === 'xsd')
+
+      setSchema(xsdScript?.config?.schema)
+      setSchemaEntry(xsdScript?.config?.entry)
+    }
+  }, [session, setFileList])
+
   return (
-    <Stack spacing={4}>
-      <Stack spacing={2}>
-        <Typography variant="h5">Profile</Typography>
-        <Typography><b>1.</b> Begin by selecting which profile to use for validation</Typography>
-        <Typography>
-          <ul style={{ marginTop: 0 }}>
-            <li>NeTEx - The full NeTEx schema (<a href="https://github.com/NeTEx-CEN/NeTEx/tree/12848763e6a9340b703de048368f2dd518ac3e27" target="_blank" rel="noreferrer">more info</a>)</li>
-            <li>NeTEx Fast - NeTEx schema without constraint (<a href="https://github.com/NeTEx-CEN/NeTEx/tree/12848763e6a9340b703de048368f2dd518ac3e27" target="_blank" rel="noreferrer">more info</a>)</li>
-            <li>EPIP - NeTEx European Passenger Information Profile (<a href="https://data4pt.org/NeTEx/GraphicKit/Documention_of_XSD_for_EPIP.html" target="_blank" rel="noreferrer">more info</a>)</li>
-            <li>EPIP Light - NeTEx European Passenger Information Profile</li>
-          </ul>
-        </Typography>
-        <FormControl>
-          <InputLabel id="netex-schema-label">Schema</InputLabel>
-          <Select
-            labelId="netex-schema-label"
-            name="netex-schema"
-            value={schema}
-            onChange={handleSelectSchema}
-          >
-            <MenuItem key="netex" value="netex@1.2">NeTEx (v1.2)</MenuItem>
-            <MenuItem key="netex-light" value="netex@1.2-nc">NeTEx Fast (v1.2)</MenuItem>
-            <MenuItem key="epip" value="epip@1.1.1">EPIP (v1.1.1)</MenuItem>
-            <MenuItem key="epip-light" value="epip@1.1.1-nc">EPIP Fast (v1.1.1)</MenuItem>
-          </Select>
-        </FormControl>
+    <Stack spacing={8}>
+      <Stack spacing={4}>
+        <Stack spacing={2}>
+          <Typography variant="h4">Profile</Typography>
+          <Typography><b>1.</b> Begin by selecting which profile to use for validation</Typography>
+          <Typography>
+            <ul style={{ marginTop: 0 }}>
+              <li>NeTEx - The full NeTEx schema (<a href="https://github.com/NeTEx-CEN/NeTEx/tree/12848763e6a9340b703de048368f2dd518ac3e27" target="_blank" rel="noreferrer">more info</a>)</li>
+              <li>NeTEx Fast - NeTEx schema without constraint (<a href="https://github.com/NeTEx-CEN/NeTEx/tree/12848763e6a9340b703de048368f2dd518ac3e27" target="_blank" rel="noreferrer">more info</a>)</li>
+              <li>EPIP - NeTEx European Passenger Information Profile (<a href="https://data4pt.org/NeTEx/GraphicKit/Documention_of_XSD_for_EPIP.html" target="_blank" rel="noreferrer">more info</a>)</li>
+              <li>EPIP Light - NeTEx European Passenger Information Profile</li>
+            </ul>
+          </Typography>
+          <FormControl>
+            <InputLabel id="netex-schema-label">Profile</InputLabel>
+            <Select
+              labelId="netex-schema-label"
+              name="netex-schema"
+              value={schema}
+              onChange={handleSelectSchema}
+            >
+              <MenuItem key="netex" value="netex@1.2">NeTEx (v1.2)</MenuItem>
+              <MenuItem key="netex-light" value="netex@1.2-nc">NeTEx Fast (v1.2)</MenuItem>
+              <MenuItem key="epip" value="epip@1.1.1">EPIP (v1.1.1)</MenuItem>
+              <MenuItem key="epip-light" value="epip@1.1.1-nc">EPIP Fast (v1.1.1)</MenuItem>
+              <MenuItem key="custom" value="custom">Custom</MenuItem>
+            </Select>
+          </FormControl>
+        </Stack>
+        {schema === 'custom' && (
+          <Card style={{ padding: 16 }}>
+            <Stack spacing={3}>
+              <Stack spacing={1}>
+                <Typography variant="h5">Upload custom profile</Typography>
+                <Typography gutterBottom>Select which file to use as profile &apos;Select file(s)&apos;</Typography>
+              </Stack>
+              <Stack alignItems="center" spacing={2}>
+                <FileUpload
+                  values={fileList}
+                  disabled={false}
+                  supportedFormats={['xml', 'zip']}
+                  onUpload={async (file: any, cb: any) => {
+                    await apiClient.xsdUpload(session?.id ?? '', file, cb)
+                      .then(res => {
+                        setSchemaFiles(res.data?.xsdFiles?.reduce((o: XSDUploadFile[], v: any) => {
+                          if (v.files != null) {
+                            o.push(...v.files)
+                          }
+                          return o
+                        }, []) ?? [])
+                      })
+                  }}
+                  onChange={(fileList: FileList) => {
+                    setFileList({ ...fileList })
+                  }}
+                  onError={({ errorMessage }: { errorMessage: string }) => {
+                    return `Error caught uploading file, message: ${errorMessage}`
+                  }}
+                />
+              </Stack>
+              <FormControl>
+                <InputLabel id="schema-entry">Main entry point</InputLabel>
+                <Select
+                  labelId="schema-entry-label"
+                  name="schema-entry"
+                  value={schemaEntry}
+                  onChange={handleSelectSchemaEntry}
+                  disabled={Object.values(fileList).length === 0}
+                >
+                  {schemaFiles.map(({ id, name }) => (
+                    <MenuItem key={id} value={id}>{name}</MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            </Stack>
+          </Card>
+        )}
       </Stack>
       <Stack spacing={2}>
-        <Typography variant="h5">Rules</Typography>
+        <Typography variant="h4">Rules</Typography>
         <Typography><b>2.</b> In addition to the schema validation, we have also included a few optional rules that validate the consistency of the documents</Typography>
         <List
           sx={{
@@ -242,7 +346,7 @@ const CustomConfiguration = (props: CustomConfigurationProps): JSX.Element => {
       </Stack>
       <Stack alignItems="center">
         <Button
-          disabled={props.disabled}
+          disabled={(disabled ?? false) || (schema === 'custom' && schemaEntry === '')}
           variant="contained"
           endIcon={<ChevronRightIcon />}
           onClick={handleNextClick}

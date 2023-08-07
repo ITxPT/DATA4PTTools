@@ -184,6 +184,38 @@ func startServer(cmd *cobra.Command, args []string) {
 		return c.JSON(code, session)
 	})
 
+	e.POST("/api/sessions/:sid/upload/xsd", func(c echo.Context) error {
+		session := sessions.Get(c.Param("sid"))
+		if session == nil {
+			return fmt.Errorf("session not found")
+		} else if session.Status != "created" {
+			return fmt.Errorf("session already processed")
+		}
+
+		form, err := c.MultipartForm()
+		if err != nil {
+			return err
+		}
+
+		for _, files := range form.File {
+			for _, file := range files {
+				f, err := file.Open()
+				if err != nil {
+					return err
+				}
+
+				xsd, err := NewXSDUpload(file.Filename, f)
+				if err != nil {
+					return err
+				}
+
+				session.XSDFiles = append(session.XSDFiles, xsd)
+			}
+		}
+
+		return c.JSON(http.StatusOK, session)
+	})
+
 	e.GET("/api/sessions/:sid/validate", func(c echo.Context) error {
 		session := sessions.Get(c.Param("sid"))
 		if session == nil {

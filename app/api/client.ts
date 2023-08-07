@@ -104,6 +104,25 @@ class ApiClient {
     })
   }
 
+  async xsdUpload (id: string, file: File, onProgress?: (p: any) => void): Promise<any> {
+    const { checksum } = await calculateChecksum(file)
+    const data = new FormData()
+
+    data.append('file', file)
+
+    return await axios({
+      method: 'post',
+      url: this.withUrl(`sessions/${id}/upload/xsd`),
+      data,
+      params: { checksum },
+      onUploadProgress: (p) => {
+        if (onProgress !== undefined) {
+          onProgress(p)
+        }
+      }
+    })
+  }
+
   async validate (id: string): Promise<any> {
     return await axios({
       method: 'get',
