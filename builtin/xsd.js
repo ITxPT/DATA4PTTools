@@ -14,7 +14,6 @@ const types = require("types");
  */
 function main(ctx) {
   const {config} = ctx;
-  const schema = config.schema === "custom" ? config.entry : config.schema;
 
   ctx.log.debug(`validation using schema "${config.schema}"`);
 
