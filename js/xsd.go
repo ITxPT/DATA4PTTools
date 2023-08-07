@@ -15,8 +15,8 @@ var (
 		data: map[string]*xml.Schema{},
 	}
 	internalXSDPaths = map[string]string{
-		"epip@1.1.1":    "xsd/epip/1.1.1/NeTEx_publication_EPIP.xsd",
-		"epip@1.1.1-nc": "xsd/epip/1.1.1/NeTEx_publication_EPIP-NoConstraint.xsd",
+		"epip@1.1.2":    "xsd/epip/1.1.2/NeTEx_publication_reduced.xsd",
+		"epip@1.1.2-nc": "xsd/epip/1.1.2/NeTEx_publication_reduced-NoConstraint.xsd",
 		"netex@1.2":     "xsd/netex/1.2/NeTEx_publication.xsd",
 		"netex@1.2-nc":  "xsd/netex/1.2/NeTEx_publication-NoConstraint.xsd",
 	}

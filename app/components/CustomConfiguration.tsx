@@ -252,8 +252,8 @@ const CustomConfiguration = ({
             <ul style={{ marginTop: 0 }}>
               <li>NeTEx - The full NeTEx schema (<a href="https://github.com/NeTEx-CEN/NeTEx/tree/12848763e6a9340b703de048368f2dd518ac3e27" target="_blank" rel="noreferrer">more info</a>)</li>
               <li>NeTEx Fast - NeTEx schema without constraint (<a href="https://github.com/NeTEx-CEN/NeTEx/tree/12848763e6a9340b703de048368f2dd518ac3e27" target="_blank" rel="noreferrer">more info</a>)</li>
-              <li>EPIP - NeTEx European Passenger Information Profile (<a href="https://data4pt.org/NeTEx/GraphicKit/Documention_of_XSD_for_EPIP.html" target="_blank" rel="noreferrer">more info</a>)</li>
-              <li>EPIP Light - NeTEx European Passenger Information Profile</li>
+              <li>EPIP - NeTEx European Passenger Information Profile (<a href="https://data4pt.org/w/index.php?title=NeTEX#NeTEx_EPIP_Light" target="_blank" rel="noreferrer">more info</a>)</li>
+              <li>EPIP Light - NeTEx European Passenger Information Profile (<a href="https://data4pt.org/w/index.php?title=NeTEX#NeTEx_EPIP_Light" target="_blank" rel="noreferrer">more info</a>)</li>
             </ul>
           </Typography>
           <FormControl>
@@ -266,8 +266,8 @@ const CustomConfiguration = ({
             >
               <MenuItem key="netex" value="netex@1.2">NeTEx (v1.2)</MenuItem>
               <MenuItem key="netex-light" value="netex@1.2-nc">NeTEx Fast (v1.2)</MenuItem>
-              <MenuItem key="epip" value="epip@1.1.1">EPIP (v1.1.1)</MenuItem>
-              <MenuItem key="epip-light" value="epip@1.1.1-nc">EPIP Fast (v1.1.1)</MenuItem>
+              <MenuItem key="epip" value="epip@1.1.2">EPIP (v1.1.2)</MenuItem>
+              <MenuItem key="epip-light" value="epip@1.1.2-nc">EPIP Fast (v1.1.2)</MenuItem>
               <MenuItem key="custom" value="custom">Custom</MenuItem>
             </Select>
           </FormControl>
