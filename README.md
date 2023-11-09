@@ -54,7 +54,7 @@
 - [Building from source](#building-from-source)
   - [Prerequisites](#prerequisites)
   - [Getting started](#getting-started-1)
--[More information](#further-information)
+- [More information](#further-information)
 
 
 &nbsp;
