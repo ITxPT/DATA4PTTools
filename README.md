@@ -48,7 +48,7 @@
 - [Introduction](#introduction)
 - [Requirements](#requirements)
 - [Getting started](#getting-started)
- -[Local installation](#local-installation) 
+ - [Local installation](#local-installation) 
 - [Web interface](#web-interface)
 - [Command Line Interface - CLI](#command-line-interface-cli)
 - [Building from source](#building-from-source)
