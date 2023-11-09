@@ -194,3 +194,7 @@ cd DATA4PTTools
 ```sh
 go get
 ```
+
+# Further information
+
+For further details on how to use Greenlight Data4pt tool, see our [wiki](https://github.com/ITxPT/DATA4PTTools/wiki)
