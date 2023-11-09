@@ -21,17 +21,18 @@
   ·
   <a href="#building-from-source">Source</a>
 </p>
+
 <h1></h1>
 
 <table>
 <tr><td>
 <img
-  src="media/getting-started_web-validation-result.png"
+  src="https://github.com/EliotTerrier/NeTEx-Profile-EPIP-wiki/assets/134064791/a71c8167-683a-45fb-98ef-ca29964dbfb5"
   alt="Simple validation"
-  width="50%"
+  width="25%"
   align="right"
 />
-
+  
 **The minimal, customizable, NeTEx validation tool**
 
 - **Customizable:** configure what you see and how you see it.
@@ -44,52 +45,25 @@
 </table>
 
 # Table of Content
-- [Greenlight - The Data4PT Validation tool](#greenlight---the-data4pt-validation-tool)
-- [Table of Content](#table-of-content)
 - [Introduction](#introduction)
 - [Requirements](#requirements)
 - [Getting started](#getting-started)
-  - [Local installation](#local-installation)
+ -[Local installation](#local-installation) 
 - [Web interface](#web-interface)
-  - [Navigation](#navigation)
-  - [Configuration](#configuration)
-  - [Packages](#packages)
-  - [Custom configuration](#custom-configuration)
-  - [Select files to validate](#select-files-to-validate)
-  - [Validation result](#validation-result)
-  - [Downloading the result](#downloading-the-result)
-  - [Previous validation](#previous-validation)
-  - [Technical error messages](#technical-error-messages)
-- [Command Line Interface - CLI](#command-line-interface---cli)
-  - [Getting help](#getting-help)
-  - [Server command](#server-command)
-  - [Validate command](#validate-command)
-    - [NeTEx profile](#netex-profile)
-    - [Rules](#rules)
-    - [Providing files](#providing-files)
-    - [Output](#output)
-  - [Completion command](#completion-command)
+- [Command Line Interface - CLI](#command-line-interface-cli)
 - [Building from source](#building-from-source)
   - [Prerequisites](#prerequisites)
   - [Getting started](#getting-started-1)
-  - [Building the CLI](#building-the-cli)
-  - [Building the Web GUI](#building-the-web-gui)
-- [Configuration](#configuration-1)
-  - [Command line](#command-line)
-  - [Environment variables](#environment-variables)
-  - [Configuration file](#configuration-file)
 
 
 &nbsp;
+
 # Introduction
 The tool consists of a number of components, each with a different responsibility. This will ensure that the tool is modular and that each component is easy to understand and maintain.
 
 
-<img
-  src="media/getting-started_components.png"
-  alt="Components"
-    style="margin-bottom:20px;margin-top:10px"
-/>
+![image](https://github.com/EliotTerrier/NeTEx-Profile-EPIP-wiki/assets/134064791/5c999e94-b91d-48c3-900c-0593326a8426)
+
 
 **Core** - This is the main component of the tool, it reads the configuration, handles file imports, calls the validation scripts and summarizes the result. The Core provides an API that other components use to control the validation or to get access to shared functions, e.g, in libXML. The API also makes it possible to extend the tool with different front ends, as the CLI and Web Interface.
 
@@ -131,7 +105,8 @@ After you have installed Docker, you can get the latest version of the Greenligh
 docker pull itxpt/greenlight
 ```
 
-![Docker Pull](media/getting-started_docker-pull.png?raw=true)
+![image](https://github.com/EliotTerrier/NeTEx-Profile-EPIP-wiki/assets/134064791/64e7f05a-d43c-44e6-b29b-066cd8412852)
+
 
 We suggest that you first start to use the web interface to verify that the installation works and to learn more about the functionality. 
 
@@ -142,134 +117,27 @@ docker run -it -p 8080:8080 itxpt/greenlight server
 ```
 
 
-![Docker Pull](media/getting-started_docker-start-web-server.png?raw=true)
+![image](https://github.com/EliotTerrier/NeTEx-Profile-EPIP-wiki/assets/134064791/56c1fe22-f8ba-4164-9f26-8f2ee405eb2f)
 
 
 
 If you have used the image before, you can also start the web interface via Docker Desktop, goto to the Containers tab and press Start on the Greenlight container.
 
-![Docker Desktop - Images](media/getting-started_docker-desktop.png?raw=true)
+![image](https://github.com/EliotTerrier/NeTEx-Profile-EPIP-wiki/assets/134064791/e3ded9be-f33c-4eb9-8391-3c2d68e43830)
 
-&nbsp;
 
 &nbsp;
 
 # Web interface
 
-After the container has started you can use the web interface by opening a web browser and type the address [http://localhost:8080/](http://localhost:8080/), and click on **Start validating** to start a new validation session. You can also always use the **New validation** button in the upper right corner to start over with a new validation.
+You can use the web interface by opening a web browser and type the address http://localhost:8080/ or you can access the online tool at the address https://greenlight.itxpt.eu/. Then you can click on Start validating to start a new validation session. You can also always use the New validation button in the upper right corner to start over with a new validation.
 
-![Web Start page](media/getting-started_web-start.png?raw=true)
+![image](https://github.com/EliotTerrier/NeTEx-Profile-EPIP-wiki/assets/134064791/343a28c9-14aa-4830-9c8a-0deca87a6db5)
 
+**For mor details on how to use the web interface, see [Manual for the web interface](https://github.com/ITxPT/DATA4PTTools/wiki/Manual-for-Web-Interface)**
 
-&nbsp;
+# Command Line Interface (CLI)
 
-## Navigation
-At the top of the web page is a menu bar and a progress indicator. The logo to the left always take you to the start page. **Validations** in the menu will show recent done validations, **GitHub** will take you to our page with documentation and the soure code and **New validation** will start over with a new validation. You can also use **Go back** to navigate to a previous step. 
-
-![Web Validation result](media/getting-started_web-navigation.png)
-
-
-&nbsp;
-
-## Configuration
-
-To start a validation, you first decide if you want to use a premade configuration package or use a custom configuration. The packages are predefined with schemas and rules that are commonly used together. To select your own combination of schemas and rules you can do a custom configuration.
-
-![Web Select Configuration](media/getting-started_web-configuration-selection.png?raw=true)
-
-
-&nbsp;
-
-## Packages
-
-If you select to use the premade packages you are presented with a list to select from. Select the one that works best with your validation requirements. When you click on one of the packages you continue to the [selection of files](##Select-files-to-validate).
-
-![Web Start upload](media/getting-started_web-select-package.png?raw=true)
-
-
-&nbsp;
-
-## Custom configuration
-
-With the custom configuration you can be more detailed in which NeTEx Profile and combination of rules to use. In the list of rules, you get brief description of each rule. Zero or more rules can be selected by clicking the checkbox for each rule.
-
-![Web Select Parameters](media/getting-started_web-custom-selection.png?raw=true)
-
-Some rules use parameters as input to the validation. Those rules have a default value that can be changed by clicking on the Configure icon to the right.
-
-![Web Select rules](media/getting-started_web-configuration-parameters.png?raw=true)
-
-&nbsp;
-
-## Select files to validate
-
-The last step is to upload the files to be validated, it can be single files or multiple files compressed in an archive. Click **Select file(s)** to select which files to upload and then wait until all files has been uploaded, see the Status indicator in the files list.
-
-If you want to get back to the selection of rules you can use the **Go back** button
-
-![Web Start upload](media/getting-started_web-selecting-files.png?raw=true)
-
-&nbsp;
-
-When all files are uploaded you start the validation by clicking on **Validate**.
-
-
-![Web Uploaded files](media/getting-started_web-uploaded-files.png)
-
-
-&nbsp;
-
-Each file is validated against the selected schema and rules, all validations run in parallel. Depending on the number of files and their sizes the validation can take some time to complete. 
-
-
-![Web Uploaded files](media/getting-started_web-validating.png)
-
-&nbsp;
-
-## Validation result
-
-When the validation is done you get an overview of the result. You can see the status of the validation for each file. If there are any errors, you can get all the details by clicking on the down arrow to the right of each file. 
-![Web Validation result](media/getting-started_web-validation-result.png)
-
-&nbsp;
-
-The details display the number of times that specific error occurs in the file, and you can page between them with the arrows to the right. For each error you get information about the type, line number in the file and a more detailed explanation. 
-
-![Web Validation result](media/getting-started_web-validation-result-detailed.png)
-
-&nbsp;
-
-## Downloading the result
-You can download the result for each error or the complete validation to a file in json or csv format to process it further. For example, to give as documentation to someone who can correct the error
-![Web Validation result](media/getting-started_web-validation-result-report.png)
-
-Example of the saved data in json format.
-
-![Web Validation result](media/getting-started_web-validation-result-json.png)
-
-&nbsp;
-
-## Previous validation
-At the bottom of the result page, you have an option **Validate with this configuration** to go back and start a new validation with the same configuration but with new files. You can also see recent validation by using the menu selection **Validations** at the to of the page. By clicking on the name of a job you will see the result page for that validation again.
-
-
-![Web Validation result](media/getting-started_web-previous-validations.png)
-
-&nbsp;
-
-## Technical error messages
-Sometimes the web interface will show error messages if the Greenlight tool stops to execute. Often that occurs when the communication to the web server is lost, or the local Docker version has stopped. Check the status of your connection and that the Docker container is running if using it locally.
-
-![Web Validation result](media/getting-started_web-error.png)
-
-![Web Validation result](media/getting-started_web-error2.png)
-
-&nbsp;
-
-&nbsp;
-
-
-# Command Line Interface - CLI
 The CLI is for more advanced use cases where you want more control over the validation or if you want to include the validation in your own pipeline. An example could be to recieve a file via an integration, validate the file with GreenLight and if there are any errors inform via email and otherwise save the file for use in another system.
 
 To use the CLI you must first download the Docker image as described in [Getting started](#getting-started)
@@ -278,128 +146,7 @@ When you use the CLI you first give the command ```docker``` and the parameters 
 
 &nbsp;
 
-## Getting help
-
-The tool has a built in help system that gives explanations of all commands and parameters in the tool. Use the command below to get an overview of the help you can get.  
-```sh
- docker run -it itxpt/greenlight help
-```
-![Web Validation result](media/getting-started_cli_help.png)
-
-&nbsp;
-
-## Server command
-
-![Web Validation result](media/getting-started_cli_help_server.png)
-
-```
-docker run -it -p 8080:8080 itxpt/greenlight server
-```
-
-This will start the built in web interface and it can be accessed via [http://localhost:8080/](http://localhost:8080/). Se [Web Interface](#web-interface) for a guide on how to use it.
-
-
-&nbsp;
-
-## Validate command
-A validation is started with the command ```Validate```, it uses the following flags as input to configure the validation.
-
-```
-Flags:
-  -h, --help               help for validate
-  -i, --input string       XML file, dir or archive to validate
-  -l, --log-level string   Set level of log output (one of "trace", "debug", "info", "warn", "error") (default "debug")
-  -o, --output string      Set which output format to use (one of "json", "xml", "csv", "pretty" (default "pretty")
-  -p, --profile string     Set path of validation profile (note: flags 'rules' and 'schema' is ignored)
-  -r, --rules strings      Set which validation rules to run (defaults to all inside the builtin dir)
-  -s, --schema string      Which xsd schema to use (supported "netex@1.2", "netex@1.2-nc", "epip@1.1.2", "epip@1.1.2-nc") (default "netex@1.2-nc")
-      --silent             Running in silent will only output the result in a boolean fashion
-```
-
-To verify that the tool works yo can do a validation with a NeTEx file provided with the tool.
-```
- docker run -it itxpt/greenlight validate -i testdata
-```
-
-Example output from a validation done in the CLI
-
-![CLI Validation result](media/getting-started_cli_validation.png)
-
-### NeTEx profile
-To select NeTEx profile use the flag -s or --schema and the name of the profile. Valid names are netex@1.2, netex@1.2-nc, epip@1.1.2, epip@1.1.2-nc. If no schema is selected the netex@1.2-nc is used. -nc at the end means that the validation is with No Constraints. Which is a faster validation but needs that the no-constraints rule is used instead.
-
-Example of how to use the EPIP schema when validating the built in test file
-```
-docker run -it itxpt/greenlight validate -schema epip@1.1.2 -i testdata
-```
-
-### Rules
-Select which rules to use with the flag -r or --rules and then give the name of the rules to use. Several rules can be specified by separating them with a comma. 
-
-Example ```-r everyLineIsReferenced,everyScheduledStopPointHasAName```
-
-You can change or add your own rules by cloning the greenlight repo from GitHub and modify one of the scripts in the directory ```builtin```. Save it with a new name and then map the ```builtin``` folder to the docker container with the Docker parameter -v.
-
-```-v c:\code\greenlight\builtin:/usr/local/greenlight/builtin```
-
-Use the script in the same way as one of the standard scripts with the flag -r and name of the script.
-
-Example ```-r mymodifiedrule```
-
-### Providing files
-The files to test can be single files, a folder with files or a compressed archive with files. Put the files to be tested in a local folder and use the docker parameter -v to map it with a folder in the greenlight container. 
-
-```-v C:\code\netex\testdata:/usr/local/greenlight/testdata```
-
-Then you can use the greenlight flag -i to include the files in the validation
-
-
-&nbsp;
-
-Command to validate a folder with files
-```
-docker run -it -v c:\code\netex\testfiles:/usr/local/greenlight/testdata itxpt/greenlight validate -s netex@1.2-nc -r everyLineIsReferenced -i testdata
-```
-
-
-&nbsp;
-
-Command to validate an archive with several files
-```
-docker run -it -v c:\code\netex\testfiles:/usr/local/greenlight/testdata itxpt/greenlight validate -s netex@1.2-nc -r everyLineIsReferenced -i testdata/xt_2023_04_15.zip
-```
-
-
-&nbsp;
-
-Command to validate a single file
-```
-docker run -it -v c:\code\netex\testfiles:/usr/local/greenlight/testdata itxpt/greenlight validate -s netex@1.2-nc -r everyLineIsReferenced -i testdata/line_2_9011005000200000.xml
-```
-
-### Output
-The result of the validation can be presented in different formats. For example, the ```pretty``` will give an output adopted to be read on the screen. The other formats ```json```, ```xml``` and ```csv``` can be used to pipe the output to a file for further processing.
-
-```
-docker run -it itxpt/greenlight validate -s netex@1.2-nc -r everyLineIsReferenced -i testdata -o json > greenlight-result.json
-```
-
-&nbsp;
-
-## Completion command
-Generate an autocompletion script for Greenlight for different shells. The generated script can be added to your shell profile. Scripts can be generated for *bash*, *fish*, *zsh* and *powershell*.
-
-**Note:** This command is for power users who uses the CLI a lot and want to make it easier and faster to type commands and parameters.
-
-As an example, will the command below generate a script for bash
-```
-docker run -it itxpt/greenlight completion bash
-```
-
-
-&nbsp;
-
-&nbsp;
+**For more details on how to use the CLI, see [Manual for command line interface](https://github.com/ITxPT/DATA4PTTools/wiki/Manual-for-command-line-interface)**
 
 # Building from source
 
@@ -423,10 +170,9 @@ Greenlight is using Go and is powered by libxml2, so make sure those are install
 
 - [nodejs](https://nodejs.org/) - only required for the web interface
     
-    Download and install the latest version with standard settings
+Download and install the latest version with standard settings
 
 ## Getting started
-
 
 
 1. Open a terminal and navigate to the folder where you want to install the source code.
@@ -448,85 +194,3 @@ cd DATA4PTTools
 ```sh
 go get
 ```
-
-## Building and running the CLI
-With the source code and all dependencies downloaded you can try the tool with build in test files to verify that all is working
-
-- ### Validate with demo files provided in the source
-   _path definition will differ running on windows_
-   ```sh
-   go run cmd/*.go validate -i testdata
-   ```
-
-You can now start validating your own files by providing the path to your document
-- ### Validate using your own files
-   _path definition will differ running on windows_
-   ```sh
-   go run cmd/*.go validate -i /path/to/documents
-   ```
-
-That is all that is needed to start using the tool and to be able to modify the core or work with your own validation scripts (you find the scripts in the folder ```builtin```).
-
-## Building the Web GUI
-When running the web interface the core tool and the interface are started as two separate servers. The backend server is hosting the core tool and provides the functionallity for the validation itself. The interface is then started in a web server and calls the backend when needed.
-
-
-
-- ### Open a terminal and navigate to the DATA4PTTools directory
-
-  ```sh
-  cd /home/developer/code/DATA4PTTools
-  ```
-
-- ### Start the backend server
-  ```sh
-  go run cmd/*.go server
-  ```
-
-- ### Then open a **new terminal** and navigate to he DATA4PTTools directory again
-
-  ```sh
-  cd /home/developer/code/DATA4PTTools
-  ```
-- ### Set current configuration for backend server
-  Remember to update with the current path to the backend server.
-  ```sh
-  echo "NEXT_PUBLIC_API_URL=http://localhost:8080" > app/.env.local
-  ```
-
-- ### Navigate to the web app directory
-  ```sh
-  cd app
-  ```
-
-- ### Install dependencies for the web server
-  ```sh
-  npm i
-  ```
-
-- ### Start the web server
-  ```sh
-  npm run dev
-  ```
-
-- ### Open the web interface
-Open a browser and navigate to `http://localhost:3000` and you will see the web interface of Greenlight.
-
-![Web Uploaded files](media/build_from_source-web_interface.png)
-
-To verify that the web interface has contact with the backend server by looking at the API Status in the lower right corner of the web page.
-
-
-![Web Uploaded files](media/build_from_source-api_status.png)
-
----
-
-<h1></h1>
-
-<p align="center">
-  <img width="400" src="media/data4pt.jpeg" alt="data4pt logo">
-</p>
-
-<p align="center">
-  <img width="400" src="media/itxpt.jpeg" alt="itxpt logo">
-</p>
