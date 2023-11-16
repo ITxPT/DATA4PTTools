@@ -253,7 +253,7 @@ const CustomConfiguration = ({
               <li>NeTEx - The full NeTEx schema (<a href="https://github.com/NeTEx-CEN/NeTEx/tree/12848763e6a9340b703de048368f2dd518ac3e27" target="_blank" rel="noreferrer">more info</a>)</li>
               <li>NeTEx Fast - NeTEx schema without constraint (<a href="https://github.com/NeTEx-CEN/NeTEx/tree/12848763e6a9340b703de048368f2dd518ac3e27" target="_blank" rel="noreferrer">more info</a>)</li>
               <li>EPIP - NeTEx European Passenger Information Profile (<a href="https://data4pt.org/w/index.php?title=NeTEX#NeTEx_EPIP_Light" target="_blank" rel="noreferrer">more info</a>)</li>
-              <li>EPIP Light - NeTEx European Passenger Information Profile (<a href="https://data4pt.org/w/index.php?title=NeTEX#NeTEx_EPIP_Light" target="_blank" rel="noreferrer">more info</a>)</li>
+              <li>EPIP Fast - NeTEx European Passenger Information Profile (<a href="https://data4pt.org/w/index.php?title=NeTEX#NeTEx_EPIP_Light" target="_blank" rel="noreferrer">more info</a>)</li>
             </ul>
           </Typography>
           <FormControl>
