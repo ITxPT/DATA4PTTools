@@ -147,6 +147,15 @@ When you use the CLI you first give the command ```docker``` and the parameters 
 
 **For more details on how to use the CLI, see [Manual for command line interface](https://github.com/ITxPT/DATA4PTTools/wiki/Manual-for-command-line-interface)**
 
+# Validation rules
+
+The Validation Rules relevant to Greenlight NeTEx validator are mainly divided into two major categories:
+
+- The rules based on XML schema
+- The rules beyond XML schema
+
+More information on the validation rules(the different rules, how to use them, how to build your own rules) is available in the [wiki](https://github.com/ITxPT/DATA4PTTools/wiki/Validation-rules).
+
 # Building from source
 
 ## Prerequisites
@@ -193,6 +202,7 @@ cd DATA4PTTools
 ```sh
 go get
 ```
+A dedicated section is available in the [wiki](https://github.com/ITxPT/DATA4PTTools/wiki/Manual-for-building-from-source) to learn how to build the tool for source. You may also want to learn more about what you can find in the repository by going to this [section](https://github.com/ITxPT/DATA4PTTools/wiki/Source-code-inventory) of the wiki.
 
 # Further information
 
