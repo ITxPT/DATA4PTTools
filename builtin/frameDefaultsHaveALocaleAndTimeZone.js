@@ -3,11 +3,16 @@
  * @overview Validates the correctness of DefaultLocale and TimeZone inside FrameDefaults
  * @author Concrete IT
  */
+// Define a constant variable for the script name
 const name = "frameDefaultsHaveALocaleAndTimeZone";
+
+// Import necessary modules
 const errors = require("errors");
 const time = require("time");
 const types = require("types");
 const xpath = require("xpath");
+
+// Define a set of ISO 639-1 country codes
 const countryCodes = new Set([ // ISO 639-1 country codes
   "aa", "ab", "ae", "af", "ak", "am", "an", "ar", "as", "av",
   "ay", "az", "ba", "be", "bg", "bh", "bi", "bm", "bn", "bo",
@@ -29,6 +34,7 @@ const countryCodes = new Set([ // ISO 639-1 country codes
   "uk", "ur", "uz", "ve", "vi", "vo", "wa", "wo", "xh", "yi",
   "yo", "za", "zh", "zu",
 ]);
+// Define XPath paths for elements within FrameDefaults
 const defaultLocalePath = xpath.join(".", "DefaultLocale");
 const defaultLangPath = xpath.join(".", "DefaultLanguage");
 const tzOffsetPath = xpath.join(".", "TimeZoneOffset");
@@ -47,43 +53,46 @@ const stzPath = xpath.join(".", "SummerTimeZone");
  * @return {errors.ScriptError[]?}
  */
 function main(ctx) {
+  // Find the first FrameDefaults element in the document
   const node = ctx.node.first(xpath.path.FRAME_DEFAULTS).get();
+  // If FrameDefaults element is not found, return a NotFoundError in an array
   if (!node) {
     return [errors.NotFoundError("Document is missing element <FrameDefaults />")];
   }
 
+  // Validate DefaultLocale and TimeZone elements within FrameDefaults
   return node.first(defaultLocalePath)
     .map((node) => {
       const res = [];
-
+      // Validate TimeZoneOffset
       if (!validTimeZoneOffset(node.textAt(tzOffsetPath).get())) {
         res.push(errors.ConsistencyError(
           "Invalid <TimeZoneOffset /> in <FrameDefaults />",
           { line: node.line() },
         ));
       }
-
+      // Validate TimeZone
       if (!validTimeZone(node.textAt(tzPath).get())) {
         res.push(errors.ConsistencyError(
           "Invalid <TimeZone /> in <FrameDefaults />",
           { line: node.line() },
         ));
       }
-
+      // Validate SummerTimeZoneOffset
       if (!validTimeZoneOffset(node.textAt(stzOffsetPath).get())) {
         res.push(errors.ConsistencyError(
           "Invalid <SummerTimeZoneOffset /> in <FrameDefaults />",
           { line: node.line() },
         ));
       }
-
+      // Validate SummerTimeZone
       if (!validTimeZone(node.textAt(stzPath).get())) {
         res.push(errors.ConsistencyError(
           "Invalid <SummerTimeZone /> in <FrameDefaults />",
           { line: node.line() },
         ));
       }
-
+      // Validate DefaultLanguage
       if (!validLanguage(node.textAt(defaultLangPath).get())) {
         res.push(errors.ConsistencyError(
           "Invalid <DefaultLanguage /> in <FrameDefaults />",
@@ -93,6 +102,7 @@ function main(ctx) {
 
       return res;
     })
+    // Handle errors during the find operation
     // @ts-ignore
     .getOrElse(err => {
       if (err == errors.NODE_NOT_FOUND) {
@@ -104,6 +114,7 @@ function main(ctx) {
 }
 
 /**
+ * Validate the format of TimeZoneOffset
  * @param {string} offset
  * @returns {boolean}
  */
@@ -129,6 +140,7 @@ function validTimeZone(tz) {
 }
 
 /**
+ * Validate if the language code is in the set of ISO 639-1 country codes
  * @param {string} lang
  * @returns {boolean}
  */
